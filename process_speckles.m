@@ -5,7 +5,7 @@ MAKE_SPECKLE_IMAGES = false;
 TIME_AVG_SPECKLE = false;
 
 
-NUM_FILES =  271;
+NUM_FILES =  271*2;
 
 % The speckle pattern at t=0 of the simulation 
 % (i.e. the speckle pattern without any influence of ultrasound).

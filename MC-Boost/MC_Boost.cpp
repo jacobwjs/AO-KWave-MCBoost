@@ -42,7 +42,7 @@ MC_Boost::MC_Boost(void)
     //rng_seed_file = "Data/seeds_for_exit_" + Logger::getInstance()->getCurrTime() + ".dat";
 
     /// Holds data collected when a photon exits through the detection aperture.
-    exit_data_file = "Data/photon-exit-data";
+    exit_data_file = "Data/Detected_photons/photon-exit-data";
 }
 
 

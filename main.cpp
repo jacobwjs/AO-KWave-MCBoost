@@ -573,6 +573,7 @@ Name                            Size           Data type        Domain Type     
  * Includes for the AO simulation.
  */
 #include <AO-sim/AO_sim.h>
+#include <MC-Boost/sphereAbsorber.h>
 #include <MC-Boost/layer.h>
 #include <MC-Boost/logger.h>
 
@@ -594,7 +595,7 @@ using namespace std;
  * ------------------------------------------------------- Various functions for Monte-Carlo -----------------
  */
 // Number of photons to simulate.
-const int MAX_PHOTONS = 100e6;
+const int MAX_PHOTONS = 50e6;
 
 
 
@@ -681,7 +682,7 @@ int main(int argc, char** argv)
     	/// Assign the pezio-optical coefficient.
     	AO_simulation.Set_pezio_optical_coeff(0.322);
 
-    	/// Add a layer to the monte-carlo medium defining the optical properties.
+        /// Create a layer for the monte-carlo medium defining the optical properties.
     	Layer_Properties layer_props;
         /// NOTE:
         /// - So that the step size calculated in Photon::Hop() matches with the dimensions
@@ -695,8 +696,28 @@ int main(int argc, char** argv)
     	layer_props.refractive_index = 1.33f;
     	layer_props.anisotropy  = 0.9f;
     	layer_props.start_depth = 0.0f;
-    	layer_props.end_depth   = AO_simulation.Get_MC_Zaxis_depth();
-    	AO_simulation.Add_layer_MC_medium(layer_props);
+        layer_props.end_depth   = AO_simulation.Get_MC_Zaxis_depth();
+        Layer *layer1 = new Layer(layer_props);
+
+        /// Add an absorber to the layer.
+        /// Note:
+        ///  - The absober is centered in the US focus, which is co-aligned with
+        ///    the injection of light and the detector on the front and back aperture.
+        SphereAbsorber *absorber_middle_of_medium = new SphereAbsorber(0.002,
+                                                                       0.0225,
+                                                                       AO_simulation.Get_MC_Yaxis_depth()/2,
+                                                                       AO_simulation.Get_MC_Zaxis_depth()/2);
+        /// Set the inclusion to 100x the background absorption, and to the same
+        /// properties as the rest of the background layer.
+        absorber_middle_of_medium->setAbsorberAbsorptionCoeff(layer_props.mu_a * 500);
+        absorber_middle_of_medium->setAbsorberScatterCoeff(layer_props.mu_s);
+        absorber_middle_of_medium->setAbsorberAnisotropy(layer_props.anisotropy);
+        absorber_middle_of_medium->setAbsorberRefractiveIndex(layer_props.refractive_index);
+        layer1->addAbsorber(absorber_middle_of_medium);
+
+
+        /// Add the layer to the monte-carlo medium.
+        AO_simulation.Add_layer_MC_medium(layer1);
 
     	/// Add a detector to the medium (i.e. an exit aperture) for collecting photons that will make their way
     	/// to the CCD camera.

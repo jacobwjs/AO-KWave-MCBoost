@@ -49,11 +49,11 @@ Medium::~Medium()
 	}
 
 	// If there were any absorbers in the medium, write out their data.
-	for (vector<Layer *>::iterator it = p_layers.begin(); it != p_layers.end(); it++)
-	{
-		(*it)->writeAbsorberData();
-		delete *it;
-	}
+    //for (vector<Layer *>::iterator it = p_layers.begin(); it != p_layers.end(); it++)
+    //{
+    //	(*it)->writeAbsorberData();
+    //	delete *it;
+    //}
 }
 
 

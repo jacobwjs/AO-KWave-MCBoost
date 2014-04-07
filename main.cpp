@@ -595,7 +595,7 @@ using namespace std;
  * ------------------------------------------------------- Various functions for Monte-Carlo -----------------
  */
 // Number of photons to simulate.
-const int MAX_PHOTONS = 50e6;
+const int MAX_PHOTONS = 2e6;
 
 
 
@@ -689,7 +689,7 @@ int main(int argc, char** argv)
         ///   of everything else used in the simulation, we convert the commonly used mu_a
         ///   and mu_s dimensions from cm^-1 to m^-1.
         layer_props.mu_a        = 0.01f;              // cm^-1
-        layer_props.mu_s        = 70.0f;                // cm^-1
+        layer_props.mu_s        = 100.0f;                // cm^-1
         layer_props.mu_a = layer_props.mu_a * 100;      // m^-1
         layer_props.mu_s = layer_props.mu_s * 100;      // m^-1
         
@@ -703,17 +703,17 @@ int main(int argc, char** argv)
         /// Note:
         ///  - The absober is centered in the US focus, which is co-aligned with
         ///    the injection of light and the detector on the front and back aperture.
-        SphereAbsorber *absorber_middle_of_medium = new SphereAbsorber(0.002,
-                                                                       0.0225,
-                                                                       AO_simulation.Get_MC_Yaxis_depth()/2,
-                                                                       AO_simulation.Get_MC_Zaxis_depth()/2);
-        /// Set the inclusion to 100x the background absorption, and to the same
-        /// properties as the rest of the background layer.
-        absorber_middle_of_medium->setAbsorberAbsorptionCoeff(layer_props.mu_a * 500);
-        absorber_middle_of_medium->setAbsorberScatterCoeff(layer_props.mu_s);
-        absorber_middle_of_medium->setAbsorberAnisotropy(layer_props.anisotropy);
-        absorber_middle_of_medium->setAbsorberRefractiveIndex(layer_props.refractive_index);
-        layer1->addAbsorber(absorber_middle_of_medium);
+//        SphereAbsorber *absorber_middle_of_medium = new SphereAbsorber(0.002,
+//                                                                       0.0225,
+//                                                                       AO_simulation.Get_MC_Yaxis_depth()/2,
+//                                                                       AO_simulation.Get_MC_Zaxis_depth()/2);
+//        /// Set the inclusion to (some value)x the background absorption, and to the same
+//        /// properties as the rest of the background layer.
+//        absorber_middle_of_medium->setAbsorberAbsorptionCoeff(layer_props.mu_a * 1);  /// Set it to the background for reference meas.
+//        absorber_middle_of_medium->setAbsorberScatterCoeff(layer_props.mu_s);
+//        absorber_middle_of_medium->setAbsorberAnisotropy(layer_props.anisotropy);
+//        absorber_middle_of_medium->setAbsorberRefractiveIndex(layer_props.refractive_index);
+//        layer1->addAbsorber(absorber_middle_of_medium);
 
 
         /// Add the layer to the monte-carlo medium.
@@ -723,12 +723,16 @@ int main(int argc, char** argv)
     	/// to the CCD camera.
     	/// NOTE: Centering the detector on the x-y plane.
     	Detector_Properties detector_props;
-    	detector_props.radius = 0.0025;
+        detector_props.radius = 0.0020;
     	detector_props.x_coord = 0.0225;    //  Upon inspection, the US focus is located here.  //AO_simulation.Get_MC_Xaxis_depth()/2;
 
 
         detector_props.y_coord = AO_simulation.Get_MC_Yaxis_depth()/2;
-    	detector_props.z_coord = AO_simulation.Get_MC_Zaxis_depth();
+        /// Transmission mode
+        /// detector_props.z_coord = AO_simulation.Get_MC_Zaxis_depth();
+
+        /// Reflection mode
+        detector_props.z_coord = 0.0f;
 		detector_props.xy_plane = true;
     	AO_simulation.Add_circular_detector_MC_medium(detector_props);
 

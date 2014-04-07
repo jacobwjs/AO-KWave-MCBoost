@@ -1,9 +1,10 @@
-
+    
 
 clear all;
 
 
 PA_GUIDED_FOCUS = false;
+MY_FIXED_FOCUS     = true;
 
 % set the size of the perfectly matched layer (PML)
 PML_X_SIZE = 20;            % [grid points]
@@ -11,9 +12,13 @@ PML_Y_SIZE = 10;            % [grid points]
 PML_Z_SIZE = 10;            % [grid points]
 
 % set total number of grid points not including the PML
-Nx = 1296;
-Ny = 768;
-Nz = 512;
+Nx = 1296; % dx*Nx = 39.7 [mm]
+Ny = 768;  % dy*Ny = 23.5 [mm]
+Nz = 512;  % dz*Nz = 15.7 [mm]
+
+%Nx = 1296; % dx*Nx = 39.7 [mm]
+%Ny = 864;  % dy*Ny = 26.5 [mm]
+%Nz = 512;  % dz*Nz = 15.7 [mm]
 
 
 % calculate the spacing between the grid points.
@@ -23,7 +28,7 @@ Nz = 512;
 elevation_height = 5e-3;
 pitch            = 0.245e-3;
 SL3323_active_elements  = 64;
-kerf = 0;                           % Assume zero kerf.
+kerf = 1;                           % Assume kerf of 1.
 
 % dx = x/Nx                  % [m]
 dx = pitch/8;                % [m]
@@ -71,7 +76,7 @@ BonA_breast             = 9.63;
 % Density, attenuation, SOS, etc. of Agar
 % ---------------------------------------
 rho0_agar           = 1024;
-c0_agar             = 1540;
+c0_agar             = 1500;
 alpha_atten_agar    = 0.7;
 alpha_power_agar    = 1.5;
 BonA_agar           = 6.0;
@@ -131,7 +136,8 @@ kgrid.t_array = 0:dt:(Nt-1)*dt;
 % =========================================================================
 
 % define properties of the input signal
-source_strength = 0.9e6;    	% [Pa]
+% Measured peak-to-peak
+source_strength = 1.0e6;    	% [Pa] 
 tone_burst_freq = 5.0e6;        % [Hz]
 source_freq = tone_burst_freq;
 tone_burst_cycles = 5;
@@ -169,20 +175,38 @@ transducer_width = transducer.number_elements*transducer.element_width ...
 MIDDLE_of_medium = round([PML_X_SIZE+5,...
                           Ny/2 - transducer_width/2,...
                           Nz/2 - transducer.element_length/2]);
-EDGE_of_medium = round([PML_X_SIZE+5,...
-                        Ny/2 - transducer_width/2,...
-                        Nz - (transducer.element_length+2*PML_Z_SIZE)]);
+                      
+FRONT_EDGE_of_medium_5mmOpticalDepth_0mmShift = round([PML_X_SIZE+5,...
+                                                    Ny/2 - transducer_width/2,...
+                                                    Nz/3 - transducer.element_length/2]);
+% FIXME:
+% - Why does the extra 64 pixels need to be included.
+azimuthal_4mmShift = round(0.004/dy); 
+FRONT_EDGE_of_medium_5mmOpticalDepth_4mmShift = round([PML_X_SIZE+5,...
+                                                       Ny/2 - transducer_width/2 - azimuthal_4mmShift,...
+                                                       Nz/3 - transducer.element_length/2]);
+                                                
 % Bead is ~6 mm deep (optical axis), so center the US probe that depth along
 % z-axis (taking into account PML)
 BEAD_A_centered = round([(PML_X_SIZE+5), ...                                        % x-axis
                          (Ny/2 - transducer_width/2), ...                           % y-axis
                          (PML_Z_SIZE + 6e-3/dz  + transducer.element_length/2)]);   % z-axis
+
 % Assign the transducer position.
 transducer.position = MIDDLE_of_medium;
 
+% Define the focal depth
+focal_depth = 21.5e-3;
+
+% Create the steering angle for moving 4mm along the azimuthal plane.
+horizontal_steering_angle_4mm = 180/pi*atan(4e-3/focal_depth);
+
+% The steering angle along the azimuthal plane for focusing.
+steering_angle = 0;
 
 % properties used to derive the beamforming delays
 transducer.sound_speed = c0;                % sound speed [m/s]
+
 % Provide delays from an experiment.  Convert back from MyLAB scaled ticks into
 % usecs.
 if (PA_GUIDED_FOCUS)
@@ -203,11 +227,46 @@ if (PA_GUIDED_FOCUS)
     
     % Assign the delays to the transducer object.
     transducer.supplied_transmit_delays = smooth_delays;
+elseif (MY_FIXED_FOCUS)
+    F = focal_depth;  % Focal length [m]
+	c = c0;   % speed-of-sound [m]
+	N = SL3323_active_elements;     % Number of elements
+	N_avg = (N-1)/2;
+	d = pitch;    % The center-to-center spacing of elements on the probe (i.e. the pitch).
+	
+	%theta = horizontal_steering_angle_4mm*(pi/180);    % Steering angle from center of array.
+    theta = steering_angle;
+    
+	n = 0:1:N-1;
+
+	% Take into account the negative steering angle.  Just want the regular
+	% case reflected across the y-axis, so use matlab 'fliplr' with positive
+	% angle calculation.
+	if (theta >= 0)
+    		t_n = F/c * (sqrt(1 + (N_avg*d/F).^2 + ((2*N_avg*d)/F)*sin(theta)) - ...
+        	sqrt(1+((n-N_avg)*d/F).^2 - (2*(n-N_avg)*d/F)*sin(theta)));
+	else
+    		theta = abs(theta);
+    		t_n = F/c * (sqrt(1 + (N_avg*d/F).^2 + ((2*N_avg*d)/F)*sin(theta)) - ...
+        	sqrt(1+((n-N_avg)*d/F).^2 - (2*(n-N_avg)*d/F)*sin(theta)));
+    		% Reflect delays across the y-axis.
+    		t_n = fliplr(t_n);
+	end
+	
+	% k-Wave does a lot of manipulation with the beamforming delays it
+    	% calculates.  In order to minimize modifications to k-Wave, we put the
+    	% beamforming delays calculated above into a form k-Wave expects.
+   	FF_delays = t_n - max(t_n);
+   	
+   	% Assign the delays to the transducer object.
+   	transducer.supplied_transmit_delays = FF_delays;
 else
-    transducer.focus_distance = 21.5e-3;          % focus distance [m]
+    transducer.focus_distance = focal_depth;          % focus distance [m]
+    %transducer.steering_angle = horizontal_steering_angle_4mm; % steering angle [degrees]
+    transducer.steering_angle = steering_angle; % [degrees]
 end
 transducer.elevation_focus_distance = 21.5e-3;
-transducer.steering_angle = 0;              % steering angle [degrees]
+
 
 % apodization
 transducer.transmit_apodization = 'Rectangular';

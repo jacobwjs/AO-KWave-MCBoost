@@ -87,7 +87,16 @@ endif
 
 ############################## GNU g++ + FFTW ###################################
 ifeq ($(COMPILER),GNU)
+
+# Find out what OS we're working on.
+UNAME := $(shell uname)
+ifeq ($(UNAME), Darwin)
+  # Custom built GNU compiler on OS X since what ships with Xcode currently lacks
+  # OMP support
+  CXX	   = /usr/local/bin/g++
+else
   CXX	   = /usr/bin/g++
+endif
 
   CPU_FLAGS = -msse4.2 -m64 -mtune=native
 

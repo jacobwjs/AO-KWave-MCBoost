@@ -107,6 +107,10 @@ public:
 
     /// Get post-processing time
     double GetPostProcessingTime() const { return PostProcessingTime.GetElapsedTime();};
+    
+    /// ------------------------------------ JWJS -----------------------------------------
+    /// Return the computational loop time.
+    double GetIterationTime()      const { return IterationTime.GetElapsedTime(); };
 
 
     // Begin JWJS

@@ -34,7 +34,8 @@
 #include <string.h>
 
 #if defined(__APPLE__)
-#include <stdlib.h>
+//#include <stdlib.h>
+#include <cstdlib>
 #define memalign(a,b) malloc((b))
 #else
 #include <malloc.h>

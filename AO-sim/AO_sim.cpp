@@ -140,7 +140,7 @@ AO_Sim::Run_kWave_sim(TParameters * Parameters)
 
         //-- store the initial pressure at the first time step --//
         /// Here is where the computation for the refractive index, displacements,
-        /// and all the values kWave needs, takes place if commandline flags for saving data hvave been set.
+        /// and all the values kWave needs, takes place if commandline flags for saving data have been set.
         KSpaceSolver->FromAO_sim_StoreSensorData();
 
 

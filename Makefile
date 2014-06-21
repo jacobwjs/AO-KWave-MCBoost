@@ -75,7 +75,6 @@ LINKING = DYNAMIC
 
 #set up paths: FFT_DIR for FFTW or MKL for MKL
 FFT_DIR=/usr/local
-MKL_DIR=/opt/intel/composer_xe_2011_sp1/mkl
 ifeq ($(OS), Linux)
 HDF5_DIR=/usr/local
 else
@@ -88,9 +87,18 @@ endif
 
 ############################## GNU g++ + FFTW ###################################
 ifeq ($(COMPILER),GNU)
-  CXX	   = /usr/bin/g++
 
-  CPU_FLAGS = -msse2 -msse4.2 -msse4.1 -march=native
+# Find out what OS we're working on.
+UNAME := $(shell uname)
+ifeq ($(UNAME), Darwin)
+  # Custom built GNU compiler on OS X since what ships with Xcode currently lacks
+  # OMP support
+  CXX	   = /usr/local/bin/g++
+else
+  CXX	   = /usr/bin/g++
+endif
+
+  CPU_FLAGS = -msse4.2 -m64 -mtune=native
 
   #Generic CPU (any intel and AMD 64b CPU)
   #CPU_FLAGS = -msse2 -m64
@@ -100,13 +108,12 @@ ifeq ($(COMPILER),GNU)
 
   # CFLAGS for running 
   #------------------------
-  CXXFLAGS = -O3 -fopenmp $(CPU_FLAGS) -ffast-math -fassociative-math -Wall \
+  #CXXFLAGS = -O3 -mtune=native -fopenmp $(CPU_FLAGS) -ffast-math -fassociative-math -Wall \
 		     -I$(HDF5_DIR)/include -I$(FFT_DIR)/include -I .
   
-
   # CFLAGS for debugging
   #------------------------
-  #CXXFLAGS = -O0 -fopenmp $(CPU_FLAGS) -Wall -g -I$(HDF5_DIR)/include -I$(FFT_DIR)/include -I .
+  CXXFLAGS = -O0 -fopenmp $(CPU_FLAGS) -Wall -g -I$(HDF5_DIR)/include -I$(FFT_DIR)/include -I .
 
   ifeq ($(LINKING),STATIC)
 
@@ -175,7 +182,7 @@ $(TARGET):	main.o 					\
 		MatrixClasses/LongMatrix.o		\
 		MatrixClasses/MatrixContainer.o		\
 		MatrixClasses/OutputHDF5Stream.o	\
-	        MatrixClasses/InputHDF5Stream.o		\
+		MatrixClasses/InputHDF5Stream.o		\
 		MatrixClasses/RealMatrix.o		\
 		MatrixClasses/UXYZ_SGXYZMatrix.o	\
 		Parameters/CommandLineParameters.o	\
@@ -187,7 +194,6 @@ $(TARGET):	main.o 					\
 		MC-Boost/detector.o			\
 		MC-Boost/displacementMap.o		\
 		MC-Boost/layer.o			\
-		MC-Boost/multikey.o			\
 		MC-Boost/logger.o			\
 		MC-Boost/medium.o			\
 		MC-Boost/photon.o			\
@@ -197,6 +203,7 @@ $(TARGET):	main.o 					\
 		MC-Boost/vector3D.o			\
 		MC-Boost/MC_Boost.o			\
 		MC-Boost/RNG.o				\
+		MC-Boost/multikey.o			\
 		
 
 	$(CXX) $(LDFLAGS) main.o 			\
@@ -208,8 +215,8 @@ $(TARGET):	main.o 					\
 		MatrixClasses/FFTWComplexMatrix.o	\
 		MatrixClasses/LongMatrix.o          	\
 		MatrixClasses/MatrixContainer.o		\
-		MatrixClasses/InputHDF5Stream.o		\
 		MatrixClasses/OutputHDF5Stream.o	\
+		MatrixClasses/InputHDF5Stream.o		\
 		MatrixClasses/RealMatrix.o          	\
 		MatrixClasses/UXYZ_SGXYZMatrix.o	\
 		Parameters/CommandLineParameters.o	\
@@ -221,7 +228,6 @@ $(TARGET):	main.o 					\
                 MC-Boost/detector.o                     \
                 MC-Boost/displacementMap.o              \
                 MC-Boost/layer.o                        \
-		MC-Boost/multikey.o			\
                 MC-Boost/logger.o                       \
 		MC-Boost/medium.o			\
                 MC-Boost/photon.o                       \
@@ -231,6 +237,7 @@ $(TARGET):	main.o 					\
                 MC-Boost/vector3D.o                     \
 		MC-Boost/MC_Boost.o			\
 		MC-Boost/RNG.o				\
+		MC-Boost/multikey.o			\
 		$(LIBS)                             	\
 		-o $@
 

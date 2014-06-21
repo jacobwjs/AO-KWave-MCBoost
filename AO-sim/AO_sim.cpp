@@ -95,7 +95,7 @@ AO_Sim::Run_kWave_sim(TParameters * Parameters)
     KSpaceSolver->FromAO_sim_PrintOutputHeader();
     KSpaceSolver->IterationTimeStart();
 	size_t k_wave_Nt = Parameters->Get_Nt();
-    k_wave_Nt = 10;
+    //k_wave_Nt = 10;
     for (KSpaceSolver->SetTimeIndex(0); KSpaceSolver->GetTimeIndex() < k_wave_Nt; KSpaceSolver->IncrementTimeIndex()){
 
         cout << ".......... Running k-Wave ........... ("
@@ -148,27 +148,55 @@ AO_Sim::Run_kWave_sim(TParameters * Parameters)
 
     }
 
-        KSpaceSolver->IterationTimeStop();
-
-        cout << "\n\n-------------------------------------------------------------";
-        cout << "\nComputational loop elapsed time: " << KSpaceSolver->GetIterationTime();
+    cout << " .......... Done\n";
     
-
-        cout << "\nPost-processing phase......."; cout.flush();
-        KSpaceSolver->PostProcessingTimeStart();
-        KSpaceSolver->FromAO_sim_PostProcessing();
-        KSpaceSolver->PostProcessingTimeStop();
-        cout << "Done \n";
-        cout << "Post-processing elapsed time: " << KSpaceSolver->GetPostProcessingTime();
-
-
-        KSpaceSolver->FromAO_sim_WriteOutputDataInfo();
-
-        Parameters->HDF5_OutputFile.Close();
+    KSpaceSolver->IterationTimeStop();
+    
+    cout << "\n\n-------------------------------------------------------------\n";
+    cout << " Timing / \n";
+    cout << " -------";
+    cout << "\nComputational loop elapsed time: " << KSpaceSolver->GetIterationTime();
     
     
-        cout << "\nTotal elapsed simulation time: " << KSpaceSolver->GetTotalTime();
-        cout << "\n-------------------------------------------------------------\n\n";
+    cout << "\nPost-processing phase......."; cout.flush();
+    KSpaceSolver->PostProcessingTimeStart();
+    KSpaceSolver->FromAO_sim_PostProcessing();
+    KSpaceSolver->PostProcessingTimeStop();
+    cout << "Done \n";
+    cout << "Post-processing elapsed time: " << KSpaceSolver->GetPostProcessingTime();
+    
+    
+    KSpaceSolver->FromAO_sim_WriteOutputDataInfo();
+    
+    Parameters->HDF5_OutputFile.Close();
+    
+    
+    cout << "\nTotal elapsed simulation time: " << KSpaceSolver->GetTotalTime();
+    
+    
+    
+    /// Display statistics about the simulation if options were enabled.
+    if (Parameters->IsStore_p_max() ||
+        Parameters->IsStore_I_max())
+    {
+        cout << "\n\n-------------------------------------------------------------\n";
+        cout << " Statistics / \n";
+        cout << " -----------";
+        
+        if (Parameters->IsStore_p_max())
+        {
+            cout << "\n Max pressure: " << KSpaceSolver->stats.max_pressure / 1e6 << " [MPa]";
+            cout << "\n - Time index: " << KSpaceSolver->stats.pressure_t_index;
+            cout << "\n - Simulation time: " << KSpaceSolver->stats.pressure_t_index * Parameters->Get_dt();
+        }
+        
+        if (Parameters->IsStore_I_max())
+        {
+            cout << "\n Max intensity: Implement me\n";
+            cout << "\n - Time index: Implement me\n";
+            cout << "\n - Simulation time: Implement me\n";
+        }
+    } /// end if
 
 }
 
@@ -415,10 +443,13 @@ AO_Sim::Run_acousto_optics_sim(TParameters * Parameters)
         
     }
 
+    cout << " .......... Done\n";
 
     KSpaceSolver->IterationTimeStop();
     
-    cout << "\n\n-------------------------------------------------------------";
+    cout << "\n\n-------------------------------------------------------------\n";
+    cout << " Timing / \n";
+    cout << " -------";
     cout << "\nComputational loop elapsed time: " << KSpaceSolver->GetIterationTime();
     
     
@@ -436,7 +467,33 @@ AO_Sim::Run_acousto_optics_sim(TParameters * Parameters)
     
     
     cout << "\nTotal elapsed simulation time: " << KSpaceSolver->GetTotalTime();
-    cout << "\n-------------------------------------------------------------\n\n";
+    
+    
+    
+    /// Display statistics about the simulation if options were enabled.
+    if (sim_refractive_grad || sim_displacement || sim_refractive_total ||
+        Parameters->IsStore_p_max() ||
+        Parameters->IsStore_I_max())
+    {
+        cout << "\n\n-------------------------------------------------------------\n";
+        cout << " Statistics / \n";
+        cout << " -----------";
+        
+        if (Parameters->IsStore_p_max())
+        {
+            cout << "\n Max pressure: " << KSpaceSolver->stats.max_pressure / 1e6 << " [MPa]";
+            cout << "\n - Time index: " << KSpaceSolver->stats.pressure_t_index;
+            cout << "\n - Simulation time: " << KSpaceSolver->stats.pressure_t_index * Parameters->Get_dt();
+        }
+        
+        if (Parameters->IsStore_I_max())
+        {
+            cout << "\n Max intensity: Implement me\n";
+            cout << "\n - Time index: Implement me\n";
+            cout << "\n - Simulation time: Implement me\n";
+        }
+    } /// end if
+        
 
 
 }

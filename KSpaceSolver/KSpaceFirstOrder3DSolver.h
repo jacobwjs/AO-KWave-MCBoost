@@ -48,6 +48,28 @@ using namespace std;
 
 
 
+/// ----------------------------------------------------- JWJS ----------------
+/// Used to track statistics about the simulation, such as
+/// the maximum pressure, intensity, acoustic particle displacement, etc.
+/// and the time step they occurred at.
+typedef struct {
+    float max_pressure;
+    int   pressure_t_index;
+    
+    float max_intensity;
+    int   intensity_t_index;
+    
+    float max_displacement;
+    float min_displacement;
+    int   displacement_t_index;
+    
+    float max_refractive_index;
+    float min_refractive_index;
+    int   refractive_t_index;
+    
+} Statistics;
+/// ----------------------------------------------------------/
+
 /**
  * \class TKSpaceFirstOrder3DSolver
  * \brief Class responsible for running the k-space first order 3D method.
@@ -159,6 +181,11 @@ public:
     TRealMatrix & FromAO_sim_Get_disp_x          ()   {return Get_disp_x();};
     TRealMatrix & FromAO_sim_Get_disp_y          ()   {return Get_disp_y();};
     TRealMatrix & FromAO_sim_Get_disp_z          ()   {return Get_disp_z();};
+
+    /// Used to track attributes about the simulations
+    /// (max pressure, intensity, etc.)
+    Statistics stats;
+    
     /// ---------------------------------------------------------------------------------------
     // End JWJS
 
@@ -600,6 +627,7 @@ protected:
 
 
 
+    
 
 
 

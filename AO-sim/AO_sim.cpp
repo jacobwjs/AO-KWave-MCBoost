@@ -417,24 +417,26 @@ AO_Sim::Run_acousto_optics_sim(TParameters * Parameters)
 
 
     KSpaceSolver->IterationTimeStop();
-
-    cout << "-------------------------------------------------------------\n";
-    cout << "Elapsed time: " << KSpaceSolver->GetSimulationTime() << "\n";
-    cout << "-------------------------------------------------------------\n";
-
-    cout << "Post-processing phase......."; cout.flush();
+    
+    cout << "\n\n-------------------------------------------------------------";
+    cout << "\nComputational loop elapsed time: " << KSpaceSolver->GetIterationTime();
+    
+    
+    cout << "\nPost-processing phase......."; cout.flush();
     KSpaceSolver->PostProcessingTimeStart();
-
-
     KSpaceSolver->FromAO_sim_PostProcessing();
     KSpaceSolver->PostProcessingTimeStop();
     cout << "Done \n";
-    cout << "Elapsed time: " << KSpaceSolver->GetPostProcessingTime() << "\n";
-
-
+    cout << "Post-processing elapsed time: " << KSpaceSolver->GetPostProcessingTime();
+    
+    
     KSpaceSolver->FromAO_sim_WriteOutputDataInfo();
-
+    
     Parameters->HDF5_OutputFile.Close();
+    
+    
+    cout << "\nTotal elapsed simulation time: " << KSpaceSolver->GetTotalTime();
+    cout << "\n-------------------------------------------------------------\n\n";
 
 
 }

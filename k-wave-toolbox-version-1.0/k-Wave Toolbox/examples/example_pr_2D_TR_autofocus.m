@@ -44,7 +44,7 @@ kgrid = makeGrid(Nx, dx, Ny, dy);
 p0 = resize(p0, [Nx, Ny]);
 
 % smooth the initial pressure distribution and restore the magnitude
-p0 = smooth(kgrid, p0, true);
+%p0 = smooth(kgrid, p0, true);
 
 % assign to the source structure
 source.p0 = p0;

@@ -172,6 +172,11 @@ public:
     std::string GetInputFileName()      const {return InputFileName;};    
     /// Get output file name
     std::string GetOutputFileName()     const {return OutputFileName;};
+
+    /// ------------------------------- JWJS --------------------------------------------------
+    /// Get input file name for RNG seeds. Used for loading seeds in monte-carlo simulation.
+    std::string GetRNGSeedsFileName()   const {return InputRNGSeedsFileName;};
+    /// ------------------------------------
     
     /// Is --benchmark flag set?
     bool IsBenchmarkFlag()              const {return BenchmarkFlag;};
@@ -223,16 +228,25 @@ public:
     
     
     /// ------------------- JWJS ------------------------------------
+    /// Is --save_seeds set
+    bool IsStore_RNG_seeds()           const {return Store_seeds;};
+
+    /// Is --load_seeds set
+    bool IsLoad_seeds()                 const {return Load_seeds;};
+
+    /// Is --phase_inversion set
+    bool IsPhase_inversion()            const {return Phase_inversion;};
+
     /// Is --modulation_depth set
     bool IsStore_modulation_depth()     const {return Store_modulation_depth;};
     
-    /// Is --n_total set
+    /// Is --refractive_total set
     bool IsStore_refractive_total()     const {return Store_refractive_total;};
-    /// Is --nx set
+    /// Is --refractive_x set
     bool IsStore_refractive_x()         const {return Store_refractive_x;};
-    /// Is --ny set
+    /// Is --refractive_y set
     bool IsStore_refractive_y()         const {return Store_refractive_y;};
-    /// Is --nz set
+    /// Is --refractive_z set
     bool IsStore_refractive_z()         const {return Store_refractive_z;};
     
     /// Is --disp_x set
@@ -308,6 +322,22 @@ private:
     
     
     /// -------------------------- JWJS --------------------------------------------
+    /// Store the RNG seeds used in monte-carlo simulation.
+    bool        Store_seeds;
+
+    /// Use RNG seeds from a previous run of the monte-carlo simulation.
+    bool        Load_seeds;
+    /// Input file name for RNG seeds
+    std::string InputRNGSeedsFileName;
+
+    /// Perform a phase inversion acousto-optic simulation, which
+    /// simply runs the acousto-optic simulation on displacement
+    /// and/or refractive index data, at a recorded time step,
+    /// and inverts the data such that it was as if the ultrasound
+    /// had made it to the same location and time, but with a 180
+    /// phase shift.
+    bool        Phase_inversion;
+
     /// Store the modulation depth (tagged vs. untagged photons)
     bool        Store_modulation_depth;
     
@@ -320,11 +350,11 @@ private:
     /// Store index of refraction values of the z-component
     bool        Store_refractive_z;
     
-    /// Store displacement along x-axis;
+    /// Store displacement along x-axis
     bool        Store_disp_x;
-    /// Store displacement along y-axis;
+    /// Store displacement along y-axis
     bool        Store_disp_y;
-    /// Store displacement along z-axis;
+    /// Store displacement along z-axis
     bool        Store_disp_z;
     
                         /// Options to decide what is run, via the commandline ///

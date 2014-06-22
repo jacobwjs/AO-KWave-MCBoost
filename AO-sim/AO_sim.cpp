@@ -95,7 +95,7 @@ AO_Sim::Run_kWave_sim(TParameters * Parameters)
     KSpaceSolver->FromAO_sim_PrintOutputHeader();
     KSpaceSolver->IterationTimeStart();
 	size_t k_wave_Nt = Parameters->Get_Nt();
-	//k_wave_Nt = 1700;
+    //k_wave_Nt = 10;
     for (KSpaceSolver->SetTimeIndex(0); KSpaceSolver->GetTimeIndex() < k_wave_Nt; KSpaceSolver->IncrementTimeIndex()){
 
         cout << ".......... Running k-Wave ........... ("
@@ -140,7 +140,7 @@ AO_Sim::Run_kWave_sim(TParameters * Parameters)
 
         //-- store the initial pressure at the first time step --//
         /// Here is where the computation for the refractive index, displacements,
-        /// and all the values kWave needs, takes place if commandline flags for saving data hvave been set.
+        /// and all the values kWave needs, takes place if commandline flags for saving data have been set.
         KSpaceSolver->FromAO_sim_StoreSensorData();
 
 
@@ -148,25 +148,55 @@ AO_Sim::Run_kWave_sim(TParameters * Parameters)
 
     }
 
-        KSpaceSolver->IterationTimeStop();
-
-        cout << "-------------------------------------------------------------\n";
-        cout << "Elapsed time: " << KSpaceSolver->GetSimulationTime() << "\n";
-        cout << "-------------------------------------------------------------\n";
-
-        cout << "Post-processing phase......."; cout.flush();
-        KSpaceSolver->PostProcessingTimeStart();
-
-
-        KSpaceSolver->FromAO_sim_PostProcessing();
-        KSpaceSolver->PostProcessingTimeStop();
-        cout << "Done \n";
-        cout << "Elapsed time: " << KSpaceSolver->GetPostProcessingTime() << "\n";
-
-
-        KSpaceSolver->FromAO_sim_WriteOutputDataInfo();
-
-        Parameters->HDF5_OutputFile.Close();
+    cout << " .......... Done\n";
+    
+    KSpaceSolver->IterationTimeStop();
+    
+    cout << "\n\n-------------------------------------------------------------\n";
+    cout << " Timing / \n";
+    cout << " -------";
+    cout << "\nComputational loop elapsed time: " << KSpaceSolver->GetIterationTime();
+    
+    
+    cout << "\nPost-processing phase......."; cout.flush();
+    KSpaceSolver->PostProcessingTimeStart();
+    KSpaceSolver->FromAO_sim_PostProcessing();
+    KSpaceSolver->PostProcessingTimeStop();
+    cout << "Done \n";
+    cout << "Post-processing elapsed time: " << KSpaceSolver->GetPostProcessingTime();
+    
+    
+    KSpaceSolver->FromAO_sim_WriteOutputDataInfo();
+    
+    Parameters->HDF5_OutputFile.Close();
+    
+    
+    cout << "\nTotal elapsed simulation time: " << KSpaceSolver->GetTotalTime();
+    
+    
+    
+    /// Display statistics about the simulation if options were enabled.
+    if (Parameters->IsStore_p_max() ||
+        Parameters->IsStore_I_max())
+    {
+        cout << "\n\n-------------------------------------------------------------\n";
+        cout << " Statistics / \n";
+        cout << " -----------";
+        
+        if (Parameters->IsStore_p_max())
+        {
+            cout << "\n Max pressure: " << KSpaceSolver->stats.max_pressure / 1e6 << " [MPa]";
+            cout << "\n - Time index: " << KSpaceSolver->stats.pressure_t_index;
+            cout << "\n - Simulation time: " << KSpaceSolver->stats.pressure_t_index * Parameters->Get_dt();
+        }
+        
+        if (Parameters->IsStore_I_max())
+        {
+            cout << "\n Max intensity: Implement me\n";
+            cout << "\n - Time index: Implement me\n";
+            cout << "\n - Simulation time: Implement me\n";
+        }
+    } /// end if
 
 }
 
@@ -180,16 +210,15 @@ AO_Sim::Run_monte_carlo_sim(TParameters * Parameters)
     da_boost->Simulate_displacement(false);
   
     
-    /// Not saving seeds, we are running the AO_sim, so set to false.
-    da_boost->Save_RNG_seeds(true);
+    /// Set the monte-carlo simulation to use, or save, RNG seeds based on command line args.
+    //Parameters->IsStore_seeds()   ?   da_boost->Save_RNG_seeds(true) : da_boost->Save_RNG_seeds(false);
+    //Parameters->IsLoad_seeds()    ?   da_boost->Use_RNG_seeds(true)  : da_boost->Use_RNG_seeds(false);
+
     
     size_t time = 1;
-    
-    cout << ".......... Running MC-Boost ......... ";
-    cout.flush();
-    da_boost->Run_seeded_MC_sim_timestep(m_medium,
-                                         m_Laser_injection_coords,
-                                         time);
+    da_boost->Run_MC_sim_timestep(m_medium,
+                                  m_Laser_injection_coords,
+                                  time);
     
 }
 
@@ -198,10 +227,29 @@ AO_Sim::Run_monte_carlo_sim(TParameters * Parameters)
 void
 AO_Sim::Run_acousto_optics_sim(TParameters * Parameters)
 {
-
+    /// ------------------ Begin MC-Boost Configuration ------------------------------------------
+    /// Configure the monte-carlo simulation to run what was specified via the commandline.
+    ///
     bool sim_refractive_total = Parameters->IsSim_refractive_total();
     bool sim_refractive_grad  = Parameters->IsSim_refractive_grad();
     bool sim_displacement     = Parameters->IsSim_displacement();
+
+    /// Decide what to simulate (refractive gradient, refractive_total, displacement).
+    if (sim_refractive_grad)
+    {
+       da_boost->Simulate_refractive_gradient(true);
+       cout << "Refractive gradient: ON\n";
+    }
+    if (sim_refractive_total)
+    {
+       da_boost->Simulate_refractive_total(true);
+       cout << "Refraction: ON\n";
+    }
+    if (sim_displacement)
+    {
+       da_boost->Simulate_displacement(true);
+       cout << "Displacement: ON\n";
+    }
 
 
     /// Load data from disk
@@ -217,7 +265,7 @@ AO_Sim::Run_acousto_optics_sim(TParameters * Parameters)
     }
     cout << ".... done\n";
 
-    //fprintf(stdout,"Elapsed time:          %8.2fs\n",KSpaceSolver.GetDataLoadTime());
+
 
     /// start computation of k-Wave simulation.
     cout << ".......... k-Wave Computation ...........\n";
@@ -295,22 +343,7 @@ AO_Sim::Run_acousto_optics_sim(TParameters * Parameters)
 
             if (sim_refractive_grad)
             {
-//                /// Check if we are saving the refracive index data in KSpaceSolver, which is based on a commandline flag.
-//                /// If we are, we don't want to run the computation from here, as it will already
-//                /// be done in KSpaceSolver if we are saving the data.  This eliminates the possiblity
-//                /// of computing something twice, which could happen when monte-carlo needs the data
-//                /// and the flag has been set to save data in KSpaceSolver.
-//                if (!(Parameters->IsStore_refractive_x() ||
-//                      Parameters->IsStore_refractive_y() ||
-//                      Parameters->IsStore_refractive_z()))
-//                {
-//                    /// This is executed when the AO simulation needs refractive index changes, but
-//                    /// the commandline flags were not made to save the refractive index data, as
-//                    /// discussed above.
-
                 KSpaceSolver->FromAO_sim_compute_refractive_index();
-//                }
-
                 refractive_x = &(KSpaceSolver->FromAO_sim_Get_refractive_x());
                 refractive_y = &(KSpaceSolver->FromAO_sim_Get_refractive_y());
                 refractive_z = &(KSpaceSolver->FromAO_sim_Get_refractive_z());
@@ -318,27 +351,13 @@ AO_Sim::Run_acousto_optics_sim(TParameters * Parameters)
 
             if (sim_refractive_total)
             {
-//                /// Same reasoning as above.
-//                if (!(Parameters->IsStore_refractive_total()))
-//                {
-
                 KSpaceSolver->FromAO_sim_compute_refractive_index_total();
-//                }
-                
                 refractive_total = &(KSpaceSolver->FromAO_sim_Get_refractive_total());
             }
 
             if (sim_displacement)
             {
-//                /// Same reasoning as above.
-//                if (!(Parameters->IsStore_disp_x() ||
-//                      Parameters->IsStore_disp_y() ||
-//                      Parameters->IsStore_disp_z()))
-//                {
-
                 KSpaceSolver->FromAO_sim_compute_displacement();
-//                }
-
                 disp_x = &(KSpaceSolver->FromAO_sim_Get_disp_x());
                 disp_y = &(KSpaceSolver->FromAO_sim_Get_disp_y());
                 disp_z = &(KSpaceSolver->FromAO_sim_Get_disp_z());
@@ -381,7 +400,6 @@ AO_Sim::Run_acousto_optics_sim(TParameters * Parameters)
                                                 refractive_y,
                                                 refractive_z);
 			}
-			/// Similar to above (i.e. sim_refractive_grad)
 			else if (sim_displacement)
 			{
                 /// Create a displacment map based upon the pressure at this time step.
@@ -392,25 +410,6 @@ AO_Sim::Run_acousto_optics_sim(TParameters * Parameters)
         	}
 
 
-			/// Decide what to simulate (refractive gradient, refractive_total, displacement) based on whether those objects exist.
-            if (sim_refractive_grad)
-            {
-                m_medium->kwave.nmap->IsSim_refractive_grad()   ?   da_boost->Simulate_refractive_gradient(true) :
-                                                                        da_boost->Simulate_refractive_gradient(false);
-            }
-            if (sim_refractive_total)
-            {
-                m_medium->kwave.nmap->IsSim_refractive_total()  ?   da_boost->Simulate_refractive_total(true) :
-                                                                        da_boost->Simulate_refractive_total(false);
-            }
-            if (sim_displacement)
-            {
-                m_medium->kwave.dmap->IsSim_displacement()  ?   da_boost->Simulate_displacement(true) :
-                                                                    da_boost->Simulate_displacement(false);
-            }
-
-        	/// Not saving seeds, we are running the AO_sim, so set to false.
-        	da_boost->Save_RNG_seeds(false);
 
 
         	/// Only run the MC-sim after ultrasound has propagated a certain distance (or time).
@@ -422,12 +421,10 @@ AO_Sim::Run_acousto_optics_sim(TParameters * Parameters)
                    //|| ((curr_time >= 940) && (curr_time <= 950))
                )
         	{
-            	cout << ".......... Running MC-Boost ......... ";
-            	cout << "(time: " << KSpaceSolver->GetTimeIndex()*Parameters->Get_dt() << ")\n";
-                cout.flush();
-            	da_boost->Run_seeded_MC_sim_timestep(m_medium,
-            	                                     m_Laser_injection_coords,
-            	                                     KSpaceSolver->GetTimeIndex());
+
+            	da_boost->Run_MC_sim_timestep(m_medium,
+                                              m_Laser_injection_coords,
+                                              KSpaceSolver->GetTimeIndex());
         	}
 		} // END if (sim_refractive_grad || sim_displacement )
 
@@ -446,26 +443,57 @@ AO_Sim::Run_acousto_optics_sim(TParameters * Parameters)
         
     }
 
+    cout << " .......... Done\n";
 
     KSpaceSolver->IterationTimeStop();
-
-    cout << "-------------------------------------------------------------\n";
-    cout << "Elapsed time: " << KSpaceSolver->GetSimulationTime() << "\n";
-    cout << "-------------------------------------------------------------\n";
-
-    cout << "Post-processing phase......."; cout.flush();
+    
+    cout << "\n\n-------------------------------------------------------------\n";
+    cout << " Timing / \n";
+    cout << " -------";
+    cout << "\nComputational loop elapsed time: " << KSpaceSolver->GetIterationTime();
+    
+    
+    cout << "\nPost-processing phase......."; cout.flush();
     KSpaceSolver->PostProcessingTimeStart();
-
-
     KSpaceSolver->FromAO_sim_PostProcessing();
     KSpaceSolver->PostProcessingTimeStop();
     cout << "Done \n";
-    cout << "Elapsed time: " << KSpaceSolver->GetPostProcessingTime() << "\n";
-
-
+    cout << "Post-processing elapsed time: " << KSpaceSolver->GetPostProcessingTime();
+    
+    
     KSpaceSolver->FromAO_sim_WriteOutputDataInfo();
-
+    
     Parameters->HDF5_OutputFile.Close();
+    
+    
+    cout << "\nTotal elapsed simulation time: " << KSpaceSolver->GetTotalTime();
+    
+    
+    
+    /// Display statistics about the simulation if options were enabled.
+    if (sim_refractive_grad || sim_displacement || sim_refractive_total ||
+        Parameters->IsStore_p_max() ||
+        Parameters->IsStore_I_max())
+    {
+        cout << "\n\n-------------------------------------------------------------\n";
+        cout << " Statistics / \n";
+        cout << " -----------";
+        
+        if (Parameters->IsStore_p_max())
+        {
+            cout << "\n Max pressure: " << KSpaceSolver->stats.max_pressure / 1e6 << " [MPa]";
+            cout << "\n - Time index: " << KSpaceSolver->stats.pressure_t_index;
+            cout << "\n - Simulation time: " << KSpaceSolver->stats.pressure_t_index * Parameters->Get_dt();
+        }
+        
+        if (Parameters->IsStore_I_max())
+        {
+            cout << "\n Max intensity: Implement me\n";
+            cout << "\n - Time index: Implement me\n";
+            cout << "\n - Simulation time: Implement me\n";
+        }
+    } /// end if
+        
 
 
 }
@@ -500,7 +528,7 @@ AO_Sim::Run_acousto_optics_sim_loadData(TParameters * Parameters)
 
 
     THDF5_File& HDF5_OutputFile = Parameters->HDF5_OutputFile;
-    THDF5_File& HDF5_InputFile  = Parameters->HDF5_InputFile;
+    //THDF5_File& HDF5_InputFile  = Parameters->HDF5_InputFile;
 
 
     long int Nx, Ny, Nz;
@@ -558,7 +586,8 @@ AO_Sim::Run_acousto_optics_sim_loadData(TParameters * Parameters)
         if ((!displacement_x_InputStream) || (!displacement_y_InputStream) || (!displacement_z_InputStream))
             throw bad_alloc();
 
-        /// Set the HDF5 file to read from, which was the output file from the previous run.
+        /// Set the HDF5 file to read from, which was the output file from the previous kWave/AO_sim run,
+        /// which is when the data was stored.
         displacement_x_InputStream->SetHDF5File(HDF5_OutputFile);
         displacement_y_InputStream->SetHDF5File(HDF5_OutputFile);
         displacement_z_InputStream->SetHDF5File(HDF5_OutputFile);
@@ -583,6 +612,10 @@ AO_Sim::Run_acousto_optics_sim_loadData(TParameters * Parameters)
         recorded_time_steps = disp_x_size.Y;
     }
 
+    /// Print the number of time steps that were recorded and stored out of the total
+    /// number of time steps simulated.
+    cout << "Simulation time steps (recorded): " << recorded_time_steps << '\n';
+
     /// Is storage of the modulation depth enabled?  If so inform the monte-carlo simulation
     /// to log the optical path lengths via the logger.
     if (Parameters->IsStore_modulation_depth())
@@ -591,60 +624,142 @@ AO_Sim::Run_acousto_optics_sim_loadData(TParameters * Parameters)
     }
 
 
-
-    /// Load data from the HDF5 for each time step of the kWave simulation, and run the monte-carlo simulation
-    /// to use the refractive index and displacement data loaded in, which is the acousto-optic simulation at that point.
-    for (size_t i = 0; i < recorded_time_steps; i++)
+    /// Typically when we want to look at the modulation depth (taggged ratio to untagged) we only want
+    /// to look at the resulting acousto-optic signal at the ultrasound focus and with the ultrasound
+    /// at with a 180 degree phase shift at the same location (i.e. a given propagation time 't'). To achieve
+    /// this we simply need to load in the data that was specified (i.e. displacement and/or refractive index vals)
+    /// and run the monte-carlo simulation twice, with the recorded data at time 't' and the 180 degree phase
+    /// shifted data, also at time 't'. To create the "phase inversion" we simply multiply the recorded data
+    /// by -1, which is done with the calls below.
+    if (Parameters->IsPhase_inversion())
     {
+        /// Typically when data is saved to the HDF5 file, the first recorded time step is the displacement
+        /// values at t=1, when no ultrasound is present. Therefore we read past it and use the next
+        /// chunk of data, which if the data has been saved correctly, should be at time t=focus.
+        /// FIXME:
+        /// - Should be able to choose which set of data to invert in cases of when many time steps
+        ///   of data were saved. For the time being this will need to be altered here.
+        const size_t INVERT_RECORDED_TIME_STEP = 2;
+        for (size_t i = 1; i <= INVERT_RECORDED_TIME_STEP; i++)
+        {
+            if (Parameters->IsSim_refractive_total())
+            {
+                /// Read refractive total data in from the HDF5 file that holds the precomputed values for
+                /// a previously run kWave simulation.
+                refractive_total_InputStream->ReadData(refractive_total_Name, refractive_total->GetRawData());
+            }
+
+            if (Parameters->IsSim_displacement())
+            {
+                /// Read displacment data in from the HDF5 file that holds the precomputed values for
+                /// a previously run kWave simulation.
+                displacement_x_InputStream->ReadData(disp_x_Name, disp_x->GetRawData());
+                displacement_y_InputStream->ReadData(disp_y_Name, disp_y->GetRawData());
+                displacement_z_InputStream->ReadData(disp_z_Name, disp_y->GetRawData());
+            }
+        }
+
+        /// Now that we have read past the time t=1 and have the appropriate time step read from the
+        /// HDF5 file (i.e. time t=focus), we run the monte-carlo simulation twice - once with the
+        /// data in the original recorded phase, and again with a 180 degree phase shift.
+        ///
+        /// First simulation with original phase.
         if (Parameters->IsSim_refractive_total())
         {
-            /// Read refractive total data in from the HDF5 file that holds the precomputed values for
-            /// a previously run kWave simulation.
-            refractive_total_InputStream->ReadData(refractive_total_Name, refractive_total->GetRawData());
-
-
             /// Create a refractive map (total) based on the values read in from the HDF5 file.
             m_medium->Create_refractive_map(refractive_total);
-
-            ///PrintMatrix((*refractive_total), Parameters);
-
-            /// Zero out the matrix for the next read in from the HDF5 file.
-            refractive_total->ZeroMatrix();
         }
-
         if (Parameters->IsSim_displacement())
         {
-            /// Read displacment data in from the HDF5 file that holds the precomputed values for
-            /// a previously run kWave simulation.
-            displacement_x_InputStream->ReadData(disp_x_Name, disp_x->GetRawData());
-            displacement_y_InputStream->ReadData(disp_y_Name, disp_y->GetRawData());
-            displacement_z_InputStream->ReadData(disp_z_Name, disp_y->GetRawData());
-
-
             /// Create a displacement map based on the values read in from the HDF5 file.
             m_medium->Create_displacement_map(disp_x, disp_y, disp_z);
-
-            ///PrintMatrix((*disp_x), Parameters);
-            ///PrintMatrix(m_medium, Parameters);
-
-            /// Zero out the matrices for the next read in from the HDF5 file.
-            disp_x->ZeroMatrix();
-            disp_y->ZeroMatrix();
-            disp_z->ZeroMatrix();
-
-
         }
+        cout << "-------------------- Running Phase Inversion (original phase) --------------------\n";
+        da_boost->Run_MC_sim_timestep(m_medium,
+                                      m_Laser_injection_coords,
+                                      INVERT_RECORDED_TIME_STEP);
 
-        int time_step = i;
-        /// Run the monte-carlo simulation with the loaded in data (displacements, refractive index vals).
-        /// XXX:
-        /// - Needs testing!!!
-        da_boost->Run_seeded_MC_sim_timestep(m_medium,
-                                             m_Laser_injection_coords,
-                                             time_step);
+        /// Now perform the inversion and run the simulation as if the ultrasound focus had reached the
+        /// same location and same time, but with a phase that had been shifted 180 degrees.
+        if (Parameters->IsSim_refractive_total())
+        {
+            /// Notify the medium to invert the data for creating the phase shift.
+            m_medium->Invert_refractive_map_phase();
+        }
+        if (Parameters->IsSim_displacement())
+        {
+            /// Notify the medium to invert the data for creating the phase shift.
+            m_medium->Invert_displacement_map_phase();
+        }
+        cout << "-------------------- Running Phase Inversion (180 deg shifted) ------------------\n";
+        da_boost->Run_MC_sim_timestep(m_medium,
+                                      m_Laser_injection_coords,
+                                      INVERT_RECORDED_TIME_STEP);
 
-    }/// end FOR LOOP
+    }
+    else {
+        /// Load data from the HDF5 for each time step of the kWave simulation, and run the monte-carlo simulation
+        /// to use the refractive index and displacement data loaded in, which is the acousto-optic simulation at
+        /// that point in time.
+        for (size_t i = 0; i < recorded_time_steps; i++)
+        {
+            if (Parameters->IsSim_refractive_total())
+            {
+                /// Read refractive total data in from the HDF5 file that holds the precomputed values for
+                /// a previously run kWave simulation.
+                refractive_total_InputStream->ReadData(refractive_total_Name, refractive_total->GetRawData());
 
+
+                /// Create a refractive map (total) based on the values read in from the HDF5 file.
+                m_medium->Create_refractive_map(refractive_total);
+
+                ///PrintMatrix((*refractive_total), Parameters);
+
+                /// Zero out the matrix for the next read in from the HDF5 file.
+                ///refractive_total->ZeroMatrix();
+            }
+
+            if (Parameters->IsSim_displacement())
+            {
+                /// Read displacment data in from the HDF5 file that holds the precomputed values for
+                /// a previously run kWave simulation.
+                displacement_x_InputStream->ReadData(disp_x_Name, disp_x->GetRawData());
+                displacement_y_InputStream->ReadData(disp_y_Name, disp_y->GetRawData());
+                displacement_z_InputStream->ReadData(disp_z_Name, disp_y->GetRawData());
+
+
+                /// Create a displacement map based on the values read in from the HDF5 file.
+                m_medium->Create_displacement_map(disp_x, disp_y, disp_z);
+
+                ///PrintMatrix((*disp_x), Parameters);
+                ///PrintMatrix(m_medium, Parameters);
+
+                /// Zero out the matrices for the next read in from the HDF5 file.
+                //disp_x->ZeroMatrix();
+                //disp_y->ZeroMatrix();
+                //disp_z->ZeroMatrix();
+
+
+            }
+
+            /// Set the monte-carlo simulation to use, or save, RNG seeds based on command line args.
+            //Parameters->IsStore_seeds()   ?   da_boost->Save_RNG_seeds(true) : da_boost->Save_RNG_seeds(false);
+            //Parameters->IsLoad_seeds()    ?   da_boost->Use_RNG_seeds(true)  : da_boost->Use_RNG_seeds(false);
+
+            int time_step = i;
+            /// Run the monte-carlo simulation with the loaded in data (displacements, refractive index vals).
+            /// XXX:
+            /// - Needs testing!!!
+            ///cout << "............. Running MC-Boost ........... ";
+            ///cout << "(time step: " << time_step << ")\n";
+            ///cout.flush();
+            da_boost->Run_MC_sim_timestep(m_medium,
+                                          m_Laser_injection_coords,
+                                          time_step);
+
+        }/// end FOR LOOP
+
+    } /// end IF (PHASE_INVERSION)
 
 
     /// Clean up memory.
@@ -778,15 +893,19 @@ AO_Sim::Create_MC_grid(TParameters * parameters)
 
 
 void
-AO_Sim::Print_MC_sim_params()
+AO_Sim::Print_MC_sim_params(TParameters * parameters)
 {
     assert (m_medium != NULL);
     assert (da_boost != NULL);
-    cout << "\n--------------------------------\nMC-Boost parameters\n--------------------------------\n";
-    cout << "Number of CPU threads: " << da_boost->Get_CPU_threads() << '\n';
-    cout << "Medium size: [x=" << m_medium->Get_X_bound() << ", y=" << m_medium->Get_Y_bound() << ", z=" << m_medium->Get_Z_bound() << "] (meters)\n";
-    cout << "Medium dims: [Nx=" << m_medium->Get_Nx() << ", Ny=" << m_medium->Get_Ny() << ", z=" << m_medium->Get_Nz() << "] (voxels)\n";
-    cout << "Time step: " << MC_time_step << '\n';
+    cout << "-----------------------------------------------------\n"
+         << "MC-Boost parameters /\n"
+         << "--------------------\n";
+    cout << " Number of CPU threads: " << da_boost->Get_CPU_threads() << '\n';
+    cout << " Medium size: [x=" << m_medium->Get_X_bound() << ", y=" << m_medium->Get_Y_bound() << ", z=" << m_medium->Get_Z_bound() << "] (meters)\n";
+    cout << " Medium dims: [Nx=" << m_medium->Get_Nx() << ", Ny=" << m_medium->Get_Ny() << ", z=" << m_medium->Get_Nz() << "] (voxels)\n";
+    cout << " Time step: " << MC_time_step << '\n';
+    /// If we are NOT loading seeds, display how many photon energy packets are going to be simulated.
+    if (!parameters->IsLoad_seeds()) cout << " Photons: " << da_boost->Get_num_photons_to_sim() << '\n';
 }
 
 
@@ -798,6 +917,7 @@ AO_Sim::Add_circular_detector_MC_medium(Detector_Properties &props)
     /*
     assert(m_medium != NULL);
 
+    /*
     /// Remove error from significant digits.  Just truncate value at the defined decimal place.
     double bottom_x_axis = VectorMath::truncate_to_places(m_medium->Get_X_bound(), 6);
     double top_x_axis = 0.0f;

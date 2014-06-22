@@ -100,6 +100,16 @@ TKSpaceFirstOrder3DSolver::TKSpaceFirstOrder3DSolver():
     TotalTime.Start();
 
     Parameters        = TParameters::GetInstance();
+    
+    /// ------------------------ JWJS -------------
+    /// Zero out the statistics structure.
+    stats.max_pressure      = 0.0f;
+    stats.max_intensity     = 0.0f;
+    stats.max_displacement  = 0.0f;
+    stats.min_displacement  = 0.0f;
+    stats.max_refractive_index = 0.0f;
+    stats.min_refractive_index = 0.0f;
+    /// -----------------------------/
 
 
 }// end of TKSpace3DSolver
@@ -483,13 +493,19 @@ void TKSpaceFirstOrder3DSolver::PostCompute(){
  */
 void TKSpaceFirstOrder3DSolver::PrintParametersOfSimulation(FILE * file){
 
-
-    fprintf(file,"Domain dims:   [%4ld, %4ld,%4ld]\n",
-                Parameters->GetFullDimensionSizes().X,
-                Parameters->GetFullDimensionSizes().Y,
-                Parameters->GetFullDimensionSizes().Z);
-
-    fprintf(file,"Simulation time steps:  %8ld\n", Parameters->Get_Nt());
+    /// ------------------------------------------------ JWJS -------------
+    //fprintf(file,"Domain dims:   [%4ld, %4ld,%4ld]\n",
+    //  Parameters->GetFullDimensionSizes().X,
+    //  Parameters->GetFullDimensionSizes().Y,
+    //  Parameters->GetFullDimensionSizes().Z);
+    //fprintf(file,"Simulation time steps:  %8ld\n", Parameters->Get_Nt());
+    
+    cout << "Domain dims: [Nx=" << Parameters->GetFullDimensionSizes().X
+         << ", Ny=" << Parameters->GetFullDimensionSizes().Y
+         << ", Nz=" << Parameters->GetFullDimensionSizes().Z << "]"
+         << '\n';
+    cout << "Simulation time steps (total): " << Parameters->Get_Nt() << '\n';
+    
 }// end of PrintParametersOfTask
 //------------------------------------------------------------------------------
 
@@ -2827,10 +2843,14 @@ void TKSpaceFirstOrder3DSolver::StoreSensorData(){
     /// -------------------------------- JWJS ---------------------------------
     /// If it's the first time coming here (i.e. t_index == 1), we want to store
     /// data for the non-modulated speckle pattern formation.
-    if ((t_index < Parameters->GetStartTimeIndex()) && (t_index != 1)) return;
+    if (((t_index < Parameters->GetStartTimeIndex()) && (t_index != 1)) ||
+         (t_index > Parameters->GetEndTimeIndex())) {
+            return;
+        }
     /// --------------------------------------
 
     if (Parameters->IsStore_p_raw()) {
+        cout << "Storing raw pressure values (x,y,z)\n";
        p_sensor_raw_OutputStream->AddData(Get_p(),Get_sensor_mask_ind(),Get_Temp_1_RS3D().GetRawData());
     }
 
@@ -2839,13 +2859,11 @@ void TKSpaceFirstOrder3DSolver::StoreSensorData(){
         ux_sensor_raw_OutputStream->AddData(Get_ux_sgx(),Get_sensor_mask_ind(),Get_Temp_1_RS3D().GetRawData());
         uy_sensor_raw_OutputStream->AddData(Get_uy_sgy(),Get_sensor_mask_ind(),Get_Temp_1_RS3D().GetRawData());
         uz_sensor_raw_OutputStream->AddData(Get_uz_sgz(),Get_sensor_mask_ind(),Get_Temp_1_RS3D().GetRawData());
-
-
     }
 
 
 
-    if (Parameters->IsStore_p_max()){
+    if (Parameters->IsStore_p_max()) {
 
          const float * p           = Get_p().GetRawData();
                float * p_max       = Get_p_sensor_max().GetRawData();
@@ -2853,7 +2871,7 @@ void TKSpaceFirstOrder3DSolver::StoreSensorData(){
          const size_t  sensor_size = Get_sensor_mask_ind().GetTotalElementCount();
 
         /// ------------------------------ JWJS --------------------------------------------
-        static float max_val  = 0.0f;
+        
         float temp_max = 0.0f;
         /// ------------------------------------
          #ifndef __NO_OMP__
@@ -2863,28 +2881,26 @@ void TKSpaceFirstOrder3DSolver::StoreSensorData(){
              if (p_max[i] < p[index[i]])
              {
                  p_max[i] = p[index[i]];
+                 
+                 /// ---------------------------- JWJS -------------------------------------
+                 if (temp_max < p_max[i]) temp_max = p_max[i];
+                 /// ----------------------------------
              }
-             /// ---------------------------- JWJS -------------------------------------
-             if (p[index[i]] > temp_max) temp_max = p[index[i]];
-             /// ----------------------------------
+             
          }
         
         /// -------------------------------------- JWJS ------------------------------------
-        /// If this is true, then pressure has reached its peak (i.e. focus) and is now starting
-        /// to decline, therefore we know that the time step before the current one had the largest
-        /// peak pressure, and we should display this.
-        if (temp_max > max_val)
+        /// Update the max pressure and display it.
+        if (stats.max_pressure < temp_max)
         {
-        	max_val = temp_max;
-        	cout << "Updating max pressure: " << max_val << '\n'; 
-        }
-        else
-        {
-           	cout << "Max Pressure: " << temp_max << '\n';
-        	cout << "Time step for max pressure: " << t_index - 1 << '\n';
+        	stats.max_pressure = temp_max;
+            stats.pressure_t_index = t_index;
+        	cout << "Updating max pressure: " << stats.max_pressure << '\n';
         }
         /// --------------------------------------------
       }// p_max
+    
+    
 
     if (Parameters->IsStore_p_rms()){
          // square sum

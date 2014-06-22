@@ -32,7 +32,8 @@
 #ifndef DIMENSIONSIZES_H
 #define	DIMENSIONSIZES_H
 
-#include <stdlib.h>
+//#include <stdlib.h>
+#include <cstdlib>
 #include <stdio.h>
 
 using namespace std;

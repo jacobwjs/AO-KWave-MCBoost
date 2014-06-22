@@ -91,7 +91,7 @@ void Photon::setIterations(const int num)
 void Photon::initTrajectory(void)
 {
 
-    double beam_radius = 0.0025;  /// 5mm diameter.
+    double beam_radius = 0.0015;  /// 3mm diameter.
     double injection_point = beam_radius * sqrt(getRandNum());
 
 	// Randomly set photon trajectory to yield anisotropic source.
@@ -100,8 +100,8 @@ void Photon::initTrajectory(void)
 	psi = 2.0 * PI * getRandNum();
 
     /// Set the injection points to spread across the beam diameter (randomly).
-    currLocation->location.x = illuminationCoords.x;/// + injection_point*cos(psi);
-    currLocation->location.y = illuminationCoords.y;/// + injection_point*sin(psi);
+    currLocation->location.x = illuminationCoords.x + injection_point*cos(psi);
+    currLocation->location.y = illuminationCoords.y + injection_point*sin(psi);
     currLocation->location.z = illuminationCoords.z;
 
 	// Set the initial direction cosines for this photon.
@@ -124,8 +124,8 @@ void Photon::initTrajectory(void)
 // 2) Drop - drop weight due to absorption
 // 3) Spin - update trajectory accordingly
 // 4) Roulette - test to see if photon should live or die.
-void Photon::injectPhoton(Medium * medium, const int num_iterations, RNG_seed_vector *rng_seeds, coords &laser,
-                          MC_Parameters &Params)
+void Photon::Inject_photon(Medium * medium, const int num_iterations, RNG_seed_vector *rng_seeds, coords &laser,
+                           MC_Parameters &Params)
 {
 
 	// Before propagation we set the medium which will be used by the photon.
@@ -211,9 +211,6 @@ void Photon::propagatePhoton(const int iterations)
 		/// finding its way through the exit aperture.
 		if ((iteration_seeds->size() == iterations))
 		{
-
-			///RNGSeeds blah = (*iteration_seeds)[1];
-			///unsigned int blah2 = (*iteration_seeds)[i].s1;
 			/// Case where we want each iteration to contain a RNG from new seeds.
 			/// That is, each iteration will contain, from the start of photon propagation,
 			/// seeds that had caused this photon to hop() until it exited the detection aperture.
@@ -242,7 +239,6 @@ void Photon::propagatePhoton(const int iterations)
 
         if (SAVE_RNG_SEEDS || SIM_MODULATION_DEPTH)
         {
-			assert(RNG_generator != NULL);
             exit_seeds = RNG_generator->getState();
         }
 
@@ -569,10 +565,9 @@ void Photon::spin()
 
 	if (this->status == DEAD) return;
 
-	// Get the anisotropy factor from the layer that resides at depth 'z' in
-	// the medium.
-	// FIXME: Need to index into layer and check if absorber causes this to change.
-	double g = currLayer->getAnisotropy();
+    // Get the anisotropy factor from the current location
+    // of the photon in the medium.
+    double g = currLayer->getAnisotropy(currLocation);
 
 	double rnd = getRandNum();
 
@@ -688,7 +683,6 @@ void Photon::displacePhotonFromPressure(void)
 
 
 	// Subtle case where index into grid is negative because of rounding errors above.
-
 #ifdef DEBUG
 	if (_z < 0 || _x < 0 || _y < 0)
 	{
@@ -706,24 +700,37 @@ void Photon::displacePhotonFromPressure(void)
 
 
 
-	// Calculate the displacement due to pressure.
+    // Get the displacement caused by ultrasound pressure at this location of the scattering event.
 	//
-	// Index into the displacement grids to retrieve pre-calculated value of how much to
-	// displace the photon from it's current location based upon the pressure in the voxel.
-	currLocation->location.x += m_medium->kwave.dmap->getDisplacementFromGridX(_x, _y, _z);
-	currLocation->location.y += m_medium->kwave.dmap->getDisplacementFromGridY(_x, _y, _z);
-	currLocation->location.z += m_medium->kwave.dmap->getDisplacementFromGridZ(_x, _y, _z);
+    // Index into the displacement grids to retrieve the value of how much to
+    // displace the photon from it's current location along each axis (x,y,z).
+    double x_displacement = m_medium->kwave.dmap->getDisplacementFromGridX(_x, _y, _z);
+    double y_displacement = m_medium->kwave.dmap->getDisplacementFromGridY(_x, _y, _z);
+    double z_displacement = m_medium->kwave.dmap->getDisplacementFromGridZ(_x, _y, _z);
 
-	/// Get the appropriate voxel number for the 3-D grid.
-//	_x = currLocation->location.x/dx - (currLocation->location.x/dx)/Nx;
-//	_y = currLocation->location.y/dy - (currLocation->location.y/dy)/Ny;
-//	_z = currLocation->location.z/dz - (currLocation->location.z/dz)/Nz;
+    /// To mitigate any numerical instability in the displacement values that is
+    /// compounded over the time ultrasound propagates through the medium, we threshold
+    /// the displacement such that we don't displace this scattering event until the
+    /// displacement value exceeds the DISPLACEMENT_THRESHOLD value, which can only be caused
+    /// when we are in (or near) the ultrasound focus.
+    /// FIXME:
+    /// - This needs to be taken care of in the computation of the displacement values, so that
+    ///   this check never need take place.
+    const float DISPLACEMENT_THRESHOLD = 0.0f; /// (meters)
+    ///if (abs(x_displacement) >= DISPLACEMENT_THRESHOLD) currLocation->location.x += x_displacement;
+    ///if (abs(y_displacement) >= DISPLACEMENT_THRESHOLD) currLocation->location.y += y_displacement;
+    ///if (abs(z_displacement) >= DISPLACEMENT_THRESHOLD) currLocation->location.z += z_displacement;
+    currLocation->location.x += x_displacement;
+    currLocation->location.y += y_displacement;
+    currLocation->location.z += z_displacement;
+
 
 	// Get the local refractive index based on the coordinates of the displaced photon.
 	/// NOTE:
 	/// - Not needed since we assume the mechanism of modulation is strictly the displacement
 	///   and nothing to do with spatially varying refractive index values.  Therefore, use
 	///   the background refractive index.
+    /// FIXME:
 	/// - How does this change with non-uniform density???
 	//double local_refractive_index = m_medium->kwave.nmap->getRefractiveIndexFromGrid(_x, _y, _z);
 	double local_refractive_index = 1.33;
@@ -951,7 +958,7 @@ void Photon::alterOPLFromAverageRefractiveChanges(void)
 
 	// Accumulate the refractive index encountered along the segment between scattering events for this
 	// step through the medium.
-	n_cumulative += m_medium->kwave.nmap->getRefractiveIndexFromGrid(_x, _y, _z);
+	n_cumulative = m_medium->kwave.nmap->getRefractiveIndexFromGrid(_x, _y, _z);
 
 	// Transform the location of the photon in the medium to discrete locations in the grid based
     // on the photon's current location in the medium after 'hopping'.
@@ -969,8 +976,8 @@ void Photon::alterOPLFromAverageRefractiveChanges(void)
 
 	// Get the distance between the previous location and the current location.
 	double distance_traveled = VectorMath::Distance(prevLocation, currLocation);
-	cout << "distance = " << distance_traveled << "\n";
-	cout << "n_avg = " << n_avg << "\n";
+	//cout << "distance = " << distance_traveled << "\n";
+	//cout << "n_avg = " << n_avg << "\n";
 
 	// Make the final calculation of the OPL.
 	refractiveIndex_optical_path_length += distance_traveled * n_avg;

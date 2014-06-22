@@ -573,6 +573,7 @@ Name                            Size           Data type        Domain Type     
  * Includes for the AO simulation.
  */
 #include <AO-sim/AO_sim.h>
+#include <MC-Boost/sphereAbsorber.h>
 #include <MC-Boost/layer.h>
 #include <MC-Boost/logger.h>
 
@@ -585,9 +586,7 @@ Name                            Size           Data type        Domain Type     
 #include <fstream>
 using std::ifstream;
 #include <iostream>
-using std::cout;
-using std::endl;
-
+using namespace std;
 
 
 
@@ -596,12 +595,13 @@ using std::endl;
  * ------------------------------------------------------- Various functions for Monte-Carlo -----------------
  */
 // Number of photons to simulate.
-const int MAX_PHOTONS = 5e6;
+const int MAX_PHOTONS = 2e6;
 
 // Testing routines.
 void testVectorMath(void);
 void testDisplacements(void);
 void testPressures(void);
+
 
 
 
@@ -659,18 +659,26 @@ int main(int argc, char** argv)
     bool sim_acousto_optics_loadData = Parameters->IsRun_AO_sim_loadData();
     bool sim_modulation_depth        = Parameters->IsStore_modulation_depth();
 
-	/// What AO mechanisms will be turned on during the simulation.
-	bool sim_displacement 	  = false;
-	bool sim_refractive_grad  = false;
-    bool sim_refractive_total = false;
-
 
     /// ----------------------------------------------------------------------------------------------------
-    /// MC-Boost
+    /// MC-Boost attributes
     /// ----------------------------------------------------------------------------------------------------
     if (sim_monte_carlo || sim_acousto_optics || sim_acousto_optics_loadData)
 	{
 
+        /// If use of RNG seeds was specified at the command line, we pass along the
+        /// filename to load and the monte-carlo simulation is notified.
+        if (Parameters->IsLoad_seeds())
+        {
+            AO_simulation.Load_generated_RNG_seeds(Parameters->GetRNGSeedFileName());
+        }
+
+        /// If saving seeds has been specified via the command line, we notify
+        /// the monte-carlo simulation.
+        if (Parameters->IsStore_RNG_seeds())
+        {
+            AO_simulation.Save_RNG_seeds(true);
+        }
 
     	///AO_simulation.Set_num_MC_threads(boost::thread::hardware_concurrency());
     	AO_simulation.Set_num_photons(MAX_PHOTONS);
@@ -681,7 +689,7 @@ int main(int argc, char** argv)
     	/// Assign the pezio-optical coefficient.
     	AO_simulation.Set_pezio_optical_coeff(0.322);
 
-    	/// Add a layer to the monte-carlo medium defining the optical properties.
+        /// Create a layer for the monte-carlo medium defining the optical properties.
     	Layer_Properties layer_props;
         /// NOTE:
         /// - So that the step size calculated in Photon::Hop() matches with the dimensions
@@ -689,30 +697,54 @@ int main(int argc, char** argv)
         ///   and mu_s dimensions from cm^-1 to m^-1.  Doing it here is the better choice
         ///   since it only happens once, otherwise it must be done every scattering
         ///   event in the monte-carlo simulation, which is typically ~1000 x number_of_photons.
-    	layer_props.mu_a        = 0.0010f;             // cm^-1
-    	layer_props.mu_s        = 70.0f;            // cm^-1
-        layer_props.mu_a = layer_props.mu_a * 100;  // m^-1
-        layer_props.mu_s = layer_props.mu_s * 100;  // m^-1
+    
+        ///   and mu_s dimensions from cm^-1 to m^-1.
+        layer_props.mu_a        = 0.01f;              // cm^-1
+        layer_props.mu_s        = 100.0f;                // cm^-1
+        layer_props.mu_a = layer_props.mu_a * 100;      // m^-1
+        layer_props.mu_s = layer_props.mu_s * 100;      // m^-1
+
         
     	layer_props.refractive_index = 1.33f;
     	layer_props.anisotropy  = 0.9f;
     	layer_props.start_depth = 0.0f;
-    	layer_props.end_depth   = AO_simulation.Get_MC_Zaxis_depth();
-    	AO_simulation.Add_layer_MC_medium(layer_props);
+        layer_props.end_depth   = AO_simulation.Get_MC_Zaxis_depth();
+        Layer *layer1 = new Layer(layer_props);
+
+        /// Add an absorber to the layer.
+        /// Note:
+        ///  - The absober is centered in the US focus, which is co-aligned with
+        ///    the injection of light and the detector on the front and back aperture.
+//        SphereAbsorber *absorber_middle_of_medium = new SphereAbsorber(0.002,
+//                                                                       0.0225,
+//                                                                       AO_simulation.Get_MC_Yaxis_depth()/2,
+//                                                                       AO_simulation.Get_MC_Zaxis_depth()/2);
+//        /// Set the inclusion to (some value)x the background absorption, and to the same
+//        /// properties as the rest of the background layer.
+//        absorber_middle_of_medium->setAbsorberAbsorptionCoeff(layer_props.mu_a * 1);  /// Set it to the background for reference meas.
+//        absorber_middle_of_medium->setAbsorberScatterCoeff(layer_props.mu_s);
+//        absorber_middle_of_medium->setAbsorberAnisotropy(layer_props.anisotropy);
+//        absorber_middle_of_medium->setAbsorberRefractiveIndex(layer_props.refractive_index);
+//        layer1->addAbsorber(absorber_middle_of_medium);
+
+
+        /// Add the layer to the monte-carlo medium.
+        AO_simulation.Add_layer_MC_medium(layer1);
 
     	/// Add a detector to the medium (i.e. an exit aperture) for collecting photons that will make their way
     	/// to the CCD camera.
     	/// NOTE: Centering the detector on the x-y plane.
     	Detector_Properties detector_props;
-    	detector_props.radius = 0.0025;
+        detector_props.radius = 0.0020;
     	detector_props.x_coord = 0.0225;    //  Upon inspection, the US focus is located here.  //AO_simulation.Get_MC_Xaxis_depth()/2;
 
-        // FOR DEBUGGING
-        //detector_props.radius = 0.00025;
-    	//detector_props.x_coord = 0.0015 / 2;    //  Upon inspection, the US focus is located here.  //AO_simulation.Get_MC_Xaxis_depth()/2;
 
         detector_props.y_coord = AO_simulation.Get_MC_Yaxis_depth()/2;
-    	detector_props.z_coord = AO_simulation.Get_MC_Zaxis_depth();
+        /// Transmission mode
+        /// detector_props.z_coord = AO_simulation.Get_MC_Zaxis_depth();
+
+        /// Reflection mode
+        detector_props.z_coord = 0.0f;
 		detector_props.xy_plane = true;
     	AO_simulation.Add_circular_detector_MC_medium(detector_props);
 
@@ -727,27 +759,16 @@ int main(int argc, char** argv)
 
 
 		/// Set how often the monte-carlo simulation runs.
-		float mc_step = 100e-9;
+        float mc_step = 100e-9;
 		assert(mc_step >= Parameters->Get_dt());
 		AO_simulation.Set_MC_time_step(mc_step);
 
 
-
-    	/// Run the monte-carlo simulation once, to save seeds, that produced paths,
-    	/// that made it through the exit aperture.
-    	/// FIXME:
-    	/// - Using seeds is producing an enormous slow down.  Need to debug why this is happening.
-    	///   Turned off for now.
-    	///AO_simulation.Generate_exit_seeds();
-    	///AO_simulation.Load_generated_seeds();
-
     	/// Display the monte-carlo simulation parameters
-		/// Due to hyper-threading, boost see's 8 possible threads (i7 architecture).
-		/// Only want to run 4 hardware threads.
-		const size_t hardware_threads = 1;
+        const size_t hardware_threads = Parameters->GetNumberOfThreads();
 		///AO_simulation.Set_num_MC_threads(boost::thread::hardware_concurrency());
 		AO_simulation.Set_num_MC_threads(hardware_threads);
-		AO_simulation.Print_MC_sim_params();
+        AO_simulation.Print_MC_sim_params(Parameters);
 	}
 
 
@@ -782,20 +803,21 @@ int main(int argc, char** argv)
 #else
 
 
+    cout << "\n\n";
 	/// Run what was specified.
 	if (sim_monte_carlo)
 	{
         cout << FMT_SmallSeparator;
-        cout << " Simulation: Monte-Carlo\n";
+        cout << "Simulation: Monte-Carlo\n";
         cout << FMT_SmallSeparator;
 
-		/// This will run the monte-carlo simulation once.
+        /// This will run the monte-carlo simulation once.
 		AO_simulation.Run_monte_carlo_sim(Parameters);
 	}
 	else if (sim_kWave)
 	{
         cout << FMT_SmallSeparator;
-        cout << " Simulation: kWave\n";
+        cout << "Simulation: kWave\n";
         cout << FMT_SmallSeparator;
 
         /// Run the kWave simulation.
@@ -804,14 +826,16 @@ int main(int argc, char** argv)
     else if (sim_acousto_optics)
     {
         cout << FMT_SmallSeparator;
-        cout << " Simulation: Acousto-Optics\n";
+        cout << "Simulation: Acousto-Optics\n";
         cout << FMT_SmallSeparator;
 
         /// Has modulation depth commandline argument been set.
         /// If so we notify the logger to save the OPL's to file.
         if (sim_modulation_depth)
         {
-            Logger::getInstance()->Open_modulation_depth_file("optical_path_lengths.dat");
+
+            Logger::getInstance()->Open_modulation_depth_file("Data/optical_path_lengths_" + Logger::getInstance()->getCurrTime() + ".dat");
+
         }
 
         /// Run the AO simulation.
@@ -828,14 +852,14 @@ int main(int argc, char** argv)
     else if (sim_acousto_optics_loadData)
     {
         cout << FMT_SmallSeparator;
-        cout << " Simulation: Acousto-Optics (loading pre-computed data)\n";
+        cout << "Simulation: Acousto-Optics (loading pre-computed data)\n";
         cout << FMT_SmallSeparator;
 
         /// Has modulation depth commandline argument been set.
         /// If so we notify the logger to save the OPL's to file.
         if (sim_modulation_depth)
         {
-            Logger::getInstance()->Open_modulation_depth_file("optical_path_lengths.dat");
+            Logger::getInstance()->Open_modulation_depth_file("Data/optical_path_lengths_" + Logger::getInstance()->getCurrTime() + ".dat");
         }
 
         /// Run the AO simulation.

@@ -112,7 +112,7 @@ public:
 
 
 	/// Print the MC simulation attributes.
-	void	Print_MC_sim_params();
+    void	Print_MC_sim_params(TParameters * parameters);
     
     
     /// Add a layer to the medium, which defines the optical properties of that layer
@@ -141,12 +141,12 @@ public:
                 m_Laser_injection_coords.y = laser_coords.y;
                 m_Laser_injection_coords.z = laser_coords.z;
 
-				cout << "----------------------------------------\n"
-					 << "Laser injection coordinates set\n"
-					 << "----------------------------------------\n"
-				     << "Location: [x=" << m_Laser_injection_coords.x 
-					 << ", y=" << m_Laser_injection_coords.y
-					 << ", z=" << m_Laser_injection_coords.z << "] (meters)\n";
+                cout << "-----------------------------------------------------\n"
+                     << "Laser injection coordinates set /\n"
+                     << "--------------------------------\n"
+                     << " Location: [x=" << m_Laser_injection_coords.x
+                     << ", y=" << m_Laser_injection_coords.y
+                     << ", z=" << m_Laser_injection_coords.z << "] (meters)\n";
             }
     
     
@@ -170,18 +170,28 @@ public:
             {
                 da_boost->Simulate_displacement(false);
                 da_boost->Simulate_refractive_gradient(false);
+                da_boost->Simulate_refractive_total(false);
                 da_boost->Save_RNG_seeds(true);
-                da_boost->Generate_RNG_seeds(m_medium, m_Laser_injection_coords);
+                da_boost->Use_RNG_seeds(false);
+                da_boost->Generate_MC_RNG_seeds(m_medium, m_Laser_injection_coords);
             }
     
     
     /// Load the seeds that were saved to file.  These seeds produced paths of photons
     /// that eventually found their way out of the exit aperture.
-    void    Load_generated_seeds()
+    void    Load_generated_RNG_seeds(const std::string rng_seed_file)
             {
-                /// Load the seeds for the monte-carlo simulation.
-                da_boost->Load_exit_RNG_seeds();
+
+                da_boost->Set_RNG_seed_file(rng_seed_file);
+
+                /// Notify the monte-carlo simulation that it should use the RNG seeds
+                /// during the simulation.
+                da_boost->Use_RNG_seeds(true);
             }
+
+    /// Set the monte-carlo simulation to save the RNG seeds that produced photon paths
+    /// that exited through the exit aperture.
+    void    Save_RNG_seeds(const bool flag) {da_boost->Save_RNG_seeds(flag);};
     
     /// Return the z-axis depth.
     double  Get_MC_Zaxis_depth() {return m_medium->Get_Z_bound();}
@@ -192,26 +202,37 @@ public:
     void    Set_pezio_optical_coeff(const float val)
             {
                 pezio_optical_coeff = val;
-            }
+            }    
+
+
+
 
 
 
 	/// TEST CASES
-	/// ------------------------------------------------------------------
+    /// -----------------------------------------------------------------------------------------
     void    Test_Seeded_MC_sim()
             {
                 da_boost->Simulate_displacement(false);
                 da_boost->Simulate_refractive_gradient(false);
+                da_boost->Simulate_refractive_total(false);
                 da_boost->Save_RNG_seeds(false);
+                da_boost->Use_RNG_seeds(true);
                 static int i = 0;
-                i++;
-                da_boost->Run_seeded_MC_sim_timestep(m_medium, m_Laser_injection_coords, i);
+                da_boost->Run_MC_sim_timestep(m_medium, m_Laser_injection_coords, ++i);
             }
     
     void    Test_Read_HDF5_File(TParameters * Parameters);
-    /// end TEST CASES
+    /// end TEST CASES --------------------------------------------------------------------------
     
     
+
+
+
+
+
+
+
     
 protected:
     TInputHDF5Stream* refractive_total_InputStream;

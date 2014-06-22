@@ -16,17 +16,8 @@ using std::endl;
 #include <MC-Boost/layer.h>
 #include <MC-Boost/voxel_struct.h>
 
-
-
 #include <MatrixClasses/RealMatrix.h>
 #include <MatrixClasses/LongMatrix.h>
-
-
-
-
-
-// Maximum number of bins that hold absorption values.
-const int MAX_BINS = 101;
 
 
 // Forward declaration of PressureMap and DisplacementMap objects.
@@ -38,16 +29,11 @@ class Vector3d;
 class Photon;
 
 
-
-
-
-
 // Medium is a container object that holds one or many layer objects that the
 // photon is propagated through.  This allows easy simulation of heterogeneous
 // media with Monte Carlo simulations.
 class Medium
 {
-
 public:
 
 	friend class Photon;
@@ -105,6 +91,8 @@ public:
     ///       in from a previous run of kWave.
     void    Create_refractive_map(TRealMatrix * refractive_total);
     /// Used with bending of photon trajectories.
+    /// FIXME:
+    /// - Needs implementation
     void    Create_refractive_map(TRealMatrix * refractive_x,
                                   TRealMatrix * refractive_y,
                                   TRealMatrix * refractive_z);
@@ -116,18 +104,11 @@ public:
                                     TRealMatrix * disp_y,
                                     TRealMatrix * disp_z);
 
-//    /// Takes the refractive map (total) computed from KSpaceSolver directly, or loaded in from a previous run of kWave.
-//    void    Assign_refractive_map(TRealMatrix * refractive_total);
-//
-//    /// Takes the refractive maps (gradient) computed from KSpaceSolver directly, or loaded in from a previous run of kWave.
-//    void    Assign_refractive_map(TRealMatrix * refractive_x,
-//                                  TRealMatrix * refractive_y,
-//                                  TRealMatrix * refractive_z);
-//
-//    /// Takes the displacement maps computed from KSpaceSolver directly, or loaded in from a previous run of kWave.
-//    void    Assign_displacement_map(TRealMatrix * disp_x,
-//                                    TRealMatrix * disp_y,
-//                                    TRealMatrix * disp_z);
+    /// Invert the phase of the refractive index data by multiplying everything by -1 (180 degree phase shift).
+    void    Invert_refractive_map_phase()       {kwave.nmap->Invert_phase();};
+
+    /// Invert the phase of the displacement data by multiplying everything by -1 (180 degree phase shift).
+    void    Invert_displacement_map_phase()     {kwave.dmap->Invert_phase();};
 
     // Add a refractive map object that holds refractive index values generated from k-Wave pressures.
     void	addRefractiveMap(RefractiveMap *n_map);
@@ -156,17 +137,6 @@ public:
     // Return the max depth of the medium.
     double 	getDepth() {return depth;}
 
-    // Return the refractive index of the medium.
-    //double  getRefractiveIndex(void) {return refractive_index;}
-
-    // Write photon coordinates to file.
-    void 	writePhotonCoords(std::vector<double> &coords);
-
-    // Write photon exit locations and phases to file.
-    void	writeExitCoordsAndLength(std::vector<double> &coords_phase);
-
-    // Write the photon exit locations, phase and weight to file.
-    void	writeExitCoordsLengthWeight(std::vector<double> &coords_phase_weight);
 
     // Return the bounds of the medium.
     double Get_X_bound(void) {return x_bound;}

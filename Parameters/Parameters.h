@@ -180,6 +180,11 @@ public:
     string GetInputFileName()           const {return CommandLinesParameters.GetInputFileName();};    
     /// Get output file name
     string GetOutputFileName()          const {return CommandLinesParameters.GetOutputFileName();};
+
+    /// ------------------------------ JWJS ---------------------------------------
+    /// Get input RNG seed file name
+    string GetRNGSeedFileName()         const {return CommandLinesParameters.GetRNGSeedsFileName();};
+    /// ------------------------------------
        
     /// Get compression level
     int GetCompressionLevel()           const {return CommandLinesParameters.GetCompressionLevel();};
@@ -227,6 +232,15 @@ public:
     
     
     /// ------------------------ JWJS --------------------------------------------------------------------------------------
+    /// Is --save_seeds specified at the command line
+    bool IsStore_RNG_seeds()                          const {return CommandLinesParameters.IsStore_RNG_seeds();};
+
+    /// Is --load_seeds specified at the command line
+    bool IsLoad_seeds()                           const {return CommandLinesParameters.IsLoad_seeds();};
+
+    /// Is --phase_inversion specified at the command line
+    bool IsPhase_inversion()                      const {return CommandLinesParameters.IsPhase_inversion();};
+
     /// Is --modulation_depth specified at the command line
     bool IsStore_modulation_depth()               const {return CommandLinesParameters.IsStore_modulation_depth();};
     

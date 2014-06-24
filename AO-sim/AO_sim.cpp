@@ -73,7 +73,7 @@ AO_Sim::Print_runtime_statistics(TParameters * Parameters)
     bool sim_refractive_grad  = Parameters->IsSim_refractive_grad();
     bool sim_displacement     = Parameters->IsSim_displacement();
     bool store_p_max          = Parameters->IsStore_p_max();
-    bool store_I_max          = Parameters->IsStore_I_max()
+    bool store_I_max          = Parameters->IsStore_I_max();
     
     /// Display statistics about the simulation if options were enabled.
     if (sim_refractive_grad || sim_displacement || sim_refractive_total ||

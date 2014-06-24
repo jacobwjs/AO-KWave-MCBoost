@@ -2843,11 +2843,11 @@ void TKSpaceFirstOrder3DSolver::StoreSensorData(){
     /// -------------------------------- JWJS ---------------------------------
     /// If it's the first time coming here (i.e. t_index == 1), we want to store
     /// data for the non-modulated speckle pattern formation.
-    if (((t_index < Parameters->GetStartTimeIndex()) && (t_index != 1)) ||
+    if (((t_index < Parameters->GetStartTimeIndex()) && (t_index != 0)) ||
          (t_index > Parameters->GetEndTimeIndex())) {
             return;
         }
-    /// --------------------------------------
+    /// -------------------------------------/
 
     if (Parameters->IsStore_p_raw()) {
         cout << "Storing raw pressure values (x,y,z)\n";
@@ -2873,7 +2873,7 @@ void TKSpaceFirstOrder3DSolver::StoreSensorData(){
         /// ------------------------------ JWJS --------------------------------------------
         
         float temp_max = 0.0f;
-        /// ------------------------------------
+        /// -----------------------------------/
          #ifndef __NO_OMP__
                 #pragma omp parallel for schedule (static) if (sensor_size > 1e5)
          #endif
@@ -2884,7 +2884,7 @@ void TKSpaceFirstOrder3DSolver::StoreSensorData(){
                  
                  /// ---------------------------- JWJS -------------------------------------
                  if (temp_max < p_max[i]) temp_max = p_max[i];
-                 /// ----------------------------------
+                 /// ---------------------------------/
              }
              
          }
@@ -2897,7 +2897,7 @@ void TKSpaceFirstOrder3DSolver::StoreSensorData(){
             stats.pressure_t_index = t_index;
         	cout << "Updating max pressure: " << stats.max_pressure << '\n';
         }
-        /// --------------------------------------------
+        /// -------------------------------------------/
       }// p_max
     
     

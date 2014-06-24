@@ -63,7 +63,41 @@ AO_Sim::~AO_Sim()
 
 //    if (m_medium)
 //        delete m_medium;
+}
 
+
+void
+AO_Sim::Print_runtime_statistics(TParameters * Parameters)
+{
+    bool sim_refractive_total = Parameters->IsSim_refractive_total();
+    bool sim_refractive_grad  = Parameters->IsSim_refractive_grad();
+    bool sim_displacement     = Parameters->IsSim_displacement();
+    bool store_p_max          = Parameters->IsStore_p_max();
+    bool store_I_max          = Parameters->IsStore_I_max()
+    
+    /// Display statistics about the simulation if options were enabled.
+    if (sim_refractive_grad || sim_displacement || sim_refractive_total ||
+        store_p_max || store_I_max)
+    {
+        cout << "\n\n-------------------------------------------------------------\n";
+        cout << " Statistics / \n";
+        cout << " -----------";
+        
+        if (Parameters->IsStore_p_max())
+        {
+            cout << "\n Max pressure: " << KSpaceSolver->stats.max_pressure / 1e6 << " [MPa]";
+            cout << "\n - Time index: " << KSpaceSolver->stats.pressure_t_index;
+            cout << "\n - Simulation time: " << KSpaceSolver->stats.pressure_t_index * Parameters->Get_dt();
+        }
+        
+        if (Parameters->IsStore_I_max())
+        {
+            cout << "\n Max intensity: Implement me";
+            cout << "\n - Time index: Implement me";
+            cout << "\n - Simulation time: Implement me";
+        }
+    } /// end if
+    
 }
 
 
@@ -157,7 +191,6 @@ AO_Sim::Run_kWave_sim(TParameters * Parameters)
     cout << " -------";
     cout << "\nComputational loop elapsed time: " << KSpaceSolver->GetIterationTime();
     
-    
     cout << "\nPost-processing phase......."; cout.flush();
     KSpaceSolver->PostProcessingTimeStart();
     KSpaceSolver->FromAO_sim_PostProcessing();
@@ -165,38 +198,12 @@ AO_Sim::Run_kWave_sim(TParameters * Parameters)
     cout << "Done \n";
     cout << "Post-processing elapsed time: " << KSpaceSolver->GetPostProcessingTime();
     
-    
     KSpaceSolver->FromAO_sim_WriteOutputDataInfo();
-    
     Parameters->HDF5_OutputFile.Close();
-    
     
     cout << "\nTotal elapsed simulation time: " << KSpaceSolver->GetTotalTime();
     
     
-    
-    /// Display statistics about the simulation if options were enabled.
-    if (Parameters->IsStore_p_max() ||
-        Parameters->IsStore_I_max())
-    {
-        cout << "\n\n-------------------------------------------------------------\n";
-        cout << " Statistics / \n";
-        cout << " -----------";
-        
-        if (Parameters->IsStore_p_max())
-        {
-            cout << "\n Max pressure: " << KSpaceSolver->stats.max_pressure / 1e6 << " [MPa]";
-            cout << "\n - Time index: " << KSpaceSolver->stats.pressure_t_index;
-            cout << "\n - Simulation time: " << KSpaceSolver->stats.pressure_t_index * Parameters->Get_dt();
-        }
-        
-        if (Parameters->IsStore_I_max())
-        {
-            cout << "\n Max intensity: Implement me\n";
-            cout << "\n - Time index: Implement me\n";
-            cout << "\n - Simulation time: Implement me\n";
-        }
-    } /// end if
 
 }
 
@@ -221,6 +228,9 @@ AO_Sim::Run_monte_carlo_sim(TParameters * Parameters)
                                   time);
     
 }
+
+
+
 
 
 /// Run the acousto-optic simulation.
@@ -414,17 +424,25 @@ AO_Sim::Run_acousto_optics_sim(TParameters * Parameters)
 
         	/// Only run the MC-sim after ultrasound has propagated a certain distance (or time).
 			/// Similar to the stroboscopic experiments.
+            /// This implements PI phase shifts of US propagation and light injection.
+            /// XXX:
+            /// - Ensure that we make it in here when 'curr_time = 0'.
         	static size_t cnt = MC_time_step/Parameters->Get_dt();
             size_t curr_time = KSpaceSolver->GetTimeIndex();
-        	if (
-                (((curr_time % cnt) == 0) && (curr_time > 0))
-                   //|| ((curr_time >= 940) && (curr_time <= 950))
-               )
+        	if (((curr_time % cnt) == 0) && (curr_time >= 0))
         	{
 
             	da_boost->Run_MC_sim_timestep(m_medium,
                                               m_Laser_injection_coords,
                                               KSpaceSolver->GetTimeIndex());
+                
+                /// If 'phase_inversion' is enabled, then we only save data during PI phase shifts.
+                if (Parameters->IsPhase_inversion())
+                {
+                    /// Here is where the computation for the refractive index, displacements,
+                    /// and all the values kWave needs, takes place if commandline flags for saving data hvave been set.
+                    KSpaceSolver->FromAO_sim_StoreSensorData();
+                }
         	}
 		} // END if (sim_refractive_grad || sim_displacement )
 
@@ -434,9 +452,13 @@ AO_Sim::Run_acousto_optics_sim(TParameters * Parameters)
 
         
         //-- store the initial pressure at the first time step --//
-        /// Here is where the computation for the refractive index, displacements,
-        /// and all the values kWave needs, takes place if commandline flags for saving data hvave been set.
-        KSpaceSolver->FromAO_sim_StoreSensorData();
+        /// If 'phase_inversion' is NOT enabled, then we save data every time step over the time period specified on the commandline.
+        if (! Parameters->IsPhase_inversion())
+        {
+            /// Here is where the computation for the refractive index, displacements,
+            /// and all the values kWave needs, takes place if commandline flags for saving data hvave been set.
+            KSpaceSolver->FromAO_sim_StoreSensorData();
+        }
         
         
         KSpaceSolver->FromAO_sim_PrintStatistics();
@@ -452,7 +474,6 @@ AO_Sim::Run_acousto_optics_sim(TParameters * Parameters)
     cout << " -------";
     cout << "\nComputational loop elapsed time: " << KSpaceSolver->GetIterationTime();
     
-    
     cout << "\nPost-processing phase......."; cout.flush();
     KSpaceSolver->PostProcessingTimeStart();
     KSpaceSolver->FromAO_sim_PostProcessing();
@@ -460,39 +481,13 @@ AO_Sim::Run_acousto_optics_sim(TParameters * Parameters)
     cout << "Done \n";
     cout << "Post-processing elapsed time: " << KSpaceSolver->GetPostProcessingTime();
     
-    
     KSpaceSolver->FromAO_sim_WriteOutputDataInfo();
-    
     Parameters->HDF5_OutputFile.Close();
-    
     
     cout << "\nTotal elapsed simulation time: " << KSpaceSolver->GetTotalTime();
     
     
-    
-    /// Display statistics about the simulation if options were enabled.
-    if (sim_refractive_grad || sim_displacement || sim_refractive_total ||
-        Parameters->IsStore_p_max() ||
-        Parameters->IsStore_I_max())
-    {
-        cout << "\n\n-------------------------------------------------------------\n";
-        cout << " Statistics / \n";
-        cout << " -----------";
-        
-        if (Parameters->IsStore_p_max())
-        {
-            cout << "\n Max pressure: " << KSpaceSolver->stats.max_pressure / 1e6 << " [MPa]";
-            cout << "\n - Time index: " << KSpaceSolver->stats.pressure_t_index;
-            cout << "\n - Simulation time: " << KSpaceSolver->stats.pressure_t_index * Parameters->Get_dt();
-        }
-        
-        if (Parameters->IsStore_I_max())
-        {
-            cout << "\n Max intensity: Implement me\n";
-            cout << "\n - Time index: Implement me\n";
-            cout << "\n - Simulation time: Implement me\n";
-        }
-    } /// end if
+   
         
 
 
@@ -914,7 +909,7 @@ AO_Sim::Add_circular_detector_MC_medium(Detector_Properties &props)
 {
 
 
-    /*
+   
     assert(m_medium != NULL);
 
     /*

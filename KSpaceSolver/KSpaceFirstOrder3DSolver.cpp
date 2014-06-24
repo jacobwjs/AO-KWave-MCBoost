@@ -103,12 +103,33 @@ TKSpaceFirstOrder3DSolver::TKSpaceFirstOrder3DSolver():
     
     /// ------------------------ JWJS -------------
     /// Zero out the statistics structure.
-    stats.max_pressure      = 0.0f;
-    stats.max_intensity     = 0.0f;
-    stats.max_displacement  = 0.0f;
-    stats.min_displacement  = 0.0f;
-    stats.max_refractive_index = 0.0f;
-    stats.min_refractive_index = 0.0f;
+    stats.max_pressure                  = 0.0f;;
+    stats.pressure_t_index              = 0;
+    
+    /// Intensity has components along each axial direction.
+    stats.max_intensity_x               = 0.0f;
+    stats.intensity_t_index_xaxis       = 0;
+    stats.max_intensity_y               = 0.0f;
+    stats.intensity_t_index_yaxis       = 0;
+    stats.max_intensity_z               = 0.0f;
+    stats.intensity_t_index_zaxis       = 0;
+    
+    /// Allow the ability to record max and min displacemnt along
+    /// each axial component.
+    stats.max_displacement_x            = 0.0f;
+    stats.min_displacement_x            = 0.0f;
+    stats.displacement_t_index_xaxis    = 0;
+    stats.max_displacement_y            = 0.0f;
+    stats.min_displacement_y            = 0.0f;
+    stats.displacement_t_index_yaxis    = 0;
+    stats.max_displacement_z            = 0.0f;
+    stats.min_displacement_z            = 0.0f;
+    stats.displacement_t_index_zaxis    = 0;
+    
+    
+    stats.max_refractive_index          = 0.0f;
+    stats.min_refractive_index          = 0.0f;
+    stats.refractive_t_index            = 0;
     /// -----------------------------/
 
 
@@ -2841,13 +2862,13 @@ void TKSpaceFirstOrder3DSolver::PostProcessing(){
 void TKSpaceFirstOrder3DSolver::StoreSensorData(){
 
     /// -------------------------------- JWJS ---------------------------------
-    /// If it's the first time coming here (i.e. t_index == 1), we want to store
+    /// If it's the first time coming here (i.e. t_index == 0), we want to store
     /// data for the non-modulated speckle pattern formation.
-    if (((t_index < Parameters->GetStartTimeIndex()) && (t_index != 1)) ||
+    if (((t_index < Parameters->GetStartTimeIndex()) && (t_index != 0)) ||
          (t_index > Parameters->GetEndTimeIndex())) {
             return;
         }
-    /// --------------------------------------
+    /// -------------------------------------/
 
     if (Parameters->IsStore_p_raw()) {
         cout << "Storing raw pressure values (x,y,z)\n";
@@ -2873,7 +2894,7 @@ void TKSpaceFirstOrder3DSolver::StoreSensorData(){
         /// ------------------------------ JWJS --------------------------------------------
         
         float temp_max = 0.0f;
-        /// ------------------------------------
+        /// -----------------------------------/
          #ifndef __NO_OMP__
                 #pragma omp parallel for schedule (static) if (sensor_size > 1e5)
          #endif
@@ -2884,20 +2905,19 @@ void TKSpaceFirstOrder3DSolver::StoreSensorData(){
                  
                  /// ---------------------------- JWJS -------------------------------------
                  if (temp_max < p_max[i]) temp_max = p_max[i];
-                 /// ----------------------------------
+                 /// ---------------------------------/
              }
              
          }
-        
         /// -------------------------------------- JWJS ------------------------------------
         /// Update the max pressure and display it.
         if (stats.max_pressure < temp_max)
         {
         	stats.max_pressure = temp_max;
             stats.pressure_t_index = t_index;
-        	cout << "Updating max pressure: " << stats.max_pressure << '\n';
+        	cout << "Updating max pressure: " << stats.max_pressure/1e6 << " [MPa]\n";
         }
-        /// --------------------------------------------
+        /// -------------------------------------------/
       }// p_max
     
     
@@ -3296,6 +3316,16 @@ void TKSpaceFirstOrder3DSolver::StoreIntensityData(){
         float * Ix_max       = NULL;
         float * Iy_max       = NULL;
         float * Iz_max       = NULL;
+        
+        
+        /// --------------------------------- JWJS -----------------------
+        /// Temp variables to track the maximum intensity at a single
+        /// location in the medium over all time.
+        float temp_max_Ix = 0.0f;
+        float temp_max_Iy = 0.0f;
+        float temp_max_Iz = 0.0f;
+        /// --------------------------------------/
+        
 
 
         if (Parameters->IsStore_I_avg()) {
@@ -3315,6 +3345,7 @@ void TKSpaceFirstOrder3DSolver::StoreIntensityData(){
 
         // calculate  intensity
         if (t_index+1 > Parameters->GetStartTimeIndex()){
+            
             #ifndef __NO_OMP__
                #pragma omp for schedule (static)
             #endif
@@ -3348,9 +3379,16 @@ void TKSpaceFirstOrder3DSolver::StoreIntensityData(){
 
                // easily predictable...
                if (Parameters->IsStore_I_max()) {
-                  if (Ix_max[i] < Ix)  Ix_max[i] = Ix;
-                  if (Iy_max[i] < Iy)  Iy_max[i] = Iy;
-                  if (Iz_max[i] < Iz)  Iz_max[i] = Iz;
+                   
+                   if (Ix_max[i] < Ix)  Ix_max[i] = Ix;
+                   if (Iy_max[i] < Iy)  Iy_max[i] = Iy;
+                   if (Iz_max[i] < Iz)  Iz_max[i] = Iz;
+                 
+                   /// ---------------------------------- JWJS --------------
+                   if (temp_max_Ix < Ix) temp_max_Ix = Ix;
+                   if (temp_max_Iy < Iy) temp_max_Iy = Iy;
+                   if (temp_max_Iz < Iz) temp_max_Iz = Iz;
+                   /// --------------------------------------/
                }
 
                // easily predictable...
@@ -3383,8 +3421,31 @@ void TKSpaceFirstOrder3DSolver::StoreIntensityData(){
 
             }
         }// else
+        
+        
+        /// ------------------------------------------------------ JWJS --------------
+        if (stats.max_intensity_x < temp_max_Ix)
+        {
+            stats.max_intensity_x         = temp_max_Ix;
+            stats.intensity_t_index_xaxis = t_index;
+        }
+        if (stats.max_intensity_y < temp_max_Iy)
+        {
+            stats.max_intensity_y         = temp_max_Iy;
+            stats.intensity_t_index_yaxis = t_index;
+        }
+        if (stats.max_intensity_z < temp_max_Iz)
+        {
+            stats.max_intensity_z = temp_max_Iz;
+            stats.intensity_t_index_zaxis = t_index;
+        }
+        /// ----------------------------------------------------------/
 
     }// parallel
+    
+    
+    
+  
 
 
 }// end of StoreIntensity

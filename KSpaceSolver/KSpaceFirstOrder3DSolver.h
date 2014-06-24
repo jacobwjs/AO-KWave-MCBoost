@@ -56,12 +56,26 @@ typedef struct {
     float max_pressure;
     int   pressure_t_index;
     
-    float max_intensity;
-    int   intensity_t_index;
+    /// Intensity has components along each axial direction.
+    float max_intensity_x;
+    int   intensity_t_index_xaxis;
+    float max_intensity_y;
+    int   intensity_t_index_yaxis;
+    float max_intensity_z;
+    int   intensity_t_index_zaxis;
     
-    float max_displacement;
-    float min_displacement;
-    int   displacement_t_index;
+    /// Allow the ability to record max and min displacemnt along
+    /// each axial component.
+    float max_displacement_x;
+    float min_displacement_x;
+    int   displacement_t_index_xaxis;
+    float max_displacement_y;
+    float min_displacement_y;
+    int   displacement_t_index_yaxis;
+    float max_displacement_z;
+    float min_displacement_z;
+    int   displacement_t_index_zaxis;
+
     
     float max_refractive_index;
     float min_refractive_index;

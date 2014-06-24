@@ -175,28 +175,8 @@ AO_Sim::Run_kWave_sim(TParameters * Parameters)
     
     
     
-    /// Display statistics about the simulation if options were enabled.
-    if (Parameters->IsStore_p_max() ||
-        Parameters->IsStore_I_max())
-    {
-        cout << "\n\n-------------------------------------------------------------\n";
-        cout << " Statistics / \n";
-        cout << " -----------";
-        
-        if (Parameters->IsStore_p_max())
-        {
-            cout << "\n Max pressure: " << KSpaceSolver->stats.max_pressure / 1e6 << " [MPa]";
-            cout << "\n - Time index: " << KSpaceSolver->stats.pressure_t_index;
-            cout << "\n - Simulation time: " << KSpaceSolver->stats.pressure_t_index * Parameters->Get_dt();
-        }
-        
-        if (Parameters->IsStore_I_max())
-        {
-            cout << "\n Max intensity: Implement me\n";
-            cout << "\n - Time index: Implement me\n";
-            cout << "\n - Simulation time: Implement me\n";
-        }
-    } /// end if
+    /// Display attributes about the simulation (e.g. max pressure, intensity, displacement, etc.).
+    Print_statistics(Parameters);
 
 }
 
@@ -413,18 +393,40 @@ AO_Sim::Run_acousto_optics_sim(TParameters * Parameters)
 
 
         	/// Only run the MC-sim after ultrasound has propagated a certain distance (or time).
-			/// Similar to the stroboscopic experiments.
+			/// Similar to the stroboscopic experiments. In essence we only run the the MC_sim
+            /// (i.e. light injection) every PI phase step.
+            /// If the 'phase_inversion' option was enabled via the commandline we only save
+            /// data (i.e. store sensor data) during these phase steps. It limits the total amount
+            /// of data saved (pressure values, displacement values, whatever was enabled on the commandline)
+            /// to the PI phase shifts of the US wave propagation. This is useful for later simulations where
+            /// the medium optical properties change, but the acoustic properties and US propagation is the same.
+            /// FIXME:
+            /// - Currently 'MC_time_step' requires calculation in 'main.cpp', but this should done
+            ///   automatically when reading in the INPUT h5 file. Something along the line of,
+            ///   MC_time_step = (US_wavelength/2) * (1/medium_speed_of_sound);
+            ///   NOTE:
+            ///   - For what is below to work 'MC_time_step' must be evenly divisible by 'dt', which is something
+            ///     that needs to be ensured when generating the INPUT h5 file. In fact this entire calculation
+            ///     should be made over there and loaded from the INPUT h5 file at runtime. This ensures no mistakes
+            ///     arise. The problem can occur when the US wave is advanced beyond a PI phase shift and light is never
+            ///     injected at the proper time. This will reduce the detected tagged fraction.
         	static size_t cnt = MC_time_step/Parameters->Get_dt();
             size_t curr_time = KSpaceSolver->GetTimeIndex();
-        	if (
-                (((curr_time % cnt) == 0) && (curr_time > 0))
-                   //|| ((curr_time >= 940) && (curr_time <= 950))
-               )
+        	if (((curr_time % cnt) == 0) && (curr_time >= 0))
         	{
-
+                
             	da_boost->Run_MC_sim_timestep(m_medium,
                                               m_Laser_injection_coords,
                                               KSpaceSolver->GetTimeIndex());
+                
+                /// If the 'phase_inversion' option is enabled, then we only save data during PI phase shifts.
+                if (Parameters->IsPhase_inversion())
+                {
+                    /// Here is where data is stored in their respective sensor data structure if enabled via the commandline.
+                    /// The stored data is updated over the run of the simulation and written out to disk at the completion
+                    /// of the simulation.
+                    KSpaceSolver->FromAO_sim_StoreSensorData();
+                }
         	}
 		} // END if (sim_refractive_grad || sim_displacement )
 
@@ -434,10 +436,13 @@ AO_Sim::Run_acousto_optics_sim(TParameters * Parameters)
 
         
         //-- store the initial pressure at the first time step --//
-        /// Here is where the computation for the refractive index, displacements,
-        /// and all the values kWave needs, takes place if commandline flags for saving data hvave been set.
-        KSpaceSolver->FromAO_sim_StoreSensorData();
-        
+        if (! Parameters->IsPhase_inversion())
+        {
+            /// Here is where data is stored in their respective sensor data structure if enabled via the commandline.
+            /// The stored data is updated over the run of the simulation and written out to disk at the completion
+            /// of the simulation.
+            KSpaceSolver->FromAO_sim_StoreSensorData();
+        }
         
         KSpaceSolver->FromAO_sim_PrintStatistics();
         
@@ -469,30 +474,8 @@ AO_Sim::Run_acousto_optics_sim(TParameters * Parameters)
     cout << "\nTotal elapsed simulation time: " << KSpaceSolver->GetTotalTime();
     
     
-    
-    /// Display statistics about the simulation if options were enabled.
-    if (sim_refractive_grad || sim_displacement || sim_refractive_total ||
-        Parameters->IsStore_p_max() ||
-        Parameters->IsStore_I_max())
-    {
-        cout << "\n\n-------------------------------------------------------------\n";
-        cout << " Statistics / \n";
-        cout << " -----------";
-        
-        if (Parameters->IsStore_p_max())
-        {
-            cout << "\n Max pressure: " << KSpaceSolver->stats.max_pressure / 1e6 << " [MPa]";
-            cout << "\n - Time index: " << KSpaceSolver->stats.pressure_t_index;
-            cout << "\n - Simulation time: " << KSpaceSolver->stats.pressure_t_index * Parameters->Get_dt();
-        }
-        
-        if (Parameters->IsStore_I_max())
-        {
-            cout << "\n Max intensity: Implement me\n";
-            cout << "\n - Time index: Implement me\n";
-            cout << "\n - Simulation time: Implement me\n";
-        }
-    } /// end if
+    /// Display attributes about the simulation (e.g. max pressure, intensity, displacement, etc.).
+    Print_statistics(Parameters);
         
 
 
@@ -538,6 +521,12 @@ AO_Sim::Run_acousto_optics_sim_loadData(TParameters * Parameters)
     HDF5_OutputFile.ReadCompleteDataset(Nz_Name,  ScalarSizes, &Nz);
 
     /// The dimensions of the recorded data from kWave.
+    /// FIXME:
+    /// - Should take into account the PML sizes if the sensor.mask
+    ///   size did also during the generation of the INPUT h5 file from matlab.
+    ///   This might take changing the matlab code for
+    ///   saving these values to the INPUT h5 file, which will be written
+    ///   out to the OUTPUT h5 file.
     TDimensionSizes sensor_size(Nx, Ny, Nz);
 
     /// Is simulation of refractive index changes (total) enabled.  If so create the
@@ -806,7 +795,7 @@ AO_Sim::kWave_allocate_memory()
 // used in the k-Wave simulation.
 //
 void
-AO_Sim::Create_MC_grid(TParameters * parameters)
+AO_Sim::Create_MC_grid(TParameters * Parameters)
 {
     // Number of voxels in each axis, with the PML taken into account.
     // NOTE:
@@ -819,33 +808,23 @@ AO_Sim::Create_MC_grid(TParameters * parameters)
     //   means the monte-carlo medium should reflect these changes because US data in the PML
     //   is heavily distorted, as it should be, and we don't want photons moving through those
     //   regions.
-    size_t OFFSET = 5; /// An offset to apply to the transmission axis PML (i.e. x_pml).
-    size_t x_pml_offset = parameters->Get_pml_x_size()+OFFSET;
-    size_t y_pml_offset = parameters->Get_pml_y_size();
-    size_t z_pml_offset = parameters->Get_pml_z_size();
+    size_t x_pml_offset = Parameters->Get_pml_x_size();
+    size_t y_pml_offset = Parameters->Get_pml_y_size();
+    size_t z_pml_offset = Parameters->Get_pml_z_size();
     
-    /// If only running the monte-carlo simulation, no need to reduce the size of the medium
-    /// for taking into account the perfectly-matching-layer (PML) because no acoustics are
-    /// being simulated.
+    
     size_t Nx, Ny, Nz;
-    if (parameters->IsRun_MC_sim())
-    {
-        Nx = parameters->GetFullDimensionSizes().X;
-        Ny = parameters->GetFullDimensionSizes().Y;
-        Nz = parameters->GetFullDimensionSizes().Z;
-    }
-    else
-    {
-        Nx = parameters->GetFullDimensionSizes().X - 2*x_pml_offset;
-        Ny = parameters->GetFullDimensionSizes().Y - 2*y_pml_offset;
-        Nz = parameters->GetFullDimensionSizes().Z - 2*z_pml_offset;
-    }
+    /// Dimension size of the MC_sim grid, minus the PML in kWave.
+    Nx = Parameters->GetFullDimensionSizes().X - 2*x_pml_offset;
+    Ny = Parameters->GetFullDimensionSizes().Y - 2*y_pml_offset;
+    Nz = Parameters->GetFullDimensionSizes().Z - 2*z_pml_offset;
+    
         
 
     // Size of each voxel along its respective axis.
-    double dx = parameters->Get_dx();
-    double dy = parameters->Get_dy();
-    double dz = parameters->Get_dz();
+    double dx = Parameters->Get_dx();
+    double dy = Parameters->Get_dy();
+    double dz = Parameters->Get_dz();
 
 
     // Create the medium object that represents the grid for the
@@ -877,11 +856,11 @@ AO_Sim::Create_MC_grid(TParameters * parameters)
     /// Set the size of the sensor mask used in the kWave simulation.  This is the number
     /// of elements in the TRealMatrix that recorded data.
     // const size_t  sensor_size = Get_sensor_mask_ind().GetTotalElementCount();
-    this->m_medium->kwave.sensor_mask_index_size    = parameters->Get_sensor_mask_index_size();
+    this->m_medium->kwave.sensor_mask_index_size    = Parameters->Get_sensor_mask_index_size();
 
     /// Set the time-step used in k-Wave.
-    this->m_medium->kwave.dt = parameters->Get_dt();
-    //this->m_medium->kwave.speed_of_sound            = parameters->Get_c0_scalar();
+    this->m_medium->kwave.dt = Parameters->Get_dt();
+    //this->m_medium->kwave.speed_of_sound            = Parameters->Get_c0_scalar();
 
 
 }
@@ -893,7 +872,7 @@ AO_Sim::Create_MC_grid(TParameters * parameters)
 
 
 void
-AO_Sim::Print_MC_sim_params(TParameters * parameters)
+AO_Sim::Print_MC_sim_params(TParameters * Parameters)
 {
     assert (m_medium != NULL);
     assert (da_boost != NULL);
@@ -905,7 +884,7 @@ AO_Sim::Print_MC_sim_params(TParameters * parameters)
     cout << " Medium dims: [Nx=" << m_medium->Get_Nx() << ", Ny=" << m_medium->Get_Ny() << ", z=" << m_medium->Get_Nz() << "] (voxels)\n";
     cout << " Time step: " << MC_time_step << '\n';
     /// If we are NOT loading seeds, display how many photon energy packets are going to be simulated.
-    if (!parameters->IsLoad_seeds()) cout << " Photons: " << da_boost->Get_num_photons_to_sim() << '\n';
+    if (!Parameters->IsLoad_seeds()) cout << " Photons: " << da_boost->Get_num_photons_to_sim() << '\n';
 }
 
 
@@ -914,7 +893,7 @@ AO_Sim::Add_circular_detector_MC_medium(Detector_Properties &props)
 {
 
 
-    /*
+    
     assert(m_medium != NULL);
 
     /*
@@ -1200,6 +1179,54 @@ AO_Sim::Test_Read_HDF5_File(TParameters * Parameters)
 }
 /// end Test_Read_HDF5_File()
 
+
+
+
+void
+AO_Sim::Print_statistics(TParameters * Parameters)
+{
+    /// Print statistics about what was specified via the commandline.
+    ///
+    bool sim_refractive_total = Parameters->IsSim_refractive_total();
+    bool sim_refractive_grad  = Parameters->IsSim_refractive_grad();
+    bool sim_displacement     = Parameters->IsSim_displacement();
+    bool store_p_max          = Parameters->IsStore_p_max();
+    bool store_I_max          = Parameters->IsStore_I_max();
+    
+    
+    /// Display statistics about the simulation if options were enabled.
+    if (sim_refractive_grad || sim_displacement || sim_refractive_total ||
+        Parameters->IsStore_p_max() ||
+        Parameters->IsStore_I_max())
+    {
+        cout << "\n\n-------------------------------------------------------------\n";
+        cout << " Statistics / \n";
+        cout << " -----------";
+        
+        if (store_p_max)
+        {
+            cout << "\n Max pressure: " << KSpaceSolver->stats.max_pressure / 1e6 << " [MPa]";
+            cout << "\n - Time index: " << KSpaceSolver->stats.pressure_t_index;
+            cout << "\n - Simulation time: " << KSpaceSolver->stats.pressure_t_index * Parameters->Get_dt();
+        }
+        
+        if (store_I_max)
+        {
+            cout << "\n Max intensity [x-axis]: " << KSpaceSolver->stats.max_intensity_x;
+            cout << "\n - Time index: " << KSpaceSolver->stats.intensity_t_index_xaxis;
+            cout << "\n - Simulation time: " << KSpaceSolver->stats.intensity_t_index_xaxis * Parameters->Get_dt() << " [sec]";
+            
+            cout << "\n Max intensity [y-axis]: " << KSpaceSolver->stats.max_intensity_y;
+            cout << "\n - Time index: " << KSpaceSolver->stats.intensity_t_index_yaxis;
+            cout << "\n - Simulation time: " << KSpaceSolver->stats.intensity_t_index_yaxis * Parameters->Get_dt() << " [sec]";
+            
+            cout << "\n Max intensity [z-axis]: " << KSpaceSolver->stats.max_intensity_z;
+            cout << "\n - Time index: " << KSpaceSolver->stats.intensity_t_index_zaxis;
+            cout << "\n - Simulation time: " << KSpaceSolver->stats.intensity_t_index_zaxis * Parameters->Get_dt() << " [sec]";
+        }
+    } /// end if
+    
+}
 
 
 void PrintMatrix(TRealMatrix &data, TParameters *Parameters)

@@ -3054,31 +3054,252 @@ void TKSpaceFirstOrder3DSolver::StoreSensorData(){
 /// ------------------------ JWJS ----------------------------------------------------------------
 void TKSpaceFirstOrder3DSolver::Compute_refractive_index_data()
 {
-    cout << "Computing refractive index values (x,y,z)\n";
+    cout << "\n\n\nComputing refractive gradient index values (x,y,z)\n";
+    cout << "************** Implement me **************\n";
+    cout << "TKSpaceFirstOrder3DSolver::Compute_refractive_index_data()\n\n\n";
+//
+//    float elasto_optical_coeff         = 0.0f;
+//    float rho0_val                     = 0.0f;
+//    const float n_background           = 1.33f;
+//
+//    if (Parameters->Get_rho0_scalar())
+//    {
+//        const float* rhox_raw_data         = Get_rhox().GetRawData();
+//        const float* rhoy_raw_data         = Get_rhoy().GetRawData();
+//        const float* rhoz_raw_data         = Get_rhoz().GetRawData();
+//    }
+//    else
+//    {
+//        const float* rho0_raw_data         = Get_rho0().GetRawData();
+//    }
+//    
+//
+//    float* n_x                         = Get_refractive_x().GetRawData();
+//    float* n_y                         = Get_refractive_y().GetRawData();
+//    float* n_z                         = Get_refractive_z().GetRawData();
+//
+//
+//
+////    const size_t TotalElementCount = Parameters->GetFullDimensionSizes().GetElementCount();
+//
+////#ifndef __NO_OMP__
+////#pragma omp parallel for schedule (static) if (TotalElementCount > 1e5)
+////#endif
+////    for (size_t i = 0; i <TotalElementCount; i++)
+////    {
+////        /// Calculate the background density with the addition of the pressure induced variations.
+////        /// NOTE:
+////        /// The density passed in to this function is density obtained from k-Wave.  In the description
+////        /// of how this density is calculated, described in k-wave_user_manual_1.0.1.pdf, it is not fully
+////        /// accurate due to the removal of the -u*grad(rho0) term in the mass conservation equation (Eq. 2.4).
+////        /// Three options exist:
+////        /// 1) Verify that the error is not significant and live with it.
+////        /// 2) Implement the term in k-Wave and pass it in here as an addition to rho (need each axial component).
+////        /// 3) Use a 1st order approximation from (p=c0^2*rho).
+////        ///density = rhox_data[i] + rhoy_data[i] + rhoz_data[i];       /// Density with error.
+////        ///density = p_data[i] / c2_data[i];                           /// 1st order approxmation.
+////        
+////        
+////        
+////        ///  Calculate the modulation coefficient as described by Skadazac and Wang.
+////        /// --------------------- THIS IS WRONG FOR PRESSURES I'M USING -------------------
+////        ///M = 2.0 * pezio_optical_coeff * (p_data[i] / (density * c2_data[i]));
+////        /// Update the refractive index value based the pressure induced changes.
+////        ///n_data[i] = n_background * (1 + 0.5 * M);
+////        
+////        
+////        
+////        /// XXX: Should the refractive index have an axial component?
+////        /// ---------------------------------------------------------
+////        /// Only if you plan on bending the path between scattering events (i.e. Eikonal),
+////        /// which would cause you to know the spatial refractive index gradient.
+////        
+////        
+////        /// "Optical Measurement of Ultrasonic Poynting and Velocity Vector Fields".  (Pitts, 2002)
+////        /// Below uses the elasto-optical coefficient to
+////        /// calculate each component of the refractive index
+////        elasto_optical_coeff = (n_background*n_background - 1) / (2*rho0_raw_data[i]*n_background);
+////        //rho0_val = rho0_raw_data[i];
+////        
+////        n_x[i] = n_background + elasto_optical_coeff * ((rho0_raw_data[i] + rhox_raw_data[i]) - rho0_raw_data[i]);
+////        n_y[i] = n_background + elasto_optical_coeff * ((rho0_raw_data[i] + rhoy_raw_data[i]) - rho0_raw_data[i]);
+////        n_z[i] = n_background + elasto_optical_coeff * ((rho0_raw_data[i] + rhoz_raw_data[i]) - rho0_raw_data[i]);
+////        
+////    }
+//    
+//    const long * index        = Get_sensor_mask_ind().GetRawData();
+//    const size_t sensor_size  = Get_sensor_mask_ind().GetTotalElementCount();
+//
+//    #ifndef __NO_OMP__
+//        #pragma omp parallel for schedule (static) if (sensor_size > 1e5)
+//    #endif
+//    for (size_t i = 0; i <sensor_size; i++)
+//    {
+//        /// Calculate the background density with the addition of the pressure induced variations.
+//        /// NOTE:
+//        /// The density passed in to this function is density obtained from k-Wave.  In the description
+//        /// of how this density is calculated, described in k-wave_user_manual_1.0.1.pdf, it is not fully
+//        /// accurate due to the removal of the -u*grad(rho0) term in the mass conservation equation (Eq. 2.4).
+//        /// Three options exist:
+//        /// 1) Verify that the error is not significant and live with it.
+//        /// 2) Implement the term in k-Wave and pass it in here as an addition to rho (need each axial component).
+//        /// 3) Use a 1st order approximation from (p=c0^2*rho).
+//        ///density = rhox_data[i] + rhoy_data[i] + rhoz_data[i];       /// Density with error.
+//        ///density = p_data[i] / c2_data[i];                           /// 1st order approxmation.
+//
+//
+//
+//        ///  Calculate the modulation coefficient as described by Skadazac and Wang.
+//        /// --------------------- THIS IS WRONG FOR PRESSURES I'M USING -------------------
+//        ///M = 2.0 * pezio_optical_coeff * (p_data[i] / (density * c2_data[i]));
+//        /// Update the refractive index value based the pressure induced changes.
+//        ///n_data[i] = n_background * (1 + 0.5 * M);
+//
+//
+//
+//        /// XXX: Should the refractive index have an axial component?
+//        /// ---------------------------------------------------------
+//        /// Only if you plan on bending the path between scattering events (i.e. Eikonal),
+//        /// which would cause you to know the spatial refractive index gradient.
+//
+//
+//        /// "Optical Measurement of Ultrasonic Poynting and Velocity Vector Fields".  (Pitts, 2002)
+//        /// Below uses the elasto-optical coefficient to
+//        /// calculate each component of the refractive index
+//        elasto_optical_coeff = (n_background*n_background - 1) / (2*rho0_raw_data[index[i]]*n_background);
+//        //rho0_val = rho0_raw_data[index[i]];
+//
+//        n_x[i] = n_background + elasto_optical_coeff * ((rho0_raw_data[index[i]] + rhox_raw_data[index[i]]) - rho0_raw_data[index[i]]);
+//        n_y[i] = n_background + elasto_optical_coeff * ((rho0_raw_data[index[i]] + rhoy_raw_data[index[i]]) - rho0_raw_data[index[i]]);
+//        n_z[i] = n_background + elasto_optical_coeff * ((rho0_raw_data[index[i]] + rhoz_raw_data[index[i]]) - rho0_raw_data[index[i]]);
+//
+//    }
 
-    float elasto_optical_coeff         = 0.0f;
-    float rho0_val                     = 0.0f;
-    const float n_background           = 1.33f;
-
-    const float* rhox_raw_data         = Get_rhox().GetRawData();
-    const float* rhoy_raw_data         = Get_rhoy().GetRawData();
-    const float* rhoz_raw_data         = Get_rhoz().GetRawData();
-    const float* rho0_raw_data         = Get_rho0().GetRawData();
-    ///const float* p0_raw_data           = Get_p().GetRawData();
-    ///const float* c2_raw_data           = Get_c2().GetRawData();
-
-    float* n_x                         = Get_refractive_x().GetRawData();
-    float* n_y                         = Get_refractive_y().GetRawData();
-    float* n_z                         = Get_refractive_z().GetRawData();
+}
 
 
+void TKSpaceFirstOrder3DSolver::Compute_refractive_index_data_total()
+{
+    cout << "Computing refractive total values\n";
+    
+    float total_density             = 0.0f;
+    float rho0                      = 0.0f;
+    float elasto_optical_coeff      = 0.0f;
+    const float n_background        = 1.33f;
+    
+    /// kWave splits up the density along each axial component for use with the PML. Eventually we need
+    /// to add each component to get to the correct density, which happens below.
+    const float* rho_x         = Get_rhox().GetRawData();
+    const float* rho_y         = Get_rhoy().GetRawData();
+    const float* rho_z         = Get_rhoz().GetRawData();
+    
+    float* n_total_sensor              = Get_refractive_total_sensor().GetRawData();
+    float* n_total_full_medium         = Get_refractive_total_full_medium().GetRawData();
+    
+    const long * index        = Get_sensor_mask_ind().GetRawData();
+    const size_t sensor_size  = Get_sensor_mask_ind().GetTotalElementCount();
 
-//    const size_t TotalElementCount = Parameters->GetFullDimensionSizes().GetElementCount();
+    
+    
+    if (Parameters->Get_rho0_scalar_flag())
+    {
+        rho0 = Parameters->Get_rho0_scalar();
+        
+        #ifndef __NO_OMP__
+        #pragma omp parallel for schedule (static) if (sensor_size > 1e5)
+        #endif
+        for (size_t i = 0; i <sensor_size; i++)
+        {
+            /// Calculate the background density with the addition of the pressure induced variations.
+            /// NOTE:
+            /// The density passed in to this function is density obtained from k-Wave.  In the description
+            /// of how this density is calculated, described in k-wave_user_manual_1.0.1.pdf, it is not fully
+            /// accurate due to the removal of the -u*grad(rho0) term in the mass conservation equation (Eq. 2.4).
+            /// Three options exist:
+            /// 1) Verify that the error is not significant and live with it.
+            /// 2) Implement the term in k-Wave and pass it in here as an addition to rho (need each axial component).
+            /// 3) Use a 1st order approximation from (p=c0^2*rho).
+            ///density = rhox_data[i] + rhoy_data[i] + rhoz_data[i];       /// Density with error.
+            ///density = p_data[i] / c2_data[i];                           /// 1st order approxmation.
+            
+            total_density = rho_x[index[i]] + rho_y[index[i]] + rho_z[index[i]];
+            
+            
+            ///  Calculate the modulation coefficient as described by Skadazac and Wang.
+            /// --------------------- THIS IS WRONG FOR PRESSURES I'M USING -------------------
+            ///M = 2.0 * pezio_optical_coeff * (p_data[i] / (density * c2_data[i]));
+            /// Update the refractive index value based the pressure induced changes.
+            ///n_data[i] = n_background * (1 + 0.5 * M);
+            
+            
+            /// "Optical Measurement of Ultrasonic Poynting and Velocity Vector Fields".  (Pitts, 2002)
+            /// Below uses the elasto-optical coefficient to
+            /// calculate each component of the refractive index
+            elasto_optical_coeff = (n_background*n_background - 1) / (2*rho0*n_background);
+            
+            /// Update the sensor mask for refractive index changes, which can either be the entire medium, or a region of interest.
+            n_total_sensor[i] = n_background + elasto_optical_coeff *
+            ((total_density + rho0) - rho0);
+            
+            /// Update the full dimension refractive map for use with AO_sim, which will propagate photons through. We only update the
+            /// global medium with the portion containing the sensor.mask, which is our region of interest.
+            n_total_full_medium[index[i]] = n_total_sensor[i];
+        }
 
-//#ifndef __NO_OMP__
-//#pragma omp parallel for schedule (static) if (TotalElementCount > 1e5)
-//#endif
-//    for (size_t i = 0; i <TotalElementCount; i++)
+    }
+    else
+    {
+        const float* rho0_raw_data = Get_rho0().GetRawData();
+        
+        #ifndef __NO_OMP__
+        #pragma omp parallel for schedule (static) if (sensor_size > 1e5)
+        #endif
+        for (size_t i = 0; i <sensor_size; i++)
+        {
+            /// Calculate the background density with the addition of the pressure induced variations.
+            /// NOTE:
+            /// The density passed in to this function is density obtained from k-Wave.  In the description
+            /// of how this density is calculated, described in k-wave_user_manual_1.0.1.pdf, it is not fully
+            /// accurate due to the removal of the -u*grad(rho0) term in the mass conservation equation (Eq. 2.4).
+            /// Three options exist:
+            /// 1) Verify that the error is not significant and live with it.
+            /// 2) Implement the term in k-Wave and pass it in here as an addition to rho (need each axial component).
+            /// 3) Use a 1st order approximation from (p=c0^2*rho).
+            ///density = rhox_data[i] + rhoy_data[i] + rhoz_data[i];       /// Density with error.
+            ///density = p_data[i] / c2_data[i];                           /// 1st order approxmation.
+            
+            total_density = rho_x[index[i]] + rho_y[index[i]] + rho_z[index[i]];
+            rho0 = rho0_raw_data[index[i]];
+            
+            
+            ///  Calculate the modulation coefficient as described by Skadazac and Wang.
+            /// --------------------- THIS IS WRONG FOR PRESSURES I'M USING -------------------
+            ///M = 2.0 * pezio_optical_coeff * (p_data[i] / (density * c2_data[i]));
+            /// Update the refractive index value based the pressure induced changes.
+            ///n_data[i] = n_background * (1 + 0.5 * M);
+            
+            
+            /// "Optical Measurement of Ultrasonic Poynting and Velocity Vector Fields".  (Pitts, 2002)
+            /// Below uses the elasto-optical coefficient to
+            /// calculate each component of the refractive index
+            elasto_optical_coeff = (n_background*n_background - 1) / (2*rho0*n_background);
+            
+            /// Update the sensor mask for refractive index changes, which can either be the entire medium, or a region of interest.
+            n_total_sensor[i] = n_background + elasto_optical_coeff *
+            ((total_density + rho0) - rho0);
+            
+            /// Update the full dimension refractive map for use with AO_sim, which will propagate photons through. We only update the
+            /// global medium with the portion containing the sensor.mask, which is our region of interest.
+            n_total_full_medium[index[i]] = n_total_sensor[i];
+        }
+
+    }
+
+//
+//    #ifndef __NO_OMP__
+//        #pragma omp parallel for schedule (static) if (sensor_size > 1e5)
+//    #endif
+//    for (size_t i = 0; i <sensor_size; i++)
 //    {
 //        /// Calculate the background density with the addition of the pressure induced variations.
 //        /// NOTE:
@@ -3092,153 +3313,30 @@ void TKSpaceFirstOrder3DSolver::Compute_refractive_index_data()
 //        ///density = rhox_data[i] + rhoy_data[i] + rhoz_data[i];       /// Density with error.
 //        ///density = p_data[i] / c2_data[i];                           /// 1st order approxmation.
 //        
+//        total_density = rho_x[index[i]] + rho_y[index[i]] + rho_z[index[i]];
+//        rho0 = rho0_raw_data[index[i]];
 //        
-//        
+//
 //        ///  Calculate the modulation coefficient as described by Skadazac and Wang.
 //        /// --------------------- THIS IS WRONG FOR PRESSURES I'M USING -------------------
 //        ///M = 2.0 * pezio_optical_coeff * (p_data[i] / (density * c2_data[i]));
 //        /// Update the refractive index value based the pressure induced changes.
 //        ///n_data[i] = n_background * (1 + 0.5 * M);
-//        
-//        
-//        
-//        /// XXX: Should the refractive index have an axial component?
-//        /// ---------------------------------------------------------
-//        /// Only if you plan on bending the path between scattering events (i.e. Eikonal),
-//        /// which would cause you to know the spatial refractive index gradient.
-//        
-//        
+//
+//
 //        /// "Optical Measurement of Ultrasonic Poynting and Velocity Vector Fields".  (Pitts, 2002)
 //        /// Below uses the elasto-optical coefficient to
 //        /// calculate each component of the refractive index
-//        elasto_optical_coeff = (n_background*n_background - 1) / (2*rho0_raw_data[i]*n_background);
-//        //rho0_val = rho0_raw_data[i];
+//        elasto_optical_coeff = (n_background*n_background - 1) / (2*rho0*n_background);
+//
+//        /// Update the sensor mask for refractive index changes, which can either be the entire medium, or a region of interest.
+//        n_total_sensor[i] = n_background + elasto_optical_coeff *
+//                            ((total_density + rho0) - rho0);
 //        
-//        n_x[i] = n_background + elasto_optical_coeff * ((rho0_raw_data[i] + rhox_raw_data[i]) - rho0_raw_data[i]);
-//        n_y[i] = n_background + elasto_optical_coeff * ((rho0_raw_data[i] + rhoy_raw_data[i]) - rho0_raw_data[i]);
-//        n_z[i] = n_background + elasto_optical_coeff * ((rho0_raw_data[i] + rhoz_raw_data[i]) - rho0_raw_data[i]);
-//        
+//        /// Update the full dimension refractive map for use with AO_sim, which will propagate photons through. We only update the
+//        /// global medium with the portion containing the sensor.mask, which is our region of interest.
+//        n_total_full_medium[index[i]] = n_total_sensor[i];
 //    }
-    
-    const long * index        = Get_sensor_mask_ind().GetRawData();
-    const size_t sensor_size  = Get_sensor_mask_ind().GetTotalElementCount();
-
-    #ifndef __NO_OMP__
-        #pragma omp parallel for schedule (static) if (sensor_size > 1e5)
-    #endif
-    for (size_t i = 0; i <sensor_size; i++)
-    {
-        /// Calculate the background density with the addition of the pressure induced variations.
-        /// NOTE:
-        /// The density passed in to this function is density obtained from k-Wave.  In the description
-        /// of how this density is calculated, described in k-wave_user_manual_1.0.1.pdf, it is not fully
-        /// accurate due to the removal of the -u*grad(rho0) term in the mass conservation equation (Eq. 2.4).
-        /// Three options exist:
-        /// 1) Verify that the error is not significant and live with it.
-        /// 2) Implement the term in k-Wave and pass it in here as an addition to rho (need each axial component).
-        /// 3) Use a 1st order approximation from (p=c0^2*rho).
-        ///density = rhox_data[i] + rhoy_data[i] + rhoz_data[i];       /// Density with error.
-        ///density = p_data[i] / c2_data[i];                           /// 1st order approxmation.
-
-
-
-        ///  Calculate the modulation coefficient as described by Skadazac and Wang.
-        /// --------------------- THIS IS WRONG FOR PRESSURES I'M USING -------------------
-        ///M = 2.0 * pezio_optical_coeff * (p_data[i] / (density * c2_data[i]));
-        /// Update the refractive index value based the pressure induced changes.
-        ///n_data[i] = n_background * (1 + 0.5 * M);
-
-
-
-        /// XXX: Should the refractive index have an axial component?
-        /// ---------------------------------------------------------
-        /// Only if you plan on bending the path between scattering events (i.e. Eikonal),
-        /// which would cause you to know the spatial refractive index gradient.
-
-
-        /// "Optical Measurement of Ultrasonic Poynting and Velocity Vector Fields".  (Pitts, 2002)
-        /// Below uses the elasto-optical coefficient to
-        /// calculate each component of the refractive index
-        elasto_optical_coeff = (n_background*n_background - 1) / (2*rho0_raw_data[index[i]]*n_background);
-        //rho0_val = rho0_raw_data[index[i]];
-
-        n_x[i] = n_background + elasto_optical_coeff * ((rho0_raw_data[index[i]] + rhox_raw_data[index[i]]) - rho0_raw_data[index[i]]);
-        n_y[i] = n_background + elasto_optical_coeff * ((rho0_raw_data[index[i]] + rhoy_raw_data[index[i]]) - rho0_raw_data[index[i]]);
-        n_z[i] = n_background + elasto_optical_coeff * ((rho0_raw_data[index[i]] + rhoz_raw_data[index[i]]) - rho0_raw_data[index[i]]);
-
-    }
-
-}
-
-
-void TKSpaceFirstOrder3DSolver::Compute_refractive_index_data_total()
-{
-    cout << "Computing refractive total values\n";
-    
-    float total_density                = 0.0f;
-    float elasto_optical_coeff         = 0.0f;
-    float rho0_val                     = 0.0f;
-    const float n_background           = 1.33f;
-
-    const float* rhox_raw_data         = Get_rhox().GetRawData();
-    const float* rhoy_raw_data         = Get_rhoy().GetRawData();
-    const float* rhoz_raw_data         = Get_rhoz().GetRawData();
-    const float* rho0_raw_data         = Get_rho0().GetRawData();
-
-    float* n_total_sensor              = Get_refractive_total_sensor().GetRawData();
-    float* n_total_full_medium         = Get_refractive_total_full_medium().GetRawData();
-
-    //float temp_x = 0.0f;
-    //float temp_y = 0.0f;
-    //float temp_z = 0.0f;
-
-    const long * index        = Get_sensor_mask_ind().GetRawData();
-    const size_t sensor_size  = Get_sensor_mask_ind().GetTotalElementCount();
-
-    #ifndef __NO_OMP__
-        #pragma omp parallel for schedule (static) if (sensor_size > 1e5)
-    #endif
-    for (size_t i = 0; i <sensor_size; i++)
-    {
-        /// Calculate the background density with the addition of the pressure induced variations.
-        /// NOTE:
-        /// The density passed in to this function is density obtained from k-Wave.  In the description
-        /// of how this density is calculated, described in k-wave_user_manual_1.0.1.pdf, it is not fully
-        /// accurate due to the removal of the -u*grad(rho0) term in the mass conservation equation (Eq. 2.4).
-        /// Three options exist:
-        /// 1) Verify that the error is not significant and live with it.
-        /// 2) Implement the term in k-Wave and pass it in here as an addition to rho (need each axial component).
-        /// 3) Use a 1st order approximation from (p=c0^2*rho).
-        ///density = rhox_data[i] + rhoy_data[i] + rhoz_data[i];       /// Density with error.
-        ///density = p_data[i] / c2_data[i];                           /// 1st order approxmation.
-
-        ///  Calculate the modulation coefficient as described by Skadazac and Wang.
-        /// --------------------- THIS IS WRONG FOR PRESSURES I'M USING -------------------
-        ///M = 2.0 * pezio_optical_coeff * (p_data[i] / (density * c2_data[i]));
-        /// Update the refractive index value based the pressure induced changes.
-        ///n_data[i] = n_background * (1 + 0.5 * M);
-
-
-        /// "Optical Measurement of Ultrasonic Poynting and Velocity Vector Fields".  (Pitts, 2002)
-        /// Below uses the elasto-optical coefficient to
-        /// calculate each component of the refractive index
-        elasto_optical_coeff = (n_background*n_background - 1) / (2*rho0_raw_data[index[i]]*n_background);
-        //rho0_val = rho0_raw_data[index[i]];
-
-//        total_density = sqrt(rhox_raw_data[index[i]]*rhox_raw_data[index[i]] +
-//                             rhoy_raw_data[index[i]]*rhoy_raw_data[index[i]] +
-//                             rhoz_raw_data[index[i]]*rhoz_raw_data[index[i]]);
-
-        total_density = rhox_raw_data[index[i]] + rhoy_raw_data[index[i]] + rhoz_raw_data[index[i]];
-        
-        /// Update the sensor mask for refractive index changes, which can either be the entire medium, or a region of interest.
-        n_total_sensor[i] = n_background + elasto_optical_coeff *
-                            ((total_density + rho0_raw_data[index[i]]) - rho0_raw_data[index[i]]);
-        
-        /// Update the full dimension refractive map for use with AO_sim, which will propagate photons through. We only update the
-        /// global medium with the portion containing the sensor.mask, which is our region of interest.
-        n_total_full_medium[index[i]] = n_total_sensor[i];
-    }
     
 #define DEBUG
 #ifdef DEBUG

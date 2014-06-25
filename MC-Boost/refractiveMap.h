@@ -11,7 +11,7 @@
 
 
 #include <MatrixClasses/RealMatrix.h>
-
+#include <Utils/DimensionSizes.h>
 
 
 #include <MC-Boost/voxel_struct.h>
@@ -41,7 +41,8 @@ class RefractiveMap
 public:
 
 
-    RefractiveMap();
+    /// Takes the dimensions of the entire medium (not just the dimensions of the sensor mask).
+    RefractiveMap(const int Nx, const int Ny, const int Nz);
     ~RefractiveMap();
     
     
@@ -55,7 +56,7 @@ public:
     float   getRefractiveIndexFromGradientGrid(const char axis, const int x_photon, const int y_photon, const int z_photon);
 
     /// Return the refractive index from the TRealMatrix.
-    float  Get_refractive_index_TRealMatrix(const int x, const int y, const int z);
+    float  Get_refractive_index_TRealMatrix(const int x_photon, const int y_photon, const int z_photon);
     
     /// Is simulation of the refractive gradient enabled.
     bool    IsSim_refractive_grad(void)
@@ -71,10 +72,11 @@ public:
     
     /// Assign the refractive index map (total) from KSpaceSolver, or loaded in from an HDF5 file.
     /// This assumes straight line scattering paths (i.e. no curving of trajectories).
-    void    Assign_refractive_map(TRealMatrix * refractive_index_total)
+    void    Update_refractive_map_from_sensor(TRealMatrix * refractive_index_total_sensor, const long * sensor_index);
+    
+    void    Update_refractive_map_from_full_medium(TRealMatrix * refractive_total_full_medium)
     {
-        ///refractive_total = &(static_cast<TRealMatrix &> (*refractive_index_total));
-        refractive_total = refractive_index_total;
+        refractive_total = refractive_total_full_medium;
     }
     
     /// Assign the refractive index maps obtained from KSpaceSolver, or loaded in from an HDF5 file,
@@ -105,7 +107,8 @@ private:
 
 	/// The number of voxels in the x, y, and z directions. (meters)
 	/// The voxel size. (meters)
-	VoxelAttributes voxel_dims;
+	//VoxelAttributes voxel_dims;
+    TDimensionSizes total_medium_size;
 
 	// The density, speed of sound and the pezio-optical coefficient of the medium simulated in k-Wave, which are
 	// used to calculate the refractive indices throughout the medium.
@@ -114,7 +117,7 @@ private:
 	double n_background;
 
 	// Mutex to serialize access to the displacement arrays.
-	boost::mutex m_refractive_mutex;
+	boost::mutex m_mutex;
 
 	// Input stream
 	std::ifstream pressure_file_stream;
@@ -139,7 +142,10 @@ private:
     TRealMatrix * refractive_z;
     
     /// The size of the sensor mask used in the kWave simulation.  That is, the number of voxels
-    /// in the 3D grid used in the simulation.
+    /// in the 3D grid used in the simulation to record data.
+    /// NOTE:
+    /// - This can be a sub-section of the entire medium, meaning it must not be required to be the
+    ///   same size as the entire simulation medium.
     double  sensor_mask_size;
 };
 

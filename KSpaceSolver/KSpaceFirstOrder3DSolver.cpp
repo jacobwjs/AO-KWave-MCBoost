@@ -347,32 +347,32 @@ void TKSpaceFirstOrder3DSolver::LoadInputData(){
 
     /// --------------------------------------- JWJS ---------------------------------------------
     if (Parameters->IsStore_refractive_total()) {
-        refractive_total_OutputStream->CreateStream(HDF5_OutputFile, refractive_total_Name, TotalSizes,
+        refractive_total_OutputStream->CreateStream(HDF5_OutputFile, refractive_total_sensor_Name, TotalSizes,
                                                     ChunkSizes, Parameters->GetCompressionLevel());
     }
     if (Parameters->IsStore_refractive_x()) {
-        refractive_x_OutputStream->CreateStream(HDF5_OutputFile, refractive_x_Name, TotalSizes,
+        refractive_x_OutputStream->CreateStream(HDF5_OutputFile, refractive_x_sensor_Name, TotalSizes,
                                                 ChunkSizes, Parameters->GetCompressionLevel());
     }
     if (Parameters->IsStore_refractive_y()) {
-        refractive_y_OutputStream->CreateStream(HDF5_OutputFile, refractive_y_Name, TotalSizes,
+        refractive_y_OutputStream->CreateStream(HDF5_OutputFile, refractive_y_sensor_Name, TotalSizes,
                                                 ChunkSizes, Parameters->GetCompressionLevel());
     }
     if (Parameters->IsStore_refractive_z()) {
-        refractive_z_OutputStream->CreateStream(HDF5_OutputFile, refractive_z_Name, TotalSizes,
+        refractive_z_OutputStream->CreateStream(HDF5_OutputFile, refractive_z_sensor_Name, TotalSizes,
                                                 ChunkSizes, Parameters->GetCompressionLevel());
     }
 
     if (Parameters->IsStore_disp_x()) {
-        disp_x_OutputStream->CreateStream(HDF5_OutputFile, disp_x_Name, TotalSizes,
+        disp_x_OutputStream->CreateStream(HDF5_OutputFile, disp_x_sensor_Name, TotalSizes,
                                           ChunkSizes, Parameters->GetCompressionLevel());
     }
     if (Parameters->IsStore_disp_y()) {
-        disp_y_OutputStream->CreateStream(HDF5_OutputFile, disp_y_Name, TotalSizes,
+        disp_y_OutputStream->CreateStream(HDF5_OutputFile, disp_y_sensor_Name, TotalSizes,
                                           ChunkSizes, Parameters->GetCompressionLevel());
     }
     if (Parameters->IsStore_disp_z()) {
-        disp_z_OutputStream->CreateStream(HDF5_OutputFile, disp_z_Name, TotalSizes,
+        disp_z_OutputStream->CreateStream(HDF5_OutputFile, disp_z_sensor_Name, TotalSizes,
                                           ChunkSizes, Parameters->GetCompressionLevel());
     }
     /// ---------------------------------------------
@@ -3001,7 +3001,7 @@ void TKSpaceFirstOrder3DSolver::StoreSensorData(){
             /// Check if the current time step falls within the window of time which data is supposed to be saved (set via commandline), or if this is
             /// the first time step (need non-modulated speckle pattern when ultrasound has not made its way into the medium yet).
             if (((t_index >= Parameters->GetStartTimeIndex()) && (t_index <= Parameters->GetEndTimeIndex()) && (Parameters->GetEndTimeIndex() != -1))
-                || (t_index == 1))
+                || (t_index == 0))
             {
                 cout << "Storing refractive index values (x,y,z)\n";
                 refractive_x_OutputStream->AddData(Get_refractive_x(), Get_sensor_mask_ind(), Get_Temp_1_RS3D().GetRawData());
@@ -3020,10 +3020,10 @@ void TKSpaceFirstOrder3DSolver::StoreSensorData(){
             /// Check if the current time step falls within the window of time which data is supposed to be saved (set via commandline), or if this is
             /// the first time step (need non-modulated speckle pattern when ultrasound has not made its way into the medium yet).
             if (((t_index >= Parameters->GetStartTimeIndex()) && (t_index <= Parameters->GetEndTimeIndex()) && (Parameters->GetEndTimeIndex() != -1))
-                || (t_index == 1))
+                || (t_index == 0))
             {
                 cout << "Storing refractive index total\n";
-                refractive_total_OutputStream->AddData(Get_refractive_total(), Get_sensor_mask_ind(), Get_Temp_1_RS3D().GetRawData());
+                refractive_total_OutputStream->AddData(Get_refractive_total_sensor(), Get_sensor_mask_ind(), Get_Temp_1_RS3D().GetRawData());
             }
         
    		}
@@ -3035,12 +3035,12 @@ void TKSpaceFirstOrder3DSolver::StoreSensorData(){
             /// Check if the current time step falls within the window of time which data is supposed to be saved (set via commandline), or if this is
             /// the first time step (need non-modulated speckle pattern when ultrasound has not made its way into the medium yet).
             if (((t_index >= Parameters->GetStartTimeIndex()) && (t_index <= Parameters->GetEndTimeIndex()) && (Parameters->GetEndTimeIndex() != -1))
-                || (t_index == 1))
+                || (t_index == 0))
             {
                 cout << "Storing displacement values (x,y,z)\n";
-                disp_x_OutputStream->AddData(Get_disp_x(), Get_sensor_mask_ind(), Get_Temp_1_RS3D().GetRawData());
-                disp_y_OutputStream->AddData(Get_disp_y(), Get_sensor_mask_ind(), Get_Temp_1_RS3D().GetRawData());
-                disp_z_OutputStream->AddData(Get_disp_z(), Get_sensor_mask_ind(), Get_Temp_1_RS3D().GetRawData());
+                disp_x_OutputStream->AddData(Get_disp_x_sensor(), Get_sensor_mask_ind(), Get_Temp_1_RS3D().GetRawData());
+                disp_y_OutputStream->AddData(Get_disp_y_sensor(), Get_sensor_mask_ind(), Get_Temp_1_RS3D().GetRawData());
+                disp_z_OutputStream->AddData(Get_disp_z_sensor(), Get_sensor_mask_ind(), Get_Temp_1_RS3D().GetRawData());
             }
         }
     /// --------------------------------
@@ -3162,9 +3162,9 @@ void TKSpaceFirstOrder3DSolver::Compute_refractive_index_data()
         elasto_optical_coeff = (n_background*n_background - 1) / (2*rho0_raw_data[index[i]]*n_background);
         //rho0_val = rho0_raw_data[index[i]];
 
-        n_x[index[i]] = n_background + elasto_optical_coeff * ((rho0_raw_data[index[i]] + rhox_raw_data[index[i]]) - rho0_raw_data[index[i]]);
-        n_y[index[i]] = n_background + elasto_optical_coeff * ((rho0_raw_data[index[i]] + rhoy_raw_data[index[i]]) - rho0_raw_data[index[i]]);
-        n_z[index[i]] = n_background + elasto_optical_coeff * ((rho0_raw_data[index[i]] + rhoz_raw_data[index[i]]) - rho0_raw_data[index[i]]);
+        n_x[i] = n_background + elasto_optical_coeff * ((rho0_raw_data[index[i]] + rhox_raw_data[index[i]]) - rho0_raw_data[index[i]]);
+        n_y[i] = n_background + elasto_optical_coeff * ((rho0_raw_data[index[i]] + rhoy_raw_data[index[i]]) - rho0_raw_data[index[i]]);
+        n_z[i] = n_background + elasto_optical_coeff * ((rho0_raw_data[index[i]] + rhoz_raw_data[index[i]]) - rho0_raw_data[index[i]]);
 
     }
 
@@ -3185,7 +3185,8 @@ void TKSpaceFirstOrder3DSolver::Compute_refractive_index_data_total()
     const float* rhoz_raw_data         = Get_rhoz().GetRawData();
     const float* rho0_raw_data         = Get_rho0().GetRawData();
 
-    float* n_total                     = Get_refractive_total().GetRawData();
+    float* n_total_sensor              = Get_refractive_total_sensor().GetRawData();
+    float* n_total_full_medium         = Get_refractive_total_full_medium().GetRawData();
 
     //float temp_x = 0.0f;
     //float temp_y = 0.0f;
@@ -3230,8 +3231,13 @@ void TKSpaceFirstOrder3DSolver::Compute_refractive_index_data_total()
 
         total_density = rhox_raw_data[index[i]] + rhoy_raw_data[index[i]] + rhoz_raw_data[index[i]];
         
-        n_total[index[i]] = n_background + elasto_optical_coeff *
+        /// Update the sensor mask for refractive index changes, which can either be the entire medium, or a region of interest.
+        n_total_sensor[i] = n_background + elasto_optical_coeff *
                             ((total_density + rho0_raw_data[index[i]]) - rho0_raw_data[index[i]]);
+        
+        /// Update the full dimension refractive map for use with AO_sim, which will propagate photons through. We only update the
+        /// global medium with the portion containing the sensor.mask, which is our region of interest.
+        n_total_full_medium[index[i]] = n_total_sensor[i];
     }
     
 #define DEBUG
@@ -3265,10 +3271,14 @@ void TKSpaceFirstOrder3DSolver::Compute_displacement_data()
     const float* uy_raw_data    = Get_uy_sgy().GetRawData();
     const float* uz_raw_data    = Get_uz_sgz().GetRawData();
 
-    float *disp_x_raw_data      = Get_disp_x().GetRawData();
-    float *disp_y_raw_data      = Get_disp_y().GetRawData();
-    float *disp_z_raw_data      = Get_disp_z().GetRawData();
-
+    float *disp_x_sensor      = Get_disp_x_sensor().GetRawData();
+    float *disp_y_sensor      = Get_disp_y_sensor().GetRawData();
+    float *disp_z_sensor      = Get_disp_z_sensor().GetRawData();
+    
+    float *disp_x_full_medium = Get_disp_x_full_medium().GetRawData();
+    float *disp_y_full_medium = Get_disp_y_full_medium().GetRawData();
+    float *disp_z_full_medium = Get_disp_z_full_medium().GetRawData();
+    
     const long * index        = Get_sensor_mask_ind().GetRawData();
     const size_t sensor_size = Get_sensor_mask_ind().GetTotalElementCount();
 
@@ -3277,9 +3287,15 @@ void TKSpaceFirstOrder3DSolver::Compute_displacement_data()
     #endif
     for (size_t i = 0; i < sensor_size; i++)
     {
-        disp_x_raw_data[index[i]] += ux_raw_data[index[i]]*Parameters->Get_dt();
-        disp_y_raw_data[index[i]] += uy_raw_data[index[i]]*Parameters->Get_dt();
-        disp_z_raw_data[index[i]] += uz_raw_data[index[i]]*Parameters->Get_dt();
+        /// Update the sensor mask.
+        disp_x_sensor[i] += ux_raw_data[index[i]]*Parameters->Get_dt();
+        disp_y_sensor[i] += uy_raw_data[index[i]]*Parameters->Get_dt();
+        disp_z_sensor[i] += uz_raw_data[index[i]]*Parameters->Get_dt();
+        
+        /// Update the full medium displacement maps used by the AO_sim.
+        disp_x_full_medium[index[i]] = disp_x_sensor[i];
+        disp_y_full_medium[index[i]] = disp_y_sensor[i];
+        disp_z_full_medium[index[i]] = disp_z_sensor[i];
     }
     
 

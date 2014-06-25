@@ -187,14 +187,22 @@ public:
     void    FromAO_sim_compute_refractive_index()     {Compute_refractive_index_data();};
     void    FromAO_sim_compute_displacement()         {Compute_displacement_data();};
 
-    TRealMatrix & FromAO_sim_Get_refractive_total()   {return Get_refractive_total();};
-    TRealMatrix & FromAO_sim_Get_refractive_x    ()   {return Get_refractive_x();};
-    TRealMatrix & FromAO_sim_Get_refractive_y    ()   {return Get_refractive_y();};
-    TRealMatrix & FromAO_sim_Get_refractive_z    ()   {return Get_refractive_z();};
+    TRealMatrix & FromAO_sim_Get_refractive_total_sensor()      {return Get_refractive_total_sensor();};
+    TRealMatrix & FromAO_sim_Get_refractive_total_full_medium() {return Get_refractive_total_full_medium();};
+    
+    TRealMatrix & FromAO_sim_Get_refractive_x    ()         {return Get_refractive_x();};
+    TRealMatrix & FromAO_sim_Get_refractive_y    ()         {return Get_refractive_y();};
+    TRealMatrix & FromAO_sim_Get_refractive_z    ()         {return Get_refractive_z();};
 
-    TRealMatrix & FromAO_sim_Get_disp_x          ()   {return Get_disp_x();};
-    TRealMatrix & FromAO_sim_Get_disp_y          ()   {return Get_disp_y();};
-    TRealMatrix & FromAO_sim_Get_disp_z          ()   {return Get_disp_z();};
+    TRealMatrix & FromAO_sim_Get_disp_x_sensor()        {return Get_disp_x_sensor();};
+    TRealMatrix & FromAO_sim_Get_disp_x_full_medium()   {return Get_disp_x_full_medium();};
+    TRealMatrix & FromAO_sim_Get_disp_y_sensor()        {return Get_disp_y_sensor();};
+    TRealMatrix & FromAO_sim_Get_disp_y_full_medium()   {return Get_disp_y_full_medium();};
+    TRealMatrix & FromAO_sim_Get_disp_z_sensor()        {return Get_disp_z_sensor();};
+    TRealMatrix & FromAO_sim_Get_disp_z_full_medium()   {return Get_disp_z_full_medium();};
+    
+    
+    TLongMatrix & FromAO_sim_Get_sensor_mask_ind ()   {return Get_sensor_mask_ind();};
 
     /// Used to track attributes about the simulations
     /// (max pressure, intensity, etc.)
@@ -585,28 +593,44 @@ protected:
 
 
     /// ------------------------ JWJS -------------------------------------------------------
-    /// Get the refractive_total from the container
-    TRealMatrix         & Get_refractive_total()
-                {return MatrixContainer.GetRealMatrix(refractive_total);};
+    /// Get the refractive_total_sensor from the container
+    TRealMatrix         & Get_refractive_total_sensor()
+                {return MatrixContainer.GetRealMatrix(refractive_total_sensor);};
+    /// Get the refractive_total_full_medium from the container
+    TRealMatrix         & Get_refractive_total_full_medium()
+    {return MatrixContainer.GetRealMatrix(refractive_total_full_medium);};
+    
+    
     /// Get the refractive_x from the container
     TRealMatrix         & Get_refractive_x()
-                {return MatrixContainer.GetRealMatrix(refractive_x);};
+                {return MatrixContainer.GetRealMatrix(refractive_x_sensor);};
     /// Get the refractive_y from the container
     TRealMatrix         & Get_refractive_y()
-                {return MatrixContainer.GetRealMatrix(refractive_y);};
+                {return MatrixContainer.GetRealMatrix(refractive_y_sensor);};
     /// Get the refractive_z from the container
     TRealMatrix         & Get_refractive_z()
-                {return MatrixContainer.GetRealMatrix(refractive_z);};
+                {return MatrixContainer.GetRealMatrix(refractive_z_sensor);};
 
-    /// Get the disp_x from the container
-    TRealMatrix         & Get_disp_x()
-                {return MatrixContainer.GetRealMatrix(disp_x);};
-    /// Get the disp_y from the container
-    TRealMatrix         & Get_disp_y()
-                {return MatrixContainer.GetRealMatrix(disp_y);};
+    /// Get the disp_x_sensor from the container
+    TRealMatrix         & Get_disp_x_sensor()
+                {return MatrixContainer.GetRealMatrix(disp_x_sensor);};
+    /// Get the disp_x_full_medium from the container
+    TRealMatrix         & Get_disp_x_full_medium()
+                {return MatrixContainer.GetRealMatrix(disp_x_full_medium);};
+    
+    /// Get the disp_y_sensor from the container
+    TRealMatrix         & Get_disp_y_sensor()
+                {return MatrixContainer.GetRealMatrix(disp_y_sensor);};
+    /// Get the disp_y_sensor from the container
+    TRealMatrix         & Get_disp_y_full_medium()
+                {return MatrixContainer.GetRealMatrix(disp_y_full_medium);};
+    
     /// Get the disp_z from the container
-    TRealMatrix         & Get_disp_z()
-                {return MatrixContainer.GetRealMatrix(disp_z);};
+    TRealMatrix         & Get_disp_z_sensor()
+                {return MatrixContainer.GetRealMatrix(disp_z_sensor);};
+    /// Get the disp_z from the container
+    TRealMatrix         & Get_disp_z_full_medium()
+                {return MatrixContainer.GetRealMatrix(disp_z_full_medium);};
     /// ------------------------------
 
 

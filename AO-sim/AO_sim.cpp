@@ -90,6 +90,30 @@ AO_Sim::Run_kWave_sim(TParameters * Parameters)
     cout << ".......... k-Wave Computation ...........\n";
     KSpaceSolver->PreCompute();
 
+    
+    /// It should still be possible from a kWave_sim to compute and save refractive index changes,
+    /// as well as displacements for later use. We see if any of those are enabled and if so we make
+    /// those computations in the loop below.
+    bool sim_refractive_total = Parameters->IsSim_refractive_total();
+    bool sim_refractive_grad  = Parameters->IsSim_refractive_grad();
+    bool sim_displacement     = Parameters->IsSim_displacement();
+    /// Decide what to simulate (refractive gradient, refractive_total, displacement).
+    if (sim_refractive_grad)
+    {
+        da_boost->Simulate_refractive_gradient(true);
+        cout << "Refractive gradient: ON\n";
+    }
+    if (sim_refractive_total)
+    {
+        da_boost->Simulate_refractive_total(true);
+        cout << "Refraction: ON\n";
+    }
+    if (sim_displacement)
+    {
+        da_boost->Simulate_displacement(true);
+        cout << "Displacement: ON\n";
+    }
+    
 
     //    ActPercent = 0;
     KSpaceSolver->FromAO_sim_PrintOutputHeader();
@@ -135,6 +159,49 @@ AO_Sim::Run_kWave_sim(TParameters * Parameters)
         //-- calculate initial pressure
         if ((KSpaceSolver->GetTimeIndex() == 0) && (Parameters->Get_p0_source_flag() == 1))
             KSpaceSolver->FromAO_sim_Calculate_p0_source();
+
+        
+        
+        /// If enabled, compute the refractive index for the medium at this time step.
+        if (sim_refractive_total)
+        {
+            KSpaceSolver->FromAO_sim_compute_refractive_index_total();
+        }
+
+        
+        /// If enabled, compute the displacement for the medium at this time step.
+        if (sim_displacement)
+        {
+            KSpaceSolver->FromAO_sim_compute_displacement();
+        }
+        
+        
+        
+        /// FIXME:
+        /// - There needs to be a calculation done based on the attributes and the medium (SOS) and ultrasound
+        ///   frequency, when to save data if --phase_inversion is enabled (i.e. only save data during PI phase shifts
+        ///   of the ultrasound propagation). For now this is just a place holder until that is done, and data is always
+        ///   saved at every time step over the interval specified.
+        ///
+        /// If the 'phase_inversion' option is enabled, then we only save data during PI phase shifts.
+        if (Parameters->IsPhase_inversion())
+        {
+            /// Here is where data is stored in their respective sensor data structure if enabled via the commandline.
+            /// The stored data is updated over the run of the simulation and written out to disk at the completion
+            /// of the simulation.
+            KSpaceSolver->FromAO_sim_StoreSensorData();
+        }
+        else
+        {
+            /// Here is where data is stored in their respective sensor data structure if enabled via the commandline.
+            /// The stored data is updated over the run of the simulation and written out to disk at the completion
+            /// of the simulation.
+            KSpaceSolver->FromAO_sim_StoreSensorData();
+        }
+
+
+
+
 
 
 
@@ -230,7 +297,19 @@ AO_Sim::Run_acousto_optics_sim(TParameters * Parameters)
        da_boost->Simulate_displacement(true);
        cout << "Displacement: ON\n";
     }
+    
+    /// FIXME:
+    /// - Need to die gracefully with an appropriate error message.
+    if (!sim_displacement || !sim_refractive_total || !sim_refractive_grad)
+    {
+        /// Should fail here, since nothing has been enabled for the AO_sim.
+    }
 
+    
+    /// If any of the above are turned on, we need the sensor mask indices to map the sensor
+    /// to the respective medium (refractive index medium, displacement medium, etc.) so that
+    /// it can be updated each run.
+    const long * sensor_index = KSpaceSolver->FromAO_sim_Get_sensor_mask_ind().GetRawData();
 
     /// Load data from disk
     cout << "Loading k-Wave data ........";
@@ -310,37 +389,39 @@ AO_Sim::Run_acousto_optics_sim(TParameters * Parameters)
 		/// photon propagation.
 		if (sim_refractive_grad || sim_displacement || sim_refractive_total)
 		{
-            TRealMatrix *refractive_total = NULL;
+            TRealMatrix *refractive_total_full_medium = NULL;
 
             TRealMatrix *refractive_x = NULL;
             TRealMatrix *refractive_y = NULL;
             TRealMatrix *refractive_z = NULL;
 
-            TRealMatrix *disp_x = NULL;
-            TRealMatrix *disp_y = NULL;
-            TRealMatrix *disp_z = NULL;
+            TRealMatrix *disp_x_full_medium = NULL;
+            TRealMatrix *disp_y_full_medium = NULL;
+            TRealMatrix *disp_z_full_medium = NULL;
 
 
             if (sim_refractive_grad)
             {
-                KSpaceSolver->FromAO_sim_compute_refractive_index();
-                refractive_x = &(KSpaceSolver->FromAO_sim_Get_refractive_x());
-                refractive_y = &(KSpaceSolver->FromAO_sim_Get_refractive_y());
-                refractive_z = &(KSpaceSolver->FromAO_sim_Get_refractive_z());
+                /// FIXME:
+                /// - Not currently functional.
+//                KSpaceSolver->FromAO_sim_compute_refractive_index();
+//                refractive_x = &(KSpaceSolver->FromAO_sim_Get_refractive_x());
+//                refractive_y = &(KSpaceSolver->FromAO_sim_Get_refractive_y());
+//                refractive_z = &(KSpaceSolver->FromAO_sim_Get_refractive_z());
             }
 
             if (sim_refractive_total)
             {
                 KSpaceSolver->FromAO_sim_compute_refractive_index_total();
-                refractive_total = &(KSpaceSolver->FromAO_sim_Get_refractive_total());
+                refractive_total_full_medium = &(KSpaceSolver->FromAO_sim_Get_refractive_total_full_medium());
             }
 
             if (sim_displacement)
             {
                 KSpaceSolver->FromAO_sim_compute_displacement();
-                disp_x = &(KSpaceSolver->FromAO_sim_Get_disp_x());
-                disp_y = &(KSpaceSolver->FromAO_sim_Get_disp_y());
-                disp_z = &(KSpaceSolver->FromAO_sim_Get_disp_z());
+                disp_x_full_medium = &(KSpaceSolver->FromAO_sim_Get_disp_x_full_medium());
+                disp_y_full_medium = &(KSpaceSolver->FromAO_sim_Get_disp_y_full_medium());
+                disp_z_full_medium = &(KSpaceSolver->FromAO_sim_Get_disp_z_full_medium());
             }
 
 			/// NOTE:
@@ -349,43 +430,47 @@ AO_Sim::Run_acousto_optics_sim(TParameters * Parameters)
             if (sim_refractive_total && sim_displacement)
             {
                 /// Create a refractive map (total) based upon the pressure and density changes at this time step.
-                m_medium->Create_refractive_map(refractive_total);
+                m_medium->Create_refractive_map_from_full_medium(refractive_total_full_medium);
 
                 /// Create a displacment map based upon the pressure at this time step.
-        		m_medium->Create_displacement_map(disp_x,
-                                                  disp_y,
-                                                  disp_z);
+        		m_medium->Create_displacement_map(disp_x_full_medium,
+                                                  disp_y_full_medium,
+                                                  disp_z_full_medium);
             }
 			else if (sim_refractive_grad && sim_displacement)
 			{
 				/// Create a refractive map (gradient) based upon the pressure and density changes at this time step.
-        		m_medium->Create_refractive_map(refractive_x,
-                                                refractive_y,
-                                                refractive_z);
+                /// FIXME:
+                /// - Not currently functional.
+//        		m_medium->Create_refractive_map(refractive_x,
+//                                                refractive_y,
+//                                                refractive_z);
 
 				/// Create a displacment map based upon the pressure at this time step.
-        		m_medium->Create_displacement_map(disp_x,
-                                                  disp_y,
-                                                  disp_z);
+        		m_medium->Create_displacement_map(disp_x_full_medium,
+                                                  disp_y_full_medium,
+                                                  disp_z_full_medium);
 			}
             else if (sim_refractive_total)
             {
                 /// Create a refractive map (total) based upon the pressure and density changes at this time step.
-                m_medium->Create_refractive_map(refractive_total);
+                m_medium->Create_refractive_map_from_full_medium(refractive_total_full_medium);
             }
 			else if (sim_refractive_grad)
 			{
                 /// Create a refractive map (gradient) based upon the pressure and density changes at this time step.
-        		m_medium->Create_refractive_map(refractive_x,
-                                                refractive_y,
-                                                refractive_z);
+                /// FIXME:
+                /// - Not currently functional.
+//        		m_medium->Create_refractive_map(refractive_x,
+//                                                refractive_y,
+//                                                refractive_z);
 			}
 			else if (sim_displacement)
 			{
                 /// Create a displacment map based upon the pressure at this time step.
-        		m_medium->Create_displacement_map(disp_x,
-                                                  disp_y,
-                                                  disp_z);
+        		m_medium->Create_displacement_map(disp_x_full_medium,
+                                                  disp_y_full_medium,
+                                                  disp_z_full_medium);
 
         	}
 
@@ -486,6 +571,16 @@ AO_Sim::Run_acousto_optics_sim(TParameters * Parameters)
 void
 AO_Sim::Run_acousto_optics_sim_loadData(TParameters * Parameters)
 {
+    
+    /// FIXME:
+    /// - Needs to be an update to this section. Sensor data is read in, but that might not
+    ///   be the size of the full medium. This needs to be taken into account by reading
+    ///   in sensor data from the h5 file and populating a larger matrix that accounts for
+    ///   the full medium.
+    ///
+    cout << "\n\n\n**************** Implement me *********************\n";
+    cout << "AO_Sim::Run_acousto_optics_sim_loadData(TParameters * Parameters)\n\n\n";
+    /*
     cout << ".............. Loading precomputed kWave data .............. \n";
     cout << "Opened: " << Parameters->GetOutputFileName() << '\n';
 
@@ -500,7 +595,7 @@ AO_Sim::Run_acousto_optics_sim_loadData(TParameters * Parameters)
     /// and/or displacement data recorded.
     size_t recorded_time_steps = -1;
 
-    TRealMatrix *refractive_total = NULL;
+    TRealMatrix *refractive_total_sensor = NULL;
     //TRealMatrix *refractive_x = NULL;
     //TRealMatrix *refractive_y = NULL;
     //TRealMatrix *refractive_z = NULL;
@@ -527,6 +622,8 @@ AO_Sim::Run_acousto_optics_sim_loadData(TParameters * Parameters)
     ///   This might take changing the matlab code for
     ///   saving these values to the INPUT h5 file, which will be written
     ///   out to the OUTPUT h5 file.
+    /// NOTE:
+    /// - This is not correct if the sensor.mask was not the full medium.
     TDimensionSizes sensor_size(Nx, Ny, Nz);
 
     /// Is simulation of refractive index changes (total) enabled.  If so create the
@@ -546,11 +643,11 @@ AO_Sim::Run_acousto_optics_sim_loadData(TParameters * Parameters)
 
         /// FIXME: Currently not used, but the number of time steps to run the simulation are found
         ///      from how many time steps of the ultrasound propagation were recoreded (e.g. refract_total_size.Y).
-        TDimensionSizes refract_total_size = HDF5_OutputFile.GetDatasetDimensionSizes(refractive_total_Name);
+        TDimensionSizes refract_total_size = HDF5_OutputFile.GetDatasetDimensionSizes(refractive_total_sensor_Name);
 
 
-        refractive_total = new TRealMatrix(sensor_size);
-        if (!refractive_total) throw bad_alloc();
+        refractive_total_sensor = new TRealMatrix(sensor_size);
+        if (!refractive_total_full_medium) throw bad_alloc();
 
         /// Set the number of iterations to load in data from the HDF5 file.
         /// Due to the way data is written out to the file, the 'Y' dimension of the
@@ -635,7 +732,7 @@ AO_Sim::Run_acousto_optics_sim_loadData(TParameters * Parameters)
             {
                 /// Read refractive total data in from the HDF5 file that holds the precomputed values for
                 /// a previously run kWave simulation.
-                refractive_total_InputStream->ReadData(refractive_total_Name, refractive_total->GetRawData());
+                refractive_total_InputStream->ReadData(refractive_total_sensor_Name, refractive_total_sensor->GetRawData());
             }
 
             if (Parameters->IsSim_displacement())
@@ -656,7 +753,8 @@ AO_Sim::Run_acousto_optics_sim_loadData(TParameters * Parameters)
         if (Parameters->IsSim_refractive_total())
         {
             /// Create a refractive map (total) based on the values read in from the HDF5 file.
-            m_medium->Create_refractive_map(refractive_total);
+            //m_medium->Create_refractive_map(refractive_total_sensor, sensor_size);
+            cout << "\n\n\n ********* Implement me *********  \n\n\n Parameters->IsSim_refractive_total()\n\n\n";
         }
         if (Parameters->IsSim_displacement())
         {
@@ -696,16 +794,17 @@ AO_Sim::Run_acousto_optics_sim_loadData(TParameters * Parameters)
             {
                 /// Read refractive total data in from the HDF5 file that holds the precomputed values for
                 /// a previously run kWave simulation.
-                refractive_total_InputStream->ReadData(refractive_total_Name, refractive_total->GetRawData());
+                refractive_total_InputStream->ReadData(refractive_total_Name, refractive_total_sensor->GetRawData());
 
 
                 /// Create a refractive map (total) based on the values read in from the HDF5 file.
-                m_medium->Create_refractive_map(refractive_total);
-
-                ///PrintMatrix((*refractive_total), Parameters);
+                //m_medium->Create_refractive_map(refractive_total_sensor, sensor_size);
+                cout << "\n\n\n ********* Implement me *********  \n\n\n Parameters->IsSim_refractive_total()\n\n\n";
+                
+                ///PrintMatrix((*refractive_total_sensor), Parameters);
 
                 /// Zero out the matrix for the next read in from the HDF5 file.
-                ///refractive_total->ZeroMatrix();
+                ///refractive_total_sensor->ZeroMatrix();
             }
 
             if (Parameters->IsSim_displacement())
@@ -754,8 +853,8 @@ AO_Sim::Run_acousto_optics_sim_loadData(TParameters * Parameters)
     /// Clean up memory.
     if (Parameters->IsSim_refractive_total())
     {
-        delete refractive_total;
-        refractive_total = NULL;
+        delete refractive_total_sensor;
+        refractive_total_sensor = NULL;
     }
     if (Parameters->IsSim_displacement())
     {
@@ -765,7 +864,8 @@ AO_Sim::Run_acousto_optics_sim_loadData(TParameters * Parameters)
         disp_x = disp_y = disp_z = NULL;
     }
 
-
+     */
+     
 }
 
 
@@ -814,10 +914,10 @@ AO_Sim::Create_MC_grid(TParameters * Parameters)
     
     
     size_t Nx, Ny, Nz;
-    /// Dimension size of the MC_sim grid, minus the PML in kWave.
-    Nx = Parameters->GetFullDimensionSizes().X - 2*x_pml_offset;
-    Ny = Parameters->GetFullDimensionSizes().Y - 2*y_pml_offset;
-    Nz = Parameters->GetFullDimensionSizes().Z - 2*z_pml_offset;
+    /// Dimension size of the MC_sim grid.
+    Nx = Parameters->GetFullDimensionSizes().X;
+    Ny = Parameters->GetFullDimensionSizes().Y;
+    Nz = Parameters->GetFullDimensionSizes().Z;
     
         
 
@@ -1160,7 +1260,7 @@ AO_Sim::Test_Read_HDF5_File(TParameters * Parameters)
 
 
 
-    TDimensionSizes temp = HDF5_OutputFile.GetDatasetDimensionSizes(refractive_total_Name);
+    TDimensionSizes temp = HDF5_OutputFile.GetDatasetDimensionSizes(refractive_total_sensor_Name);
 
     long int Nx, Ny, Nz;
     TDimensionSizes ScalarSizes(1,1,1);
@@ -1168,11 +1268,14 @@ AO_Sim::Test_Read_HDF5_File(TParameters * Parameters)
     HDF5_OutputFile.ReadCompleteDataset(Ny_Name,  ScalarSizes, &Ny);
     HDF5_OutputFile.ReadCompleteDataset(Nz_Name,  ScalarSizes, &Nz);
 
+    
+    /// FIXME:
+    /// - This is incorrect when sensor.mask does not match the full size of the medium.
     TDimensionSizes sensor_size(Nx, Ny, Nz);
-    TRealMatrix refract_total(sensor_size);
+    TRealMatrix refract_total_sensor(sensor_size);
 
-    refractive_total_InputStream->ReadData(refractive_total_Name, refract_total.GetRawData());
-    PrintMatrix(refract_total, Parameters);
+    refractive_total_InputStream->ReadData(refractive_total_sensor_Name, refract_total_sensor.GetRawData());
+    PrintMatrix(refract_total_sensor, Parameters);
 /// --------------------------------------- END InputHDF5Stream WORKING VERS ---------
 
 

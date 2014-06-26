@@ -66,40 +66,6 @@ AO_Sim::~AO_Sim()
 }
 
 
-void
-AO_Sim::Print_runtime_statistics(TParameters * Parameters)
-{
-    bool sim_refractive_total = Parameters->IsSim_refractive_total();
-    bool sim_refractive_grad  = Parameters->IsSim_refractive_grad();
-    bool sim_displacement     = Parameters->IsSim_displacement();
-    bool store_p_max          = Parameters->IsStore_p_max();
-    bool store_I_max          = Parameters->IsStore_I_max();
-    
-    /// Display statistics about the simulation if options were enabled.
-    if (sim_refractive_grad || sim_displacement || sim_refractive_total ||
-        store_p_max || store_I_max)
-    {
-        cout << "\n\n-------------------------------------------------------------\n";
-        cout << " Statistics / \n";
-        cout << " -----------";
-        
-        if (Parameters->IsStore_p_max())
-        {
-            cout << "\n Max pressure: " << KSpaceSolver->stats.max_pressure / 1e6 << " [MPa]";
-            cout << "\n - Time index: " << KSpaceSolver->stats.pressure_t_index;
-            cout << "\n - Simulation time: " << KSpaceSolver->stats.pressure_t_index * Parameters->Get_dt();
-        }
-        
-        if (Parameters->IsStore_I_max())
-        {
-            cout << "\n Max intensity: Implement me";
-            cout << "\n - Time index: Implement me";
-            cout << "\n - Simulation time: Implement me";
-        }
-    } /// end if
-    
-}
-
 
 /// Run the kWave simulation.
 void
@@ -262,7 +228,7 @@ AO_Sim::Run_kWave_sim(TParameters * Parameters)
     
     
     /// Display attributes about the simulation (e.g. max pressure, intensity, displacement, etc.).
-    Print_statistics(Parameters);
+    Print_runtime_ultrasound_statistics(Parameters);
 
 }
 
@@ -579,7 +545,7 @@ AO_Sim::Run_acousto_optics_sim(TParameters * Parameters)
     
     
     /// Display attributes about the simulation (e.g. max pressure, intensity, displacement, etc.).
-    Print_statistics(Parameters);
+    Print_runtime_ultrasound_statistics(Parameters);
         
 
 
@@ -1305,7 +1271,7 @@ AO_Sim::Test_Read_HDF5_File(TParameters * Parameters)
 
 
 void
-AO_Sim::Print_statistics(TParameters * Parameters)
+AO_Sim::Print_runtime_ultrasound_statistics(TParameters * Parameters)
 {
     /// Print statistics about what was specified via the commandline.
     ///

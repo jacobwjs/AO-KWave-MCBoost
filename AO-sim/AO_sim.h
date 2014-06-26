@@ -90,7 +90,8 @@ public:
     void        kWave_allocate_memory();
     
     
-    void        Print_statistics(TParameters * Parameters);
+    /// Print various runtime attributes about the ultrasound (and associated attributes like displacement, etc.).
+    void        Print_runtime_ultrasound_statistics(TParameters * Parameters);
     
     
     

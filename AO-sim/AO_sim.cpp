@@ -1312,6 +1312,18 @@ AO_Sim::Print_runtime_ultrasound_statistics(TParameters * Parameters)
             cout << "\n - Time index: " << KSpaceSolver->stats.intensity_t_index_zaxis;
             cout << "\n - Simulation time: " << KSpaceSolver->stats.intensity_t_index_zaxis * Parameters->Get_dt() << " [sec]";
         }
+        if (sim_displacement)
+        {
+            cout << "\n Max displacement: Implement me!!!";
+            cout << "\n - Time index:  Implement me!!!";
+            cout << "\n - Simulation time:  Implement me!!!";
+        }
+        if (sim_refractive_total)
+        {
+            cout << "\n Max refractive index value: Implement me!!!";
+            cout << "\n - Time index:  Implement me!!!";
+            cout << "\n - Simulation time:  Implement me!!!";
+        }
     } /// end if
     
 }

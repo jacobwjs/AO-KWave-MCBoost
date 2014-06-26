@@ -119,7 +119,7 @@ AO_Sim::Run_kWave_sim(TParameters * Parameters)
     KSpaceSolver->FromAO_sim_PrintOutputHeader();
     KSpaceSolver->IterationTimeStart();
 	size_t k_wave_Nt = Parameters->Get_Nt();
-    //k_wave_Nt = 10;
+    k_wave_Nt = 285;
     for (KSpaceSolver->SetTimeIndex(0); KSpaceSolver->GetTimeIndex() < k_wave_Nt; KSpaceSolver->IncrementTimeIndex()){
 
         cout << ".......... Running k-Wave ........... ("
@@ -1249,7 +1249,7 @@ AO_Sim::Test_Read_HDF5_File(TParameters * Parameters)
 
 
 
-    TDimensionSizes temp = HDF5_OutputFile.GetDatasetDimensionSizes(refractive_total_sensor_Name);
+    TDimensionSizes temp = HDF5_OutputFile.GetDatasetDimensionSizes(refractive_total_full_medium_Name);
 
     long int Nx, Ny, Nz;
     TDimensionSizes ScalarSizes(1,1,1);
@@ -1261,10 +1261,10 @@ AO_Sim::Test_Read_HDF5_File(TParameters * Parameters)
     /// FIXME:
     /// - This is incorrect when sensor.mask does not match the full size of the medium.
     TDimensionSizes sensor_size(Nx, Ny, Nz);
-    TRealMatrix refract_total_sensor(sensor_size);
+    TRealMatrix refract_total_full_medium(sensor_size);
 
-    refractive_total_InputStream->ReadData(refractive_total_sensor_Name, refract_total_sensor.GetRawData());
-    PrintMatrix(refract_total_sensor, Parameters);
+    refractive_total_InputStream->ReadData(refractive_total_full_medium_Name, refract_total_full_medium.GetRawData());
+    PrintMatrix(refract_total_full_medium, Parameters);
 /// --------------------------------------- END InputHDF5Stream WORKING VERS ---------
 
 

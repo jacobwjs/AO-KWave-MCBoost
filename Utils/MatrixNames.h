@@ -282,12 +282,15 @@ const char * const  refractive_total_sensor_Name        = "refractive_total_sens
 /// refractive_total_full_medium
 const char * const  refractive_total_full_medium_Name   = "refractive_total_full_medium";
 
-/// refractive_x_sensor variable name
-const char * const  refractive_x_sensor_Name = "refractive_x_sensor";
-/// refractive_y_sensor variable name
-const char * const  refractive_y_sensor_Name = "refractive_y_sensor";
-/// refractive_z_sensor variable name
-const char * const  refractive_z_sensor_Name = "refractive_zsensor";
+/// refractive_x_full_medium variable name
+const char * const  refractive_x_full_medium_Name   = "refractive_x_full_medium";
+const char * const  refractive_x_sensor_Name        = "refractive_x_sensor";
+/// refractive_y_full_medium variable name
+const char * const  refractive_y_full_medium_Name   = "refractive_y_full_medium";
+const char * const  refractive_y_sensor_Name        = "refractive_y_sensor";
+/// refractive_z_full_medium variable name
+const char * const  refractive_z_full_medium_Name   = "refractive_z_full_medium";
+const char * const  refractive_z_sensor_Name        = "refractive_z_sensor";
 
 /// disp_x_sensor variable name
 const char * const disp_x_sensor_Name       = "disp_x_sensor";

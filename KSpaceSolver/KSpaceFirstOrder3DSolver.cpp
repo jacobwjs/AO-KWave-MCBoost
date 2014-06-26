@@ -346,6 +346,11 @@ void TKSpaceFirstOrder3DSolver::LoadInputData(){
     }
 
     /// --------------------------------------- JWJS ---------------------------------------------
+    /// 'refractive_total_sensor_Name' is the name of the stream that this data is saved to in
+    /// the h5 OUTPUT file. We only save data over the specified sensor.mask region, not the
+    /// entire medium in order to save disk space when data is written out. Therefore to reflect
+    /// this in the h5 we name the stream accordingly. This is done for all output streams below
+    /// as well (i.e. named based on the sensor name specified in 'MatrixNames.h'.
     if (Parameters->IsStore_refractive_total()) {
         refractive_total_OutputStream->CreateStream(HDF5_OutputFile, refractive_total_sensor_Name, TotalSizes,
                                                     ChunkSizes, Parameters->GetCompressionLevel());
@@ -2996,8 +3001,6 @@ void TKSpaceFirstOrder3DSolver::StoreSensorData(){
     
     	if (Parameters->IsStore_refractive_x() || Parameters->IsStore_refractive_y() || Parameters->IsStore_refractive_z())
     	{
-    		///Compute_refractive_index_data();
-
             /// Check if the current time step falls within the window of time which data is supposed to be saved (set via commandline), or if this is
             /// the first time step (need non-modulated speckle pattern when ultrasound has not made its way into the medium yet).
             if (((t_index >= Parameters->GetStartTimeIndex()) && (t_index <= Parameters->GetEndTimeIndex()) && (Parameters->GetEndTimeIndex() != -1))
@@ -3015,7 +3018,6 @@ void TKSpaceFirstOrder3DSolver::StoreSensorData(){
 
     	if (Parameters->IsStore_refractive_total())
     	{
-    		///Compute_refractive_index_data_total();
 
             /// Check if the current time step falls within the window of time which data is supposed to be saved (set via commandline), or if this is
             /// the first time step (need non-modulated speckle pattern when ultrasound has not made its way into the medium yet).
@@ -3023,7 +3025,8 @@ void TKSpaceFirstOrder3DSolver::StoreSensorData(){
                 || (t_index == 0))
             {
                 cout << "Storing refractive index total\n";
-                refractive_total_OutputStream->AddData(Get_refractive_total_sensor(), Get_sensor_mask_ind(), Get_Temp_1_RS3D().GetRawData());
+                //refractive_total_OutputStream->AddData(Get_refractive_total_sensor(), Get_sensor_mask_ind(), Get_Temp_1_RS3D().GetRawData());
+                refractive_total_OutputStream->AddData(Get_refractive_total_full_medium(), Get_sensor_mask_ind(), Get_Temp_1_RS3D().GetRawData());
             }
         
    		}
@@ -3038,9 +3041,9 @@ void TKSpaceFirstOrder3DSolver::StoreSensorData(){
                 || (t_index == 0))
             {
                 cout << "Storing displacement values (x,y,z)\n";
-                disp_x_OutputStream->AddData(Get_disp_x_sensor(), Get_sensor_mask_ind(), Get_Temp_1_RS3D().GetRawData());
-                disp_y_OutputStream->AddData(Get_disp_y_sensor(), Get_sensor_mask_ind(), Get_Temp_1_RS3D().GetRawData());
-                disp_z_OutputStream->AddData(Get_disp_z_sensor(), Get_sensor_mask_ind(), Get_Temp_1_RS3D().GetRawData());
+                disp_x_OutputStream->AddData(Get_disp_x_full_medium(), Get_sensor_mask_ind(), Get_Temp_1_RS3D().GetRawData());
+                disp_y_OutputStream->AddData(Get_disp_y_full_medium(), Get_sensor_mask_ind(), Get_Temp_1_RS3D().GetRawData());
+                disp_z_OutputStream->AddData(Get_disp_z_full_medium(), Get_sensor_mask_ind(), Get_Temp_1_RS3D().GetRawData());
             }
         }
     /// --------------------------------
@@ -3052,11 +3055,11 @@ void TKSpaceFirstOrder3DSolver::StoreSensorData(){
 
 
 /// ------------------------ JWJS ----------------------------------------------------------------
-void TKSpaceFirstOrder3DSolver::Compute_refractive_index_data()
+void TKSpaceFirstOrder3DSolver::Compute_refractive_index_gradient_data()
 {
     cout << "\n\n\nComputing refractive gradient index values (x,y,z)\n";
     cout << "************** Implement me **************\n";
-    cout << "TKSpaceFirstOrder3DSolver::Compute_refractive_index_data()\n\n\n";
+    cout << "TKSpaceFirstOrder3DSolver::Compute_refractive_index_gradient_data()\n\n\n";
 //
 //    float elasto_optical_coeff         = 0.0f;
 //    float rho0_val                     = 0.0f;
@@ -3178,7 +3181,7 @@ void TKSpaceFirstOrder3DSolver::Compute_refractive_index_data()
 }
 
 
-void TKSpaceFirstOrder3DSolver::Compute_refractive_index_data_total()
+void TKSpaceFirstOrder3DSolver::Compute_refractive_index_total_data()
 {
     cout << "Computing refractive total values\n";
     
@@ -3193,7 +3196,7 @@ void TKSpaceFirstOrder3DSolver::Compute_refractive_index_data_total()
     const float* rho_y         = Get_rhoy().GetRawData();
     const float* rho_z         = Get_rhoz().GetRawData();
     
-    float* n_total_sensor              = Get_refractive_total_sensor().GetRawData();
+    ///float* n_total_sensor              = Get_refractive_total_sensor().GetRawData();
     float* n_total_full_medium         = Get_refractive_total_full_medium().GetRawData();
     
     const long * index        = Get_sensor_mask_ind().GetRawData();
@@ -3238,12 +3241,12 @@ void TKSpaceFirstOrder3DSolver::Compute_refractive_index_data_total()
             elasto_optical_coeff = (n_background*n_background - 1) / (2*rho0*n_background);
             
             /// Update the sensor mask for refractive index changes, which can either be the entire medium, or a region of interest.
-            n_total_sensor[i] = n_background + elasto_optical_coeff *
-            ((total_density + rho0) - rho0);
+            //n_total_sensor[i] = n_background + elasto_optical_coeff * ((total_density + rho0) - rho0);
             
             /// Update the full dimension refractive map for use with AO_sim, which will propagate photons through. We only update the
             /// global medium with the portion containing the sensor.mask, which is our region of interest.
-            n_total_full_medium[index[i]] = n_total_sensor[i];
+            //n_total_full_medium[index[i]] = n_total_sensor[i];
+            n_total_full_medium[index[i]] = n_background + elasto_optical_coeff * ((total_density + rho0) - rho0);
         }
 
     }
@@ -3268,7 +3271,9 @@ void TKSpaceFirstOrder3DSolver::Compute_refractive_index_data_total()
             ///density = rhox_data[i] + rhoy_data[i] + rhoz_data[i];       /// Density with error.
             ///density = p_data[i] / c2_data[i];                           /// 1st order approxmation.
             
+            /// The acoustically induced density changes in the medium.
             total_density = rho_x[index[i]] + rho_y[index[i]] + rho_z[index[i]];
+            /// The background density values of the medium without insonification (i.e. no ultrasound present).
             rho0 = rho0_raw_data[index[i]];
             
             
@@ -3285,58 +3290,16 @@ void TKSpaceFirstOrder3DSolver::Compute_refractive_index_data_total()
             elasto_optical_coeff = (n_background*n_background - 1) / (2*rho0*n_background);
             
             /// Update the sensor mask for refractive index changes, which can either be the entire medium, or a region of interest.
-            n_total_sensor[i] = n_background + elasto_optical_coeff *
-            ((total_density + rho0) - rho0);
+            ///n_total_sensor[i] = n_background + elasto_optical_coeff * ((total_density + rho0) - rho0);
             
             /// Update the full dimension refractive map for use with AO_sim, which will propagate photons through. We only update the
             /// global medium with the portion containing the sensor.mask, which is our region of interest.
-            n_total_full_medium[index[i]] = n_total_sensor[i];
+            n_total_full_medium[index[i]] = n_background + elasto_optical_coeff * ((total_density + rho0) - rho0);
         }
 
     }
 
-//
-//    #ifndef __NO_OMP__
-//        #pragma omp parallel for schedule (static) if (sensor_size > 1e5)
-//    #endif
-//    for (size_t i = 0; i <sensor_size; i++)
-//    {
-//        /// Calculate the background density with the addition of the pressure induced variations.
-//        /// NOTE:
-//        /// The density passed in to this function is density obtained from k-Wave.  In the description
-//        /// of how this density is calculated, described in k-wave_user_manual_1.0.1.pdf, it is not fully
-//        /// accurate due to the removal of the -u*grad(rho0) term in the mass conservation equation (Eq. 2.4).
-//        /// Three options exist:
-//        /// 1) Verify that the error is not significant and live with it.
-//        /// 2) Implement the term in k-Wave and pass it in here as an addition to rho (need each axial component).
-//        /// 3) Use a 1st order approximation from (p=c0^2*rho).
-//        ///density = rhox_data[i] + rhoy_data[i] + rhoz_data[i];       /// Density with error.
-//        ///density = p_data[i] / c2_data[i];                           /// 1st order approxmation.
-//        
-//        total_density = rho_x[index[i]] + rho_y[index[i]] + rho_z[index[i]];
-//        rho0 = rho0_raw_data[index[i]];
-//        
-//
-//        ///  Calculate the modulation coefficient as described by Skadazac and Wang.
-//        /// --------------------- THIS IS WRONG FOR PRESSURES I'M USING -------------------
-//        ///M = 2.0 * pezio_optical_coeff * (p_data[i] / (density * c2_data[i]));
-//        /// Update the refractive index value based the pressure induced changes.
-//        ///n_data[i] = n_background * (1 + 0.5 * M);
-//
-//
-//        /// "Optical Measurement of Ultrasonic Poynting and Velocity Vector Fields".  (Pitts, 2002)
-//        /// Below uses the elasto-optical coefficient to
-//        /// calculate each component of the refractive index
-//        elasto_optical_coeff = (n_background*n_background - 1) / (2*rho0*n_background);
-//
-//        /// Update the sensor mask for refractive index changes, which can either be the entire medium, or a region of interest.
-//        n_total_sensor[i] = n_background + elasto_optical_coeff *
-//                            ((total_density + rho0) - rho0);
-//        
-//        /// Update the full dimension refractive map for use with AO_sim, which will propagate photons through. We only update the
-//        /// global medium with the portion containing the sensor.mask, which is our region of interest.
-//        n_total_full_medium[index[i]] = n_total_sensor[i];
-//    }
+
     
 #define DEBUG
 #ifdef DEBUG
@@ -3369,9 +3332,9 @@ void TKSpaceFirstOrder3DSolver::Compute_displacement_data()
     const float* uy_raw_data    = Get_uy_sgy().GetRawData();
     const float* uz_raw_data    = Get_uz_sgz().GetRawData();
 
-    float *disp_x_sensor      = Get_disp_x_sensor().GetRawData();
-    float *disp_y_sensor      = Get_disp_y_sensor().GetRawData();
-    float *disp_z_sensor      = Get_disp_z_sensor().GetRawData();
+    float *disp_x_sensor      = Get_disp_x_full_medium().GetRawData();
+    float *disp_y_sensor      = Get_disp_y_full_medium().GetRawData();
+    float *disp_z_sensor      = Get_disp_z_full_medium().GetRawData();
     
     float *disp_x_full_medium = Get_disp_x_full_medium().GetRawData();
     float *disp_y_full_medium = Get_disp_y_full_medium().GetRawData();

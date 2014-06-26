@@ -2869,8 +2869,8 @@ void TKSpaceFirstOrder3DSolver::StoreSensorData(){
     /// -------------------------------- JWJS ---------------------------------
     /// If it's the first time coming here (i.e. t_index == 0), we want to store
     /// data for the non-modulated speckle pattern formation.
-    if (((t_index < Parameters->GetStartTimeIndex()) && (t_index != 0)) ||
-         (t_index > Parameters->GetEndTimeIndex())) {
+    if (((t_index < Parameters->GetStartTimeIndex()+1) && (t_index != 0)) ||
+         (t_index > (Parameters->GetEndTimeIndex()+1))) {
             return;
         }
     /// -------------------------------------/
@@ -3021,7 +3021,7 @@ void TKSpaceFirstOrder3DSolver::StoreSensorData(){
 
             /// Check if the current time step falls within the window of time which data is supposed to be saved (set via commandline), or if this is
             /// the first time step (need non-modulated speckle pattern when ultrasound has not made its way into the medium yet).
-            if (((t_index >= Parameters->GetStartTimeIndex()) && (t_index <= Parameters->GetEndTimeIndex()) && (Parameters->GetEndTimeIndex() != -1))
+            if (((t_index >= Parameters->GetStartTimeIndex()) && (t_index <= Parameters->GetEndTimeIndex()+1) && (Parameters->GetEndTimeIndex() != -1))
                 || (t_index == 0))
             {
                 cout << "Storing refractive index total\n";
@@ -3037,7 +3037,7 @@ void TKSpaceFirstOrder3DSolver::StoreSensorData(){
 
             /// Check if the current time step falls within the window of time which data is supposed to be saved (set via commandline), or if this is
             /// the first time step (need non-modulated speckle pattern when ultrasound has not made its way into the medium yet).
-            if (((t_index >= Parameters->GetStartTimeIndex()) && (t_index <= Parameters->GetEndTimeIndex()) && (Parameters->GetEndTimeIndex() != -1))
+            if (((t_index >= Parameters->GetStartTimeIndex()) && (t_index <= Parameters->GetEndTimeIndex()+1) && (Parameters->GetEndTimeIndex() != -1))
                 || (t_index == 0))
             {
                 cout << "Storing displacement values (x,y,z)\n";

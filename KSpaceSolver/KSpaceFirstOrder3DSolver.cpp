@@ -3195,8 +3195,7 @@ void TKSpaceFirstOrder3DSolver::Compute_refractive_index_total_data()
     const float* rho_x         = Get_rhox().GetRawData();
     const float* rho_y         = Get_rhoy().GetRawData();
     const float* rho_z         = Get_rhoz().GetRawData();
-    
-    ///float* n_total_sensor              = Get_refractive_total_sensor().GetRawData();
+
     float* n_total_full_medium         = Get_refractive_total_full_medium().GetRawData();
     
     const long * index        = Get_sensor_mask_ind().GetRawData();

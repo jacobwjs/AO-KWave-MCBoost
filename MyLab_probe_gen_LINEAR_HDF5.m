@@ -1,5 +1,3 @@
-    
-
 clear all;
 
 
@@ -84,11 +82,38 @@ alpha_power_agar    = 1.5;
 BonA_agar           = 6.0;
 
 
-rho0 = rho0_agar;
-c0 = c0_agar;
-medium.alpha_coeff = alpha_atten_agar; 	
-medium.alpha_power = alpha_power_agar;
-medium.BonA = BonA_agar;
+rho0 = 1000;
+c0 = 1500;
+
+Nx_tot = Nx;
+Ny_tot = Ny;
+Nz_tot = Nz;
+
+% define a random distribution of scatterers for the medium
+%background_map_mean = 1;
+%background_map_std = 0.008;
+%background_map = background_map_mean + background_map_std*randn([Nx, Ny, Nz]);
+%medium.sound_speed = sound_speed_map(:, :, :);  % [m/s]
+%medium.density = density_map(:, :, :);          % [kg/m^3]
+
+
+medium.sound_speed = c0;  % [m/s]
+medium.density     = rho0;  % [kg/m^3]
+medium.alpha_coeff = 0.0;   % [dB/(MHz^y cm)] 	
+medium.alpha_power = 0.0;
+medium.BonA = 0.0;
+
+
+
+% =========================================================================
+% DEFINE THE SENSOR PARAMETERS
+% =========================================================================
+% Place sensors over a region of interest in the medium.
+sensor.mask = zeros(Nx, Ny, Nz);
+sensor.mask(PML_X_SIZE*2:(Nx-2*PML_X_SIZE),...
+            PML_Y_SIZE*2:(Ny-2*PML_Y_SIZE),...
+            PML_Z_SIZE*2:(Nz-2*PML_Z_SIZE)) = 1;
+
 
 % create the time array
 % -------------------------------------------------------------------------
@@ -289,25 +314,9 @@ transducer = makeTransducer(kgrid, transducer);
 % print out transducer properties
 transducer.properties
 % transducer.plot
-% 
-% =========================================================================
-% DEFINE THE MEDIUM PROPERTIES
-% =========================================================================
-
-Nx_tot = Nx;
-Ny_tot = Ny;
-Nz_tot = Nz;
-% 
-% define a random distribution of scatterers for the medium
-background_map_mean = 1;
-background_map_std = 0.008;
-background_map = background_map_mean + background_map_std*randn([Nx, Ny, Nz]);
 
 
- 
-% % define properties
-sound_speed_map = c0*ones(Nx, Ny, Nz).*background_map;
-density_map     = rho0*ones(Nx, Ny, Nz).*background_map;
+
 
  
 % % =========================================================================
@@ -324,18 +333,7 @@ input_args = {...
     %'DisplayMask', transducer.mask,...
     %'PlotScale', [-(source_strength+source_strength/2), (source_strength+source_strength/2)],...
      };
-    
 
-
-
-
-medium.sound_speed = sound_speed_map(:, :, :);  % [m/s]
-medium.density = density_map(:, :, :);          % [kg/m^3]
-
-
-% Place sensors over the entire medium.
-sensor.mask = ones(Nx, Ny, Nz);
-%sensor.record = {'p_max', 'p_rms'};
  
 % save input files to disk
 if (PA_GUIDED_FOCUS)
@@ -343,12 +341,11 @@ if (PA_GUIDED_FOCUS)
     PA_file = char(PA_file(1,end));                     % Convert last cell to char array
     filename = ['MyLAB_', PA_file(1:end-4),
                 num2str(source_strength), 'Pa', '_',...
-                num2str(tone_burst_freq), 'Hz','_INPUT.h5'];     % Form new file name
+                num2str(tone_burst_freq), 'Hz','LINEAR_INPUT.h5'];     % Form new file name
 else
 
     filename = ['MyLAB_FF', num2str(transducer.focus_distance), '_',...
                 num2str(source_strength), 'Pa', '_',...
-                num2str(tone_burst_freq), 'Hz', '_INPUT.h5'];
+                num2str(tone_burst_freq), 'Hz', 'LINEAR_INPUT.h5'];
 end
 kspaceFirstOrder3D(kgrid, medium, transducer, sensor, 'SaveToDisk', filename, input_args{:});
-

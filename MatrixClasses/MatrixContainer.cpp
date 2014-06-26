@@ -489,15 +489,15 @@ void TMatrixContainer::AddMatricesIntoContainer(){
     
     if (Params->IsStore_refractive_x())
     {
-       MatrixContainer[refractive_x_full_medium].SetAllValues(NULL,TMatrixRecord::mdtReal, SensorDims, false, refractive_x_full_medium_Name);
+       MatrixContainer[refractive_x_full_medium].SetAllValues(NULL,TMatrixRecord::mdtReal, FullDim, false, refractive_x_full_medium_Name);
     }
     if (Params->IsStore_refractive_y())
     {
-        MatrixContainer[refractive_y_full_medium].SetAllValues(NULL,TMatrixRecord::mdtReal, SensorDims, false, refractive_y_full_medium_Name);
+        MatrixContainer[refractive_y_full_medium].SetAllValues(NULL,TMatrixRecord::mdtReal, FullDim, false, refractive_y_full_medium_Name);
     }
     if (Params->IsStore_refractive_z())
     {
-        MatrixContainer[refractive_z_full_medium].SetAllValues(NULL,TMatrixRecord::mdtReal, SensorDims, false, refractive_z_full_medium_Name);
+        MatrixContainer[refractive_z_full_medium].SetAllValues(NULL,TMatrixRecord::mdtReal, FullDim, false, refractive_z_full_medium_Name);
     }
     
     if (Params->IsStore_disp_x())

@@ -90,7 +90,7 @@ public:
     void        kWave_allocate_memory();
     
     
-    void        Print_runtime_statistics(TParameters * Parameters);
+    void        Print_statistics(TParameters * Parameters);
     
     
     

@@ -260,6 +260,9 @@ AO_Sim::Run_kWave_sim(TParameters * Parameters)
     cout << "\nTotal elapsed simulation time: " << KSpaceSolver->GetTotalTime();
     
     
+    
+    /// Display attributes about the simulation (e.g. max pressure, intensity, displacement, etc.).
+    Print_statistics(Parameters);
 
 }
 
@@ -497,10 +500,23 @@ AO_Sim::Run_acousto_optics_sim(TParameters * Parameters)
 
 
         	/// Only run the MC-sim after ultrasound has propagated a certain distance (or time).
-			/// Similar to the stroboscopic experiments.
-            /// This implements PI phase shifts of US propagation and light injection.
-            /// XXX:
-            /// - Ensure that we make it in here when 'curr_time = 0'.
+			/// Similar to the stroboscopic experiments. In essence we only run the the MC_sim
+            /// (i.e. light injection) every PI phase step.
+            /// If the 'phase_inversion' option was enabled via the commandline we only save
+            /// data (i.e. store sensor data) during these phase steps. It limits the total amount
+            /// of data saved (pressure values, displacement values, whatever was enabled on the commandline)
+            /// to the PI phase shifts of the US wave propagation. This is useful for later simulations where
+            /// the medium optical properties change, but the acoustic properties and US propagation is the same.
+            /// FIXME:
+            /// - Currently 'MC_time_step' requires calculation in 'main.cpp', but this should done
+            ///   automatically when reading in the INPUT h5 file. Something along the line of,
+            ///   MC_time_step = (US_wavelength/2) * (1/medium_speed_of_sound);
+            ///   NOTE:
+            ///   - For what is below to work 'MC_time_step' must be evenly divisible by 'dt', which is something
+            ///     that needs to be ensured when generating the INPUT h5 file. In fact this entire calculation
+            ///     should be made over there and loaded from the INPUT h5 file at runtime. This ensures no mistakes
+            ///     arise. The problem can occur when the US wave is advanced beyond a PI phase shift and light is never
+            ///     injected at the proper time. This will reduce the detected tagged fraction.
         	static size_t cnt = MC_time_step/Parameters->Get_dt();
             size_t curr_time = KSpaceSolver->GetTimeIndex();
         	if (((curr_time % cnt) == 0) && (curr_time >= 0))
@@ -510,11 +526,12 @@ AO_Sim::Run_acousto_optics_sim(TParameters * Parameters)
                                               m_Laser_injection_coords,
                                               KSpaceSolver->GetTimeIndex());
                 
-                /// If 'phase_inversion' is enabled, then we only save data during PI phase shifts.
+                /// If the 'phase_inversion' option is enabled, then we only save data during PI phase shifts.
                 if (Parameters->IsPhase_inversion())
                 {
-                    /// Here is where the computation for the refractive index, displacements,
-                    /// and all the values kWave needs, takes place if commandline flags for saving data hvave been set.
+                    /// Here is where data is stored in their respective sensor data structure if enabled via the commandline.
+                    /// The stored data is updated over the run of the simulation and written out to disk at the completion
+                    /// of the simulation.
                     KSpaceSolver->FromAO_sim_StoreSensorData();
                 }
         	}
@@ -529,11 +546,11 @@ AO_Sim::Run_acousto_optics_sim(TParameters * Parameters)
         /// If 'phase_inversion' is NOT enabled, then we save data every time step over the time period specified on the commandline.
         if (! Parameters->IsPhase_inversion())
         {
-            /// Here is where the computation for the refractive index, displacements,
-            /// and all the values kWave needs, takes place if commandline flags for saving data hvave been set.
+            /// Here is where data is stored in their respective sensor data structure if enabled via the commandline.
+            /// The stored data is updated over the run of the simulation and written out to disk at the completion
+            /// of the simulation.
             KSpaceSolver->FromAO_sim_StoreSensorData();
         }
-        
         
         KSpaceSolver->FromAO_sim_PrintStatistics();
         
@@ -561,7 +578,8 @@ AO_Sim::Run_acousto_optics_sim(TParameters * Parameters)
     cout << "\nTotal elapsed simulation time: " << KSpaceSolver->GetTotalTime();
     
     
-   
+    /// Display attributes about the simulation (e.g. max pressure, intensity, displacement, etc.).
+    Print_statistics(Parameters);
         
 
 
@@ -994,7 +1012,7 @@ AO_Sim::Add_circular_detector_MC_medium(Detector_Properties &props)
 {
 
 
-   
+    
     assert(m_medium != NULL);
 
     /*

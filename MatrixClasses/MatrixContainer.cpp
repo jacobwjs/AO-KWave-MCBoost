@@ -483,34 +483,39 @@ void TMatrixContainer::AddMatricesIntoContainer(){
     /// ------------------------------------- JWJS ---------------------------------------------------------------------------
     if (Params->IsStore_refractive_total())
     {
-       MatrixContainer[refractive_total].SetAllValues(NULL,TMatrixRecord::mdtReal, FullDim, false, refractive_total_Name);
+       //MatrixContainer[refractive_total_sensor].SetAllValues(NULL,TMatrixRecord::mdtReal, SensorDims, false, refractive_total_sensor_Name);
+       MatrixContainer[refractive_total_full_medium].SetAllValues(NULL,TMatrixRecord::mdtReal, FullDim, false, refractive_total_full_medium_Name);
     }
+    
     if (Params->IsStore_refractive_x())
     {
-       MatrixContainer[refractive_x].SetAllValues(NULL,TMatrixRecord::mdtReal, FullDim, false, refractive_x_Name);
+       MatrixContainer[refractive_x_full_medium].SetAllValues(NULL,TMatrixRecord::mdtReal, SensorDims, false, refractive_x_full_medium_Name);
     }
     if (Params->IsStore_refractive_y())
     {
-        MatrixContainer[refractive_y].SetAllValues(NULL,TMatrixRecord::mdtReal, FullDim, false, refractive_y_Name);
+        MatrixContainer[refractive_y_full_medium].SetAllValues(NULL,TMatrixRecord::mdtReal, SensorDims, false, refractive_y_full_medium_Name);
     }
     if (Params->IsStore_refractive_z())
     {
-        MatrixContainer[refractive_z].SetAllValues(NULL,TMatrixRecord::mdtReal, FullDim, false, refractive_z_Name);
+        MatrixContainer[refractive_z_full_medium].SetAllValues(NULL,TMatrixRecord::mdtReal, SensorDims, false, refractive_z_full_medium_Name);
     }
     
     if (Params->IsStore_disp_x())
     {
-        MatrixContainer[disp_x].SetAllValues(NULL,TMatrixRecord::mdtReal, FullDim, false, disp_x_Name);
+        //MatrixContainer[disp_x_sensor].SetAllValues(NULL,TMatrixRecord::mdtReal, SensorDims, false, disp_x_sensor_Name);
+        MatrixContainer[disp_x_full_medium].SetAllValues(NULL,TMatrixRecord::mdtReal, FullDim, false, disp_x_full_medium_Name);
     }
     if (Params->IsStore_disp_y())
     {
-        MatrixContainer[disp_y].SetAllValues(NULL,TMatrixRecord::mdtReal, FullDim, false, disp_y_Name);
+        //MatrixContainer[disp_y_sensor].SetAllValues(NULL,TMatrixRecord::mdtReal, SensorDims, false, disp_y_sensor_Name);
+        MatrixContainer[disp_y_full_medium].SetAllValues(NULL,TMatrixRecord::mdtReal, FullDim, false, disp_y_full_medium_Name);
     }
     if (Params->IsStore_disp_z())
     {
-        MatrixContainer[disp_z].SetAllValues(NULL,TMatrixRecord::mdtReal, FullDim, false, disp_z_Name);
+        //MatrixContainer[disp_z_sensor].SetAllValues(NULL,TMatrixRecord::mdtReal, SensorDims, false, disp_z_sensor_Name);
+        MatrixContainer[disp_z_full_medium].SetAllValues(NULL,TMatrixRecord::mdtReal, FullDim, false, disp_z_full_medium_Name);
     }
-    /// ------------------------------------------------
+    /// --------------------------------------------/
     
     
 }// end of InitMatrixContainer

@@ -89,7 +89,9 @@ public:
     /// Assigns the current pressure from k-Wave to the medium during run-time.
     /// NOTE: There is no offline processing, pressure matrices are passed in as they are obtained from 'AO_sim' or loaded
     ///       in from a previous run of kWave.
-    void    Create_refractive_map(TRealMatrix * refractive_total);
+    void    Create_refractive_map_from_sensor(TRealMatrix * refractive_total_sensor, const long * sensor_index);
+    void    Create_refractive_map_from_full_medium(TRealMatrix * refractive_total_full_medium);
+    
     /// Used with bending of photon trajectories.
     /// FIXME:
     /// - Needs implementation
@@ -110,11 +112,11 @@ public:
     /// Invert the phase of the displacement data by multiplying everything by -1 (180 degree phase shift).
     void    Invert_displacement_map_phase()     {kwave.dmap->Invert_phase();};
 
-    // Add a refractive map object that holds refractive index values generated from k-Wave pressures.
-    void	addRefractiveMap(RefractiveMap *n_map);
+    /// Add a refractive map object that holds refractive index values generated from k-Wave pressure and density changes.
+    //void	addRefractiveMap(RefractiveMap *n_map);
 
-    // Add a displacement map object that holds pressure generated from k-Wave
-    void    addDisplacementMap(DisplacementMap *d_map);
+    /// Add a displacement map object that holds acoustic particle displacements generated from k-Wave velocity fields.
+    //void    addDisplacementMap(DisplacementMap *d_map);
 
 	// Returns the absorption coefficient (mu_a) for a given depth (i.e. a layer).
 	double	getLayerAbsorptionCoeff(double depth);

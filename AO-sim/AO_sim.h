@@ -98,7 +98,6 @@ public:
     
     
     /********************** MC-Boost *************************************************/
-    
     /// Print MC-Boost header (i.e. version number).
     string  Print_MCBoost_header() {return da_boost->GetCodeName();}
     

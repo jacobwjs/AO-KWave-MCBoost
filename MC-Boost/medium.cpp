@@ -124,41 +124,41 @@ void Medium::addPressureMap(PressureMap *p_map)
 
 }
 
-// Add a 3D refractive map object to the medium.
-void Medium::addRefractiveMap(RefractiveMap *n_map)
-{
-	assert(n_map != NULL);
+//// Add a 3D refractive map object to the medium.
+//void Medium::addRefractiveMap(RefractiveMap *n_map)
+//{
+//	assert(n_map != NULL);
+//
+//    /// Since we are adding a new refractive map, there is a chance one is already assigned.
+//    /// If one already exists, we free the memory and assign the new one.
+//    if (kwave.nmap != NULL)
+//    {
+//        delete kwave.nmap;
+//        kwave.nmap = NULL;
+//    }
+//
+//    /// Assign new refractive map.
+//	kwave.nmap = n_map;
+//
+//}
 
-    /// Since we are adding a new refractive map, there is a chance one is already assigned.
-    /// If one already exists, we free the memory and assign the new one.
-    if (kwave.nmap != NULL)
-    {
-        delete kwave.nmap;
-        kwave.nmap = NULL;
-    }
 
-    /// Assign new refractive map.
-	kwave.nmap = n_map;
-
-}
-
-
-// Add an 3-dimensional displacement map object to the medium.
-void Medium::addDisplacementMap(DisplacementMap *d_map)
-{
-	assert(d_map != NULL);
-
-    /// Since we are adding a new displacement map, there is a chance one is already assigned.
-    /// If one already exists, we free the memory and assign the new one.
-    if (kwave.dmap != NULL)
-    {
-        delete kwave.dmap;
-        kwave.dmap = NULL;
-    }
-
-    /// Assign the new displacement map.
-	kwave.dmap = d_map;
-}
+//// Add an 3-dimensional displacement map object to the medium.
+//void Medium::addDisplacementMap(DisplacementMap *d_map)
+//{
+//	assert(d_map != NULL);
+//
+//    /// Since we are adding a new displacement map, there is a chance one is already assigned.
+//    /// If one already exists, we free the memory and assign the new one.
+//    if (kwave.dmap != NULL)
+//    {
+//        delete kwave.dmap;
+//        kwave.dmap = NULL;
+//    }
+//
+//    /// Assign the new displacement map.
+//	kwave.dmap = d_map;
+//}
 
 
 
@@ -420,7 +420,7 @@ void Medium::Create_displacement_map(TRealMatrix * disp_x,
 
 /// Create the refractive index map based on what is returned from the computation
 /// that happens in KSpaceSolver or from what was loaded in from an HDF5 file from a previous run.
-void Medium::Create_refractive_map(TRealMatrix * refractive_total)
+void Medium::Create_refractive_map_from_sensor(TRealMatrix * refractive_total_sensor, const long * sensor_index)
 {
     /// XXX:
     /// - This is defined here, but would change depending on temperature changes, if that
@@ -429,16 +429,33 @@ void Medium::Create_refractive_map(TRealMatrix * refractive_total)
 
     if(kwave.nmap == NULL)
     {
-        /// Takes pressure as an argument in the constructor and forms the refractive map data.
-        kwave.nmap = new RefractiveMap();
-        kwave.nmap->Assign_refractive_map(refractive_total);
+        /// Create a new 'RefractiveMap' based on the size of the full medium.
+        kwave.nmap = new RefractiveMap(Nx, Ny, Nz);
     }
-    else
-    {
-        /// Updates the refractive map data.
-        kwave.nmap->Assign_refractive_map(refractive_total);
-    }
+    
+    /// Updates the refractive map data.
+    kwave.nmap->Update_refractive_map_from_sensor(refractive_total_sensor,
+                                                      sensor_index);
+    
 
+}
+
+void Medium::Create_refractive_map_from_full_medium(TRealMatrix * refractive_total_full_medium)
+{
+    /// XXX:
+    /// - This is defined here, but would change depending on temperature changes, if that
+    ///   is ever incorporated into this simulation, which in turn would affect density and SOS.
+    background_refractive_index = 1.33;
+    
+    if(kwave.nmap == NULL)
+    {
+        /// Create a new 'RefractiveMap' based on the size of the full medium.
+        kwave.nmap = new RefractiveMap(Nx, Ny, Nz);
+    }
+    
+    /// Updates the refractive map data.
+    kwave.nmap->Update_refractive_map_from_full_medium(refractive_total_full_medium);
+                                                  
 }
 
 
@@ -453,21 +470,25 @@ void Medium::Create_refractive_map(TRealMatrix * refractive_x,
     background_refractive_index = 1.33;
 
 
-    if(kwave.nmap == NULL)
-    {
-        /// Takes pressure as an argument in the constructor and forms the refractive map data.
-        kwave.nmap = new RefractiveMap();
-        kwave.nmap->Assign_refractive_map(refractive_x,
-                                          refractive_y,
-                                          refractive_z);
-    }
-    else
-    {
-        /// Updates the refractive map data.
-        kwave.nmap->Assign_refractive_map(refractive_x,
-                                          refractive_y,
-                                          refractive_z);
-    }
+    /// FIXME:
+    /// - Needs to be implemented for bending photon paths.
+    cout << "\n\n\n ************* Implement me ***************** \n\n\n ";
+    cout << "Medium::Create_refractive_map(TRealMatrix * refractive_x, TRealMatrix * refractive_y,TRealMatrix * refractive_z)\n\n\n";
+//    if(kwave.nmap == NULL)
+//    {
+//        /// Takes pressure as an argument in the constructor and forms the refractive map data.
+//        kwave.nmap = new RefractiveMap(Nx, Ny, Nz);
+//        kwave.nmap->Update_refractive_map_from_sensor(refractive_x,
+//                                          refractive_y,
+//                                          refractive_z);
+//    }
+//    else
+//    {
+//        /// Updates the refractive map data.
+//        kwave.nmap->Update_refractive_map_from_sensor(refractive_x,
+//                                          refractive_y,
+//                                          refractive_z);
+//    }
 
 }
 

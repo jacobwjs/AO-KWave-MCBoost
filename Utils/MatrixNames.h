@@ -277,21 +277,33 @@ const char * const  Iz_max_Name = "Iz_max";
 
 
 /// ------------------------- JWJS ------------------------------------------------
-/// refractive_total variable name
-const char * const  refractive_total_Name = "refractive_total";
-/// refractive_x variable name
-const char * const  refractive_x_Name = "refractive_x";
-/// refractive_y variable name
-const char * const  refractive_y_Name = "refractive_y";
-/// refractive_z variable name
-const char * const  refractive_z_Name = "refractive_z";
+/// refractive_total_sensor variable name
+const char * const  refractive_total_sensor_Name        = "refractive_total_sensor";
+/// refractive_total_full_medium
+const char * const  refractive_total_full_medium_Name   = "refractive_total_full_medium";
 
-/// disp_x variable name
-const char * const disp_x_Name = "disp_x";
-/// disp_y variable name
-const char * const disp_y_Name = "disp_y";
-/// disp_z variable name
-const char * const disp_z_Name = "disp_z";
+/// refractive_x_full_medium variable name
+const char * const  refractive_x_full_medium_Name   = "refractive_x_full_medium";
+const char * const  refractive_x_sensor_Name        = "refractive_x_sensor";
+/// refractive_y_full_medium variable name
+const char * const  refractive_y_full_medium_Name   = "refractive_y_full_medium";
+const char * const  refractive_y_sensor_Name        = "refractive_y_sensor";
+/// refractive_z_full_medium variable name
+const char * const  refractive_z_full_medium_Name   = "refractive_z_full_medium";
+const char * const  refractive_z_sensor_Name        = "refractive_z_sensor";
+
+/// disp_x_sensor variable name
+const char * const disp_x_sensor_Name       = "disp_x_sensor";
+/// disp_x_full_medium variable name
+const char * const disp_x_full_medium_Name  = "disp_x_full_medium";
+/// disp_y_sensor variable name
+const char * const disp_y_sensor_Name       = "disp_y_sensor";
+/// disp_y_full_medium variable name
+const char * const disp_y_full_medium_Name  = "disp_y_full_medium";
+/// disp_z_sensor variable name
+const char * const disp_z_sensor_Name       = "disp_z_sensor";
+/// disp_z_full_medium variable name
+const char * const disp_z_full_medium_Name  = "disp_z_full_medium";
 /// ----------------------------------------------------------------
 
 

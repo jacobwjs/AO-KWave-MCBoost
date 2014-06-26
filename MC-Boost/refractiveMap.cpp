@@ -14,11 +14,15 @@
 
 
 
-RefractiveMap::RefractiveMap()
+RefractiveMap::RefractiveMap(const int Nx, const int Ny, const int Nz)
 : X_PML_OFFSET(25),
   Y_PML_OFFSET(10),
   Z_PML_OFFSET(10)
 {
+    total_medium_size.X = Nx;
+    total_medium_size.Y = Ny;
+    total_medium_size.Z = Nz;
+    
     refractive_total = refractive_x = refractive_y = refractive_z = NULL;
 }
 
@@ -116,27 +120,27 @@ RefractiveMap::getRefractiveIndexFromGradientGrid(const char axis, const int x_p
     if (axis == 'x')
     {
         assert(refractive_x != NULL);
-        return refractive_x->GetElementFrom3D(x_photon + X_PML_OFFSET,
-                                       y_photon + Y_PML_OFFSET,
-                                       z_photon + Z_PML_OFFSET);
+        return refractive_x->GetElementFrom3D(x_photon,
+                                              y_photon,
+                                              z_photon);
     }
 
     /// Refractive index changes induced from pressure propagating along y-axis.
     if (axis == 'y')
     {
         assert(refractive_y != NULL);
-        return refractive_y->GetElementFrom3D(x_photon + X_PML_OFFSET,
-                                       y_photon + Y_PML_OFFSET,
-                                       z_photon + Z_PML_OFFSET);
+        return refractive_y->GetElementFrom3D(x_photon,
+                                              y_photon,
+                                              z_photon);
     }
     
     /// Refractive index changes induced from pressure propagating along z-axis.    
     if (axis == 'z')
     {
         assert(refractive_z != NULL);
-        return refractive_z->GetElementFrom3D(x_photon + X_PML_OFFSET,
-                                       y_photon + Y_PML_OFFSET,
-                                       z_photon + Z_PML_OFFSET);
+        return refractive_z->GetElementFrom3D(x_photon,
+                                              y_photon,
+                                              z_photon);
     }
     
     /// Error
@@ -152,9 +156,14 @@ float
 RefractiveMap::getRefractiveIndexFromGrid(const int x_photon, const int y_photon, const int z_photon)
 {
     /// NEW: Used to access k-Wave data structure.
-    return Get_refractive_index_TRealMatrix(x_photon + X_PML_OFFSET,
-                                            y_photon + Y_PML_OFFSET,
-                                            z_photon + Z_PML_OFFSET);
+//    return Get_refractive_index_TRealMatrix(x_photon + X_PML_OFFSET,
+//                                            y_photon + Y_PML_OFFSET,
+//                                            z_photon + Z_PML_OFFSET);
+    
+    return Get_refractive_index_TRealMatrix(x_photon,
+                                            y_photon,
+                                            z_photon);
+
 }
 
 
@@ -195,6 +204,26 @@ RefractiveMap::Invert_phase(void)
         /// Perform the inversion.
         raw_data[i] *= -1.0f;
     }
+}
+
+
+
+void
+RefractiveMap::Update_refractive_map_from_sensor(TRealMatrix * refractive_total_sensor, const long * sensor_index)
+{
+//    if (refractive_total == NULL) refractive_total = new TRealMatrix(total_medium_size);
+//    
+//    const size_t sensor_size = refractive_total_sensor->GetTotalElementCount();
+    
+    /// Loop over the entire 'refractive_total' matrix and only update over the region where the sensors are stared in the medium.
+    /// FIXME:
+    /// - Assignment is protected in the 'TRealMatrix' class. Maybe 'RefractiveMap' should inherent from 'TRealMatrix'???
+//    for (size_t i = 0; i < sensor_size; i++)
+//    {
+//        refractive_total[sensor_index[i]] = refractive_total_sensor[i];
+//    }
+    
+    
 }
 
 

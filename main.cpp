@@ -595,7 +595,7 @@ using namespace std;
  * ------------------------------------------------------- Various functions for Monte-Carlo -----------------
  */
 // Number of photons to simulate.
-const int MAX_PHOTONS = 2e6;
+const int MAX_PHOTONS = 10e3;
 
 // Testing routines.
 void testVectorMath(void);
@@ -687,7 +687,8 @@ int main(int argc, char** argv)
     	AO_simulation.Create_MC_grid(Parameters);
 
     	/// Assign the pezio-optical coefficient.
-    	AO_simulation.Set_pezio_optical_coeff(0.322);
+        /// NOTE: No longer used.
+    	//AO_simulation.Set_pezio_optical_coeff(0.322);
 
         /// Create a layer for the monte-carlo medium defining the optical properties.
     	Layer_Properties layer_props;
@@ -759,7 +760,14 @@ int main(int argc, char** argv)
 
 
 		/// Set how often the monte-carlo simulation runs.
-        float mc_step = 100e-9;
+        /// NOTE:
+        /// - There can be a subtle issue with the MC_sim time step and the time step of kWave (dt). To know
+        ///   when to run the MC_sim properly the time step of the MC_sim must be evenly divisible by the kWave
+        ///   time step. To ensure this, the 'dt' of kWave must be set accordingly in the matlab script that
+        ///   produces the h5 input file.
+        /// - We only want to run the MC_sim at every PI phase shift of the US propagation to use Steffen's theory.
+        //float mc_step = 100e-9; /// For 5MHz with medium.sound_speed of 1,500 m/s
+        float mc_step = 500e-9; /// For 1MHz with medium.sound_speed of 1,500 m/s
 		assert(mc_step >= Parameters->Get_dt());
 		AO_simulation.Set_MC_time_step(mc_step);
 

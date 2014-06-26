@@ -103,12 +103,33 @@ TKSpaceFirstOrder3DSolver::TKSpaceFirstOrder3DSolver():
     
     /// ------------------------ JWJS -------------
     /// Zero out the statistics structure.
-    stats.max_pressure      = 0.0f;
-    stats.max_intensity     = 0.0f;
-    stats.max_displacement  = 0.0f;
-    stats.min_displacement  = 0.0f;
-    stats.max_refractive_index = 0.0f;
-    stats.min_refractive_index = 0.0f;
+    stats.max_pressure                  = 0.0f;;
+    stats.pressure_t_index              = 0;
+    
+    /// Intensity has components along each axial direction.
+    stats.max_intensity_x               = 0.0f;
+    stats.intensity_t_index_xaxis       = 0;
+    stats.max_intensity_y               = 0.0f;
+    stats.intensity_t_index_yaxis       = 0;
+    stats.max_intensity_z               = 0.0f;
+    stats.intensity_t_index_zaxis       = 0;
+    
+    /// Allow the ability to record max and min displacemnt along
+    /// each axial component.
+    stats.max_displacement_x            = 0.0f;
+    stats.min_displacement_x            = 0.0f;
+    stats.displacement_t_index_xaxis    = 0;
+    stats.max_displacement_y            = 0.0f;
+    stats.min_displacement_y            = 0.0f;
+    stats.displacement_t_index_yaxis    = 0;
+    stats.max_displacement_z            = 0.0f;
+    stats.min_displacement_z            = 0.0f;
+    stats.displacement_t_index_zaxis    = 0;
+    
+    
+    stats.max_refractive_index          = 0.0f;
+    stats.min_refractive_index          = 0.0f;
+    stats.refractive_t_index            = 0;
     /// -----------------------------/
 
 
@@ -325,33 +346,38 @@ void TKSpaceFirstOrder3DSolver::LoadInputData(){
     }
 
     /// --------------------------------------- JWJS ---------------------------------------------
+    /// 'refractive_total_sensor_Name' is the name of the stream that this data is saved to in
+    /// the h5 OUTPUT file. We only save data over the specified sensor.mask region, not the
+    /// entire medium in order to save disk space when data is written out. Therefore to reflect
+    /// this in the h5 we name the stream accordingly. This is done for all output streams below
+    /// as well (i.e. named based on the sensor name specified in 'MatrixNames.h'.
     if (Parameters->IsStore_refractive_total()) {
-        refractive_total_OutputStream->CreateStream(HDF5_OutputFile, refractive_total_Name, TotalSizes,
+        refractive_total_OutputStream->CreateStream(HDF5_OutputFile, refractive_total_sensor_Name, TotalSizes,
                                                     ChunkSizes, Parameters->GetCompressionLevel());
     }
     if (Parameters->IsStore_refractive_x()) {
-        refractive_x_OutputStream->CreateStream(HDF5_OutputFile, refractive_x_Name, TotalSizes,
+        refractive_x_OutputStream->CreateStream(HDF5_OutputFile, refractive_x_sensor_Name, TotalSizes,
                                                 ChunkSizes, Parameters->GetCompressionLevel());
     }
     if (Parameters->IsStore_refractive_y()) {
-        refractive_y_OutputStream->CreateStream(HDF5_OutputFile, refractive_y_Name, TotalSizes,
+        refractive_y_OutputStream->CreateStream(HDF5_OutputFile, refractive_y_sensor_Name, TotalSizes,
                                                 ChunkSizes, Parameters->GetCompressionLevel());
     }
     if (Parameters->IsStore_refractive_z()) {
-        refractive_z_OutputStream->CreateStream(HDF5_OutputFile, refractive_z_Name, TotalSizes,
+        refractive_z_OutputStream->CreateStream(HDF5_OutputFile, refractive_z_sensor_Name, TotalSizes,
                                                 ChunkSizes, Parameters->GetCompressionLevel());
     }
 
     if (Parameters->IsStore_disp_x()) {
-        disp_x_OutputStream->CreateStream(HDF5_OutputFile, disp_x_Name, TotalSizes,
+        disp_x_OutputStream->CreateStream(HDF5_OutputFile, disp_x_sensor_Name, TotalSizes,
                                           ChunkSizes, Parameters->GetCompressionLevel());
     }
     if (Parameters->IsStore_disp_y()) {
-        disp_y_OutputStream->CreateStream(HDF5_OutputFile, disp_y_Name, TotalSizes,
+        disp_y_OutputStream->CreateStream(HDF5_OutputFile, disp_y_sensor_Name, TotalSizes,
                                           ChunkSizes, Parameters->GetCompressionLevel());
     }
     if (Parameters->IsStore_disp_z()) {
-        disp_z_OutputStream->CreateStream(HDF5_OutputFile, disp_z_Name, TotalSizes,
+        disp_z_OutputStream->CreateStream(HDF5_OutputFile, disp_z_sensor_Name, TotalSizes,
                                           ChunkSizes, Parameters->GetCompressionLevel());
     }
     /// ---------------------------------------------
@@ -2841,7 +2867,7 @@ void TKSpaceFirstOrder3DSolver::PostProcessing(){
 void TKSpaceFirstOrder3DSolver::StoreSensorData(){
 
     /// -------------------------------- JWJS ---------------------------------
-    /// If it's the first time coming here (i.e. t_index == 1), we want to store
+    /// If it's the first time coming here (i.e. t_index == 0), we want to store
     /// data for the non-modulated speckle pattern formation.
     if (((t_index < Parameters->GetStartTimeIndex()) && (t_index != 0)) ||
          (t_index > Parameters->GetEndTimeIndex())) {
@@ -2888,14 +2914,13 @@ void TKSpaceFirstOrder3DSolver::StoreSensorData(){
              }
              
          }
-        
         /// -------------------------------------- JWJS ------------------------------------
         /// Update the max pressure and display it.
         if (stats.max_pressure < temp_max)
         {
         	stats.max_pressure = temp_max;
             stats.pressure_t_index = t_index;
-        	cout << "Updating max pressure: " << stats.max_pressure << '\n';
+        	cout << "Updating max pressure: " << stats.max_pressure/1e6 << " [MPa]\n";
         }
         /// -------------------------------------------/
       }// p_max
@@ -2976,12 +3001,10 @@ void TKSpaceFirstOrder3DSolver::StoreSensorData(){
     
     	if (Parameters->IsStore_refractive_x() || Parameters->IsStore_refractive_y() || Parameters->IsStore_refractive_z())
     	{
-    		///Compute_refractive_index_data();
-
             /// Check if the current time step falls within the window of time which data is supposed to be saved (set via commandline), or if this is
             /// the first time step (need non-modulated speckle pattern when ultrasound has not made its way into the medium yet).
             if (((t_index >= Parameters->GetStartTimeIndex()) && (t_index <= Parameters->GetEndTimeIndex()) && (Parameters->GetEndTimeIndex() != -1))
-                || (t_index == 1))
+                || (t_index == 0))
             {
                 cout << "Storing refractive index values (x,y,z)\n";
                 refractive_x_OutputStream->AddData(Get_refractive_x(), Get_sensor_mask_ind(), Get_Temp_1_RS3D().GetRawData());
@@ -2995,15 +3018,15 @@ void TKSpaceFirstOrder3DSolver::StoreSensorData(){
 
     	if (Parameters->IsStore_refractive_total())
     	{
-    		///Compute_refractive_index_data_total();
 
             /// Check if the current time step falls within the window of time which data is supposed to be saved (set via commandline), or if this is
             /// the first time step (need non-modulated speckle pattern when ultrasound has not made its way into the medium yet).
             if (((t_index >= Parameters->GetStartTimeIndex()) && (t_index <= Parameters->GetEndTimeIndex()) && (Parameters->GetEndTimeIndex() != -1))
-                || (t_index == 1))
+                || (t_index == 0))
             {
                 cout << "Storing refractive index total\n";
-                refractive_total_OutputStream->AddData(Get_refractive_total(), Get_sensor_mask_ind(), Get_Temp_1_RS3D().GetRawData());
+                //refractive_total_OutputStream->AddData(Get_refractive_total_sensor(), Get_sensor_mask_ind(), Get_Temp_1_RS3D().GetRawData());
+                refractive_total_OutputStream->AddData(Get_refractive_total_full_medium(), Get_sensor_mask_ind(), Get_Temp_1_RS3D().GetRawData());
             }
         
    		}
@@ -3015,12 +3038,12 @@ void TKSpaceFirstOrder3DSolver::StoreSensorData(){
             /// Check if the current time step falls within the window of time which data is supposed to be saved (set via commandline), or if this is
             /// the first time step (need non-modulated speckle pattern when ultrasound has not made its way into the medium yet).
             if (((t_index >= Parameters->GetStartTimeIndex()) && (t_index <= Parameters->GetEndTimeIndex()) && (Parameters->GetEndTimeIndex() != -1))
-                || (t_index == 1))
+                || (t_index == 0))
             {
                 cout << "Storing displacement values (x,y,z)\n";
-                disp_x_OutputStream->AddData(Get_disp_x(), Get_sensor_mask_ind(), Get_Temp_1_RS3D().GetRawData());
-                disp_y_OutputStream->AddData(Get_disp_y(), Get_sensor_mask_ind(), Get_Temp_1_RS3D().GetRawData());
-                disp_z_OutputStream->AddData(Get_disp_z(), Get_sensor_mask_ind(), Get_Temp_1_RS3D().GetRawData());
+                disp_x_OutputStream->AddData(Get_disp_x_full_medium(), Get_sensor_mask_ind(), Get_Temp_1_RS3D().GetRawData());
+                disp_y_OutputStream->AddData(Get_disp_y_full_medium(), Get_sensor_mask_ind(), Get_Temp_1_RS3D().GetRawData());
+                disp_z_OutputStream->AddData(Get_disp_z_full_medium(), Get_sensor_mask_ind(), Get_Temp_1_RS3D().GetRawData());
             }
         }
     /// --------------------------------
@@ -3032,33 +3055,88 @@ void TKSpaceFirstOrder3DSolver::StoreSensorData(){
 
 
 /// ------------------------ JWJS ----------------------------------------------------------------
-void TKSpaceFirstOrder3DSolver::Compute_refractive_index_data()
+void TKSpaceFirstOrder3DSolver::Compute_refractive_index_gradient_data()
 {
-    cout << "Computing refractive index values (x,y,z)\n";
-
-    float elasto_optical_coeff         = 0.0f;
-    float rho0_val                     = 0.0f;
-    const float n_background           = 1.33f;
-
-    const float* rhox_raw_data         = Get_rhox().GetRawData();
-    const float* rhoy_raw_data         = Get_rhoy().GetRawData();
-    const float* rhoz_raw_data         = Get_rhoz().GetRawData();
-    const float* rho0_raw_data         = Get_rho0().GetRawData();
-    ///const float* p0_raw_data           = Get_p().GetRawData();
-    ///const float* c2_raw_data           = Get_c2().GetRawData();
-
-    float* n_x                         = Get_refractive_x().GetRawData();
-    float* n_y                         = Get_refractive_y().GetRawData();
-    float* n_z                         = Get_refractive_z().GetRawData();
-
-
-
-//    const size_t TotalElementCount = Parameters->GetFullDimensionSizes().GetElementCount();
-
-//#ifndef __NO_OMP__
-//#pragma omp parallel for schedule (static) if (TotalElementCount > 1e5)
-//#endif
-//    for (size_t i = 0; i <TotalElementCount; i++)
+    cout << "\n\n\nComputing refractive gradient index values (x,y,z)\n";
+    cout << "************** Implement me **************\n";
+    cout << "TKSpaceFirstOrder3DSolver::Compute_refractive_index_gradient_data()\n\n\n";
+//
+//    float elasto_optical_coeff         = 0.0f;
+//    float rho0_val                     = 0.0f;
+//    const float n_background           = 1.33f;
+//
+//    if (Parameters->Get_rho0_scalar())
+//    {
+//        const float* rhox_raw_data         = Get_rhox().GetRawData();
+//        const float* rhoy_raw_data         = Get_rhoy().GetRawData();
+//        const float* rhoz_raw_data         = Get_rhoz().GetRawData();
+//    }
+//    else
+//    {
+//        const float* rho0_raw_data         = Get_rho0().GetRawData();
+//    }
+//    
+//
+//    float* n_x                         = Get_refractive_x().GetRawData();
+//    float* n_y                         = Get_refractive_y().GetRawData();
+//    float* n_z                         = Get_refractive_z().GetRawData();
+//
+//
+//
+////    const size_t TotalElementCount = Parameters->GetFullDimensionSizes().GetElementCount();
+//
+////#ifndef __NO_OMP__
+////#pragma omp parallel for schedule (static) if (TotalElementCount > 1e5)
+////#endif
+////    for (size_t i = 0; i <TotalElementCount; i++)
+////    {
+////        /// Calculate the background density with the addition of the pressure induced variations.
+////        /// NOTE:
+////        /// The density passed in to this function is density obtained from k-Wave.  In the description
+////        /// of how this density is calculated, described in k-wave_user_manual_1.0.1.pdf, it is not fully
+////        /// accurate due to the removal of the -u*grad(rho0) term in the mass conservation equation (Eq. 2.4).
+////        /// Three options exist:
+////        /// 1) Verify that the error is not significant and live with it.
+////        /// 2) Implement the term in k-Wave and pass it in here as an addition to rho (need each axial component).
+////        /// 3) Use a 1st order approximation from (p=c0^2*rho).
+////        ///density = rhox_data[i] + rhoy_data[i] + rhoz_data[i];       /// Density with error.
+////        ///density = p_data[i] / c2_data[i];                           /// 1st order approxmation.
+////        
+////        
+////        
+////        ///  Calculate the modulation coefficient as described by Skadazac and Wang.
+////        /// --------------------- THIS IS WRONG FOR PRESSURES I'M USING -------------------
+////        ///M = 2.0 * pezio_optical_coeff * (p_data[i] / (density * c2_data[i]));
+////        /// Update the refractive index value based the pressure induced changes.
+////        ///n_data[i] = n_background * (1 + 0.5 * M);
+////        
+////        
+////        
+////        /// XXX: Should the refractive index have an axial component?
+////        /// ---------------------------------------------------------
+////        /// Only if you plan on bending the path between scattering events (i.e. Eikonal),
+////        /// which would cause you to know the spatial refractive index gradient.
+////        
+////        
+////        /// "Optical Measurement of Ultrasonic Poynting and Velocity Vector Fields".  (Pitts, 2002)
+////        /// Below uses the elasto-optical coefficient to
+////        /// calculate each component of the refractive index
+////        elasto_optical_coeff = (n_background*n_background - 1) / (2*rho0_raw_data[i]*n_background);
+////        //rho0_val = rho0_raw_data[i];
+////        
+////        n_x[i] = n_background + elasto_optical_coeff * ((rho0_raw_data[i] + rhox_raw_data[i]) - rho0_raw_data[i]);
+////        n_y[i] = n_background + elasto_optical_coeff * ((rho0_raw_data[i] + rhoy_raw_data[i]) - rho0_raw_data[i]);
+////        n_z[i] = n_background + elasto_optical_coeff * ((rho0_raw_data[i] + rhoz_raw_data[i]) - rho0_raw_data[i]);
+////        
+////    }
+//    
+//    const long * index        = Get_sensor_mask_ind().GetRawData();
+//    const size_t sensor_size  = Get_sensor_mask_ind().GetTotalElementCount();
+//
+//    #ifndef __NO_OMP__
+//        #pragma omp parallel for schedule (static) if (sensor_size > 1e5)
+//    #endif
+//    for (size_t i = 0; i <sensor_size; i++)
 //    {
 //        /// Calculate the background density with the addition of the pressure induced variations.
 //        /// NOTE:
@@ -3071,148 +3149,157 @@ void TKSpaceFirstOrder3DSolver::Compute_refractive_index_data()
 //        /// 3) Use a 1st order approximation from (p=c0^2*rho).
 //        ///density = rhox_data[i] + rhoy_data[i] + rhoz_data[i];       /// Density with error.
 //        ///density = p_data[i] / c2_data[i];                           /// 1st order approxmation.
-//        
-//        
-//        
+//
+//
+//
 //        ///  Calculate the modulation coefficient as described by Skadazac and Wang.
 //        /// --------------------- THIS IS WRONG FOR PRESSURES I'M USING -------------------
 //        ///M = 2.0 * pezio_optical_coeff * (p_data[i] / (density * c2_data[i]));
 //        /// Update the refractive index value based the pressure induced changes.
 //        ///n_data[i] = n_background * (1 + 0.5 * M);
-//        
-//        
-//        
+//
+//
+//
 //        /// XXX: Should the refractive index have an axial component?
 //        /// ---------------------------------------------------------
 //        /// Only if you plan on bending the path between scattering events (i.e. Eikonal),
 //        /// which would cause you to know the spatial refractive index gradient.
-//        
-//        
+//
+//
 //        /// "Optical Measurement of Ultrasonic Poynting and Velocity Vector Fields".  (Pitts, 2002)
 //        /// Below uses the elasto-optical coefficient to
 //        /// calculate each component of the refractive index
-//        elasto_optical_coeff = (n_background*n_background - 1) / (2*rho0_raw_data[i]*n_background);
-//        //rho0_val = rho0_raw_data[i];
-//        
-//        n_x[i] = n_background + elasto_optical_coeff * ((rho0_raw_data[i] + rhox_raw_data[i]) - rho0_raw_data[i]);
-//        n_y[i] = n_background + elasto_optical_coeff * ((rho0_raw_data[i] + rhoy_raw_data[i]) - rho0_raw_data[i]);
-//        n_z[i] = n_background + elasto_optical_coeff * ((rho0_raw_data[i] + rhoz_raw_data[i]) - rho0_raw_data[i]);
-//        
+//        elasto_optical_coeff = (n_background*n_background - 1) / (2*rho0_raw_data[index[i]]*n_background);
+//        //rho0_val = rho0_raw_data[index[i]];
+//
+//        n_x[i] = n_background + elasto_optical_coeff * ((rho0_raw_data[index[i]] + rhox_raw_data[index[i]]) - rho0_raw_data[index[i]]);
+//        n_y[i] = n_background + elasto_optical_coeff * ((rho0_raw_data[index[i]] + rhoy_raw_data[index[i]]) - rho0_raw_data[index[i]]);
+//        n_z[i] = n_background + elasto_optical_coeff * ((rho0_raw_data[index[i]] + rhoz_raw_data[index[i]]) - rho0_raw_data[index[i]]);
+//
 //    }
-    
-    const long * index        = Get_sensor_mask_ind().GetRawData();
-    const size_t sensor_size  = Get_sensor_mask_ind().GetTotalElementCount();
-
-    #ifndef __NO_OMP__
-        #pragma omp parallel for schedule (static) if (sensor_size > 1e5)
-    #endif
-    for (size_t i = 0; i <sensor_size; i++)
-    {
-        /// Calculate the background density with the addition of the pressure induced variations.
-        /// NOTE:
-        /// The density passed in to this function is density obtained from k-Wave.  In the description
-        /// of how this density is calculated, described in k-wave_user_manual_1.0.1.pdf, it is not fully
-        /// accurate due to the removal of the -u*grad(rho0) term in the mass conservation equation (Eq. 2.4).
-        /// Three options exist:
-        /// 1) Verify that the error is not significant and live with it.
-        /// 2) Implement the term in k-Wave and pass it in here as an addition to rho (need each axial component).
-        /// 3) Use a 1st order approximation from (p=c0^2*rho).
-        ///density = rhox_data[i] + rhoy_data[i] + rhoz_data[i];       /// Density with error.
-        ///density = p_data[i] / c2_data[i];                           /// 1st order approxmation.
-
-
-
-        ///  Calculate the modulation coefficient as described by Skadazac and Wang.
-        /// --------------------- THIS IS WRONG FOR PRESSURES I'M USING -------------------
-        ///M = 2.0 * pezio_optical_coeff * (p_data[i] / (density * c2_data[i]));
-        /// Update the refractive index value based the pressure induced changes.
-        ///n_data[i] = n_background * (1 + 0.5 * M);
-
-
-
-        /// XXX: Should the refractive index have an axial component?
-        /// ---------------------------------------------------------
-        /// Only if you plan on bending the path between scattering events (i.e. Eikonal),
-        /// which would cause you to know the spatial refractive index gradient.
-
-
-        /// "Optical Measurement of Ultrasonic Poynting and Velocity Vector Fields".  (Pitts, 2002)
-        /// Below uses the elasto-optical coefficient to
-        /// calculate each component of the refractive index
-        elasto_optical_coeff = (n_background*n_background - 1) / (2*rho0_raw_data[index[i]]*n_background);
-        //rho0_val = rho0_raw_data[index[i]];
-
-        n_x[index[i]] = n_background + elasto_optical_coeff * ((rho0_raw_data[index[i]] + rhox_raw_data[index[i]]) - rho0_raw_data[index[i]]);
-        n_y[index[i]] = n_background + elasto_optical_coeff * ((rho0_raw_data[index[i]] + rhoy_raw_data[index[i]]) - rho0_raw_data[index[i]]);
-        n_z[index[i]] = n_background + elasto_optical_coeff * ((rho0_raw_data[index[i]] + rhoz_raw_data[index[i]]) - rho0_raw_data[index[i]]);
-
-    }
 
 }
 
 
-void TKSpaceFirstOrder3DSolver::Compute_refractive_index_data_total()
+void TKSpaceFirstOrder3DSolver::Compute_refractive_index_total_data()
 {
     cout << "Computing refractive total values\n";
     
-    float total_density                = 0.0f;
-    float elasto_optical_coeff         = 0.0f;
-    float rho0_val                     = 0.0f;
-    const float n_background           = 1.33f;
-
-    const float* rhox_raw_data         = Get_rhox().GetRawData();
-    const float* rhoy_raw_data         = Get_rhoy().GetRawData();
-    const float* rhoz_raw_data         = Get_rhoz().GetRawData();
-    const float* rho0_raw_data         = Get_rho0().GetRawData();
-
-    float* n_total                     = Get_refractive_total().GetRawData();
-
-    //float temp_x = 0.0f;
-    //float temp_y = 0.0f;
-    //float temp_z = 0.0f;
-
+    float total_density             = 0.0f;
+    float rho0                      = 0.0f;
+    float elasto_optical_coeff      = 0.0f;
+    const float n_background        = 1.33f;
+    
+    /// kWave splits up the density along each axial component for use with the PML. Eventually we need
+    /// to add each component to get to the correct density, which happens below.
+    const float* rho_x         = Get_rhox().GetRawData();
+    const float* rho_y         = Get_rhoy().GetRawData();
+    const float* rho_z         = Get_rhoz().GetRawData();
+    
+    ///float* n_total_sensor              = Get_refractive_total_sensor().GetRawData();
+    float* n_total_full_medium         = Get_refractive_total_full_medium().GetRawData();
+    
     const long * index        = Get_sensor_mask_ind().GetRawData();
     const size_t sensor_size  = Get_sensor_mask_ind().GetTotalElementCount();
 
-    #ifndef __NO_OMP__
-        #pragma omp parallel for schedule (static) if (sensor_size > 1e5)
-    #endif
-    for (size_t i = 0; i <sensor_size; i++)
+    
+    
+    if (Parameters->Get_rho0_scalar_flag())
     {
-        /// Calculate the background density with the addition of the pressure induced variations.
-        /// NOTE:
-        /// The density passed in to this function is density obtained from k-Wave.  In the description
-        /// of how this density is calculated, described in k-wave_user_manual_1.0.1.pdf, it is not fully
-        /// accurate due to the removal of the -u*grad(rho0) term in the mass conservation equation (Eq. 2.4).
-        /// Three options exist:
-        /// 1) Verify that the error is not significant and live with it.
-        /// 2) Implement the term in k-Wave and pass it in here as an addition to rho (need each axial component).
-        /// 3) Use a 1st order approximation from (p=c0^2*rho).
-        ///density = rhox_data[i] + rhoy_data[i] + rhoz_data[i];       /// Density with error.
-        ///density = p_data[i] / c2_data[i];                           /// 1st order approxmation.
-
-        ///  Calculate the modulation coefficient as described by Skadazac and Wang.
-        /// --------------------- THIS IS WRONG FOR PRESSURES I'M USING -------------------
-        ///M = 2.0 * pezio_optical_coeff * (p_data[i] / (density * c2_data[i]));
-        /// Update the refractive index value based the pressure induced changes.
-        ///n_data[i] = n_background * (1 + 0.5 * M);
-
-
-        /// "Optical Measurement of Ultrasonic Poynting and Velocity Vector Fields".  (Pitts, 2002)
-        /// Below uses the elasto-optical coefficient to
-        /// calculate each component of the refractive index
-        elasto_optical_coeff = (n_background*n_background - 1) / (2*rho0_raw_data[index[i]]*n_background);
-        //rho0_val = rho0_raw_data[index[i]];
-
-//        total_density = sqrt(rhox_raw_data[index[i]]*rhox_raw_data[index[i]] +
-//                             rhoy_raw_data[index[i]]*rhoy_raw_data[index[i]] +
-//                             rhoz_raw_data[index[i]]*rhoz_raw_data[index[i]]);
-
-        total_density = rhox_raw_data[index[i]] + rhoy_raw_data[index[i]] + rhoz_raw_data[index[i]];
+        rho0 = Parameters->Get_rho0_scalar();
         
-        n_total[index[i]] = n_background + elasto_optical_coeff *
-                            ((total_density + rho0_raw_data[index[i]]) - rho0_raw_data[index[i]]);
+        #ifndef __NO_OMP__
+        #pragma omp parallel for schedule (static) if (sensor_size > 1e5)
+        #endif
+        for (size_t i = 0; i <sensor_size; i++)
+        {
+            /// Calculate the background density with the addition of the pressure induced variations.
+            /// NOTE:
+            /// The density passed in to this function is density obtained from k-Wave.  In the description
+            /// of how this density is calculated, described in k-wave_user_manual_1.0.1.pdf, it is not fully
+            /// accurate due to the removal of the -u*grad(rho0) term in the mass conservation equation (Eq. 2.4).
+            /// Three options exist:
+            /// 1) Verify that the error is not significant and live with it.
+            /// 2) Implement the term in k-Wave and pass it in here as an addition to rho (need each axial component).
+            /// 3) Use a 1st order approximation from (p=c0^2*rho).
+            ///density = rhox_data[i] + rhoy_data[i] + rhoz_data[i];       /// Density with error.
+            ///density = p_data[i] / c2_data[i];                           /// 1st order approxmation.
+            
+            total_density = rho_x[index[i]] + rho_y[index[i]] + rho_z[index[i]];
+            
+            
+            ///  Calculate the modulation coefficient as described by Skadazac and Wang.
+            /// --------------------- THIS IS WRONG FOR PRESSURES I'M USING -------------------
+            ///M = 2.0 * pezio_optical_coeff * (p_data[i] / (density * c2_data[i]));
+            /// Update the refractive index value based the pressure induced changes.
+            ///n_data[i] = n_background * (1 + 0.5 * M);
+            
+            
+            /// "Optical Measurement of Ultrasonic Poynting and Velocity Vector Fields".  (Pitts, 2002)
+            /// Below uses the elasto-optical coefficient to
+            /// calculate each component of the refractive index
+            elasto_optical_coeff = (n_background*n_background - 1) / (2*rho0*n_background);
+            
+            /// Update the sensor mask for refractive index changes, which can either be the entire medium, or a region of interest.
+            //n_total_sensor[i] = n_background + elasto_optical_coeff * ((total_density + rho0) - rho0);
+            
+            /// Update the full dimension refractive map for use with AO_sim, which will propagate photons through. We only update the
+            /// global medium with the portion containing the sensor.mask, which is our region of interest.
+            //n_total_full_medium[index[i]] = n_total_sensor[i];
+            n_total_full_medium[index[i]] = n_background + elasto_optical_coeff * ((total_density + rho0) - rho0);
+        }
+
     }
+    else
+    {
+        const float* rho0_raw_data = Get_rho0().GetRawData();
+        
+        #ifndef __NO_OMP__
+        #pragma omp parallel for schedule (static) if (sensor_size > 1e5)
+        #endif
+        for (size_t i = 0; i <sensor_size; i++)
+        {
+            /// Calculate the background density with the addition of the pressure induced variations.
+            /// NOTE:
+            /// The density passed in to this function is density obtained from k-Wave.  In the description
+            /// of how this density is calculated, described in k-wave_user_manual_1.0.1.pdf, it is not fully
+            /// accurate due to the removal of the -u*grad(rho0) term in the mass conservation equation (Eq. 2.4).
+            /// Three options exist:
+            /// 1) Verify that the error is not significant and live with it.
+            /// 2) Implement the term in k-Wave and pass it in here as an addition to rho (need each axial component).
+            /// 3) Use a 1st order approximation from (p=c0^2*rho).
+            ///density = rhox_data[i] + rhoy_data[i] + rhoz_data[i];       /// Density with error.
+            ///density = p_data[i] / c2_data[i];                           /// 1st order approxmation.
+            
+            /// The acoustically induced density changes in the medium.
+            total_density = rho_x[index[i]] + rho_y[index[i]] + rho_z[index[i]];
+            /// The background density values of the medium without insonification (i.e. no ultrasound present).
+            rho0 = rho0_raw_data[index[i]];
+            
+            
+            ///  Calculate the modulation coefficient as described by Skadazac and Wang.
+            /// --------------------- THIS IS WRONG FOR PRESSURES I'M USING -------------------
+            ///M = 2.0 * pezio_optical_coeff * (p_data[i] / (density * c2_data[i]));
+            /// Update the refractive index value based the pressure induced changes.
+            ///n_data[i] = n_background * (1 + 0.5 * M);
+            
+            
+            /// "Optical Measurement of Ultrasonic Poynting and Velocity Vector Fields".  (Pitts, 2002)
+            /// Below uses the elasto-optical coefficient to
+            /// calculate each component of the refractive index
+            elasto_optical_coeff = (n_background*n_background - 1) / (2*rho0*n_background);
+            
+            /// Update the sensor mask for refractive index changes, which can either be the entire medium, or a region of interest.
+            ///n_total_sensor[i] = n_background + elasto_optical_coeff * ((total_density + rho0) - rho0);
+            
+            /// Update the full dimension refractive map for use with AO_sim, which will propagate photons through. We only update the
+            /// global medium with the portion containing the sensor.mask, which is our region of interest.
+            n_total_full_medium[index[i]] = n_background + elasto_optical_coeff * ((total_density + rho0) - rho0);
+        }
+
+    }
+
+
     
 #define DEBUG
 #ifdef DEBUG
@@ -3245,10 +3332,14 @@ void TKSpaceFirstOrder3DSolver::Compute_displacement_data()
     const float* uy_raw_data    = Get_uy_sgy().GetRawData();
     const float* uz_raw_data    = Get_uz_sgz().GetRawData();
 
-    float *disp_x_raw_data      = Get_disp_x().GetRawData();
-    float *disp_y_raw_data      = Get_disp_y().GetRawData();
-    float *disp_z_raw_data      = Get_disp_z().GetRawData();
-
+    float *disp_x_sensor      = Get_disp_x_full_medium().GetRawData();
+    float *disp_y_sensor      = Get_disp_y_full_medium().GetRawData();
+    float *disp_z_sensor      = Get_disp_z_full_medium().GetRawData();
+    
+    float *disp_x_full_medium = Get_disp_x_full_medium().GetRawData();
+    float *disp_y_full_medium = Get_disp_y_full_medium().GetRawData();
+    float *disp_z_full_medium = Get_disp_z_full_medium().GetRawData();
+    
     const long * index        = Get_sensor_mask_ind().GetRawData();
     const size_t sensor_size = Get_sensor_mask_ind().GetTotalElementCount();
 
@@ -3257,9 +3348,15 @@ void TKSpaceFirstOrder3DSolver::Compute_displacement_data()
     #endif
     for (size_t i = 0; i < sensor_size; i++)
     {
-        disp_x_raw_data[index[i]] += ux_raw_data[index[i]]*Parameters->Get_dt();
-        disp_y_raw_data[index[i]] += uy_raw_data[index[i]]*Parameters->Get_dt();
-        disp_z_raw_data[index[i]] += uz_raw_data[index[i]]*Parameters->Get_dt();
+        /// Update the sensor mask.
+        disp_x_sensor[i] += ux_raw_data[index[i]]*Parameters->Get_dt();
+        disp_y_sensor[i] += uy_raw_data[index[i]]*Parameters->Get_dt();
+        disp_z_sensor[i] += uz_raw_data[index[i]]*Parameters->Get_dt();
+        
+        /// Update the full medium displacement maps used by the AO_sim.
+        disp_x_full_medium[index[i]] = disp_x_sensor[i];
+        disp_y_full_medium[index[i]] = disp_y_sensor[i];
+        disp_z_full_medium[index[i]] = disp_z_sensor[i];
     }
     
 
@@ -3296,6 +3393,16 @@ void TKSpaceFirstOrder3DSolver::StoreIntensityData(){
         float * Ix_max       = NULL;
         float * Iy_max       = NULL;
         float * Iz_max       = NULL;
+        
+        
+        /// --------------------------------- JWJS -----------------------
+        /// Temp variables to track the maximum intensity at a single
+        /// location in the medium over all time.
+        float temp_max_Ix = 0.0f;
+        float temp_max_Iy = 0.0f;
+        float temp_max_Iz = 0.0f;
+        /// --------------------------------------/
+        
 
 
         if (Parameters->IsStore_I_avg()) {
@@ -3315,6 +3422,7 @@ void TKSpaceFirstOrder3DSolver::StoreIntensityData(){
 
         // calculate  intensity
         if (t_index+1 > Parameters->GetStartTimeIndex()){
+            
             #ifndef __NO_OMP__
                #pragma omp for schedule (static)
             #endif
@@ -3348,9 +3456,16 @@ void TKSpaceFirstOrder3DSolver::StoreIntensityData(){
 
                // easily predictable...
                if (Parameters->IsStore_I_max()) {
-                  if (Ix_max[i] < Ix)  Ix_max[i] = Ix;
-                  if (Iy_max[i] < Iy)  Iy_max[i] = Iy;
-                  if (Iz_max[i] < Iz)  Iz_max[i] = Iz;
+                   
+                   if (Ix_max[i] < Ix)  Ix_max[i] = Ix;
+                   if (Iy_max[i] < Iy)  Iy_max[i] = Iy;
+                   if (Iz_max[i] < Iz)  Iz_max[i] = Iz;
+                 
+                   /// ---------------------------------- JWJS --------------
+                   if (temp_max_Ix < Ix) temp_max_Ix = Ix;
+                   if (temp_max_Iy < Iy) temp_max_Iy = Iy;
+                   if (temp_max_Iz < Iz) temp_max_Iz = Iz;
+                   /// --------------------------------------/
                }
 
                // easily predictable...
@@ -3383,8 +3498,31 @@ void TKSpaceFirstOrder3DSolver::StoreIntensityData(){
 
             }
         }// else
+        
+        
+        /// ------------------------------------------------------ JWJS --------------
+        if (stats.max_intensity_x < temp_max_Ix)
+        {
+            stats.max_intensity_x         = temp_max_Ix;
+            stats.intensity_t_index_xaxis = t_index;
+        }
+        if (stats.max_intensity_y < temp_max_Iy)
+        {
+            stats.max_intensity_y         = temp_max_Iy;
+            stats.intensity_t_index_yaxis = t_index;
+        }
+        if (stats.max_intensity_z < temp_max_Iz)
+        {
+            stats.max_intensity_z = temp_max_Iz;
+            stats.intensity_t_index_zaxis = t_index;
+        }
+        /// ----------------------------------------------------------/
 
     }// parallel
+    
+    
+    
+  
 
 
 }// end of StoreIntensity

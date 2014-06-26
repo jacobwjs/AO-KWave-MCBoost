@@ -309,7 +309,7 @@ void Photon::propagatePhoton(const int iterations)
 		} // end while() loop
 
 
-		// Reset the photon and start propogation over from the beginning.
+		// Photon is no longer ALIVE. Reset the photon and start propogation over from the beginning.
 		reset();
 
 	} // end for() loop

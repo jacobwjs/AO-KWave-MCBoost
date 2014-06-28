@@ -66,6 +66,31 @@ AO_Sim::~AO_Sim()
 }
 
 
+/// Run the monte-carlo simulation.
+void
+AO_Sim::Run_monte_carlo_sim(TParameters * Parameters)
+{
+    /// Explicitly set that we are not running anything other than the monte-carlo simulation.
+    da_boost->Simulate_refractive_gradient(false);
+    da_boost->Simulate_refractive_total(false);
+    da_boost->Simulate_displacement(false);
+    
+    
+    /// Set the monte-carlo simulation to use, or save, RNG seeds based on command line args.
+    if (Parameters->IsStore_RNG_seeds())
+    {
+        Generate_exit_seeds();
+    }
+    else
+    {
+        size_t time = 0;
+        da_boost->Run_MC_sim_timestep(m_medium,
+                                      m_Laser_injection_coords,
+                                      time);
+    }
+}
+
+
 
 /// Run the kWave simulation.
 void
@@ -231,30 +256,6 @@ AO_Sim::Run_kWave_sim(TParameters * Parameters)
     Print_runtime_ultrasound_statistics(Parameters);
 
 }
-
-/// Run the monte-carlo simulation.
-void
-AO_Sim::Run_monte_carlo_sim(TParameters * Parameters)
-{
-    /// Explicitly set that we are not running anything other than the monte-carlo simulation.
-    da_boost->Simulate_refractive_gradient(false);
-    da_boost->Simulate_refractive_total(false);
-    da_boost->Simulate_displacement(false);
-  
-    
-    /// Set the monte-carlo simulation to use, or save, RNG seeds based on command line args.
-    //Parameters->IsStore_seeds()   ?   da_boost->Save_RNG_seeds(true) : da_boost->Save_RNG_seeds(false);
-    //Parameters->IsLoad_seeds()    ?   da_boost->Use_RNG_seeds(true)  : da_boost->Use_RNG_seeds(false);
-
-    
-    size_t time = 1;
-    da_boost->Run_MC_sim_timestep(m_medium,
-                                  m_Laser_injection_coords,
-                                  time);
-    
-}
-
-
 
 
 

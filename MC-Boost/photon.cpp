@@ -1121,6 +1121,11 @@ void Photon::transmit(const char *type)
 		}
 		else // Transmitted to new layer.
 		{
+            
+            /// FIXME:
+            /// - If multiple layers are ever used, with different spatial refractive index values,
+            ///   this all becomes error prone. Especially under insonification at the medium boundaries
+            ///   and use with 'AO_sim'.
 			// Store index of refraction from layer the photon is coming from.
 			double ni = currLayer->getRefractiveIndex();
 

@@ -2877,7 +2877,7 @@ void TKSpaceFirstOrder3DSolver::StoreSensorData(){
 
     if (Parameters->IsStore_p_raw()) {
         cout << "Storing raw pressure values (x,y,z)\n";
-       p_sensor_raw_OutputStream->AddData(Get_p(),Get_sensor_mask_ind(),Get_Temp_1_RS3D().GetRawData());
+        p_sensor_raw_OutputStream->AddData(Get_p(),Get_sensor_mask_ind(),Get_Temp_1_RS3D().GetRawData());
     }
 
     if (Parameters->IsStore_u_raw()) {
@@ -2899,6 +2899,7 @@ void TKSpaceFirstOrder3DSolver::StoreSensorData(){
         /// ------------------------------ JWJS --------------------------------------------
         
         float temp_max = 0.0f;
+        {
         /// -----------------------------------/
          #ifndef __NO_OMP__
                 #pragma omp parallel for schedule (static) if (sensor_size > 1e5)
@@ -2915,12 +2916,13 @@ void TKSpaceFirstOrder3DSolver::StoreSensorData(){
              
          }
         /// -------------------------------------- JWJS ------------------------------------
+        }/// parallel
         /// Update the max pressure and display it.
         if (stats.max_pressure < temp_max)
         {
         	stats.max_pressure = temp_max;
             stats.pressure_t_index = t_index;
-        	cout << "Updating max pressure: " << stats.max_pressure/1e6 << " [MPa]\n";
+        	cout << "Updating max pressure: " << stats.max_pressure/1e6 << " [MPa] @ t=" << t_index << "\n";
         }
         /// -------------------------------------------/
       }// p_max

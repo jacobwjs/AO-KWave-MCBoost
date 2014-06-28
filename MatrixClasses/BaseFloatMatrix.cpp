@@ -62,7 +62,27 @@
 //                              public methods                                //
 //----------------------------------------------------------------------------//
 
-  
+
+/// ----------------------------------------------------- JWJS -------------------------
+/**
+ *
+ * Initialize all values of the matrix to the supplied value.
+ * Typically used to populate the matrix with background index
+ * of refraction values (i.e. values in the medium before insonification).
+ *
+ */
+void TBaseFloatMatrix::InitMatrix(const float value)
+{
+#ifndef __NO_OMP__
+    #pragma omp parallel for schedule (static)
+#endif
+    for (size_t i=0; i < pTotalAllocatedElementCount; i++) {
+        pMatrixData[i] = value;
+    }
+}
+/// -----------------------------------------------------------/
+
+
 /**
  * 
  * Copy data from another matrix with same size.

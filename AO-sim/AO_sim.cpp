@@ -269,6 +269,7 @@ AO_Sim::Run_acousto_optics_sim(TParameters * Parameters)
     bool sim_refractive_total = Parameters->IsSim_refractive_total();
     bool sim_refractive_grad  = Parameters->IsSim_refractive_grad();
     bool sim_displacement     = Parameters->IsSim_displacement();
+    bool sim_modulation_depth = Parameters->IsStore_modulation_depth();
 
     /// Decide what to simulate (refractive gradient, refractive_total, displacement).
     if (sim_refractive_grad)
@@ -285,6 +286,11 @@ AO_Sim::Run_acousto_optics_sim(TParameters * Parameters)
     {
        da_boost->Simulate_displacement(true);
        cout << "Displacement: ON\n";
+    }
+    if (sim_modulation_depth)
+    {
+        da_boost->Simulate_modulation_depth(true);
+        cout << "Modulation depth: ON\n";
     }
     
     /// FIXME:

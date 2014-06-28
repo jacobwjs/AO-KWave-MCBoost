@@ -209,26 +209,33 @@ void Logger::Write_velocity_displacement(float ux, float uy, float uz,
 
 
 /// Store the OPL based on the initial seeds of the photon.
-void Logger::Store_OPL(RNGSeeds &seeds, double OPL)
+void Logger::Store_OPL(RNGSeeds &seeds, double n_OPL, double d_OPL)
 {
     boost::mutex::scoped_lock lock(m_mutex);
 
     /// Create a new key for the map based on this detected photon's initial seeds.
     MultiKey key(seeds.s1, seeds.s2, seeds.s3, seeds.s4);
+    
+    OPL new_vals;
+    new_vals.refractive_index_OPL  = n_OPL;
+    new_vals.displacement_OPL      = d_OPL;
 
     /// Check if the key already exists.
     if (OPL_Map.count(key) != 0)
     {
-        /// get vector, update it, and store back
-        std::vector<double> &temp = OPL_Map[key];
-        temp.push_back(OPL);
+        /// get the vector of OPLs for this key (i.e. seed values)
+        std::vector<OPL> &temp = OPL_Map[key];
+
+        /// and store it back
+        temp.push_back(new_vals);
         OPL_Map[key].swap(temp);
     }
     else
     {
         /// Insert into the map.
-        std::vector<double> temp;
-        temp.push_back(OPL);
+        std::vector<OPL> temp;
+      
+        temp.push_back(new_vals);
         OPL_Map[key] = temp;
     }
 
@@ -245,16 +252,18 @@ void Logger::Write_OPL_data()
     }
 
 
-    std::map<MultiKey, std::vector<double> >::const_iterator map_iter;
+    std::map<MultiKey, std::vector<OPL> >::const_iterator map_iter;
     for (map_iter = OPL_Map.begin(); map_iter != OPL_Map.end(); map_iter++)
     {
-        // Note:
-        // map_iter->first  = key
-        // map_iter->second = value
-        std::vector<double> temp = map_iter->second;
-        for (std::vector<double>::const_iterator vec_iter = temp.begin(); vec_iter != temp.end(); vec_iter++)
+        /// NOTE:
+        /// - map_iter->first  = key
+        /// - map_iter->second = value
+        std::vector<OPL> temp = map_iter->second;
+        for (std::vector<OPL>::const_iterator vec_iter = temp.begin(); vec_iter != temp.end(); vec_iter++)
         {
-            modulation_depth_stream << std::fixed << std::setprecision(15) <<  (*vec_iter) << ' ';
+            modulation_depth_stream << std::fixed << std::setprecision(15)
+                                    << (*vec_iter).refractive_index_OPL << ','
+                                    << (*vec_iter).displacement_OPL << ' ';
         }
         modulation_depth_stream << endl;
     }

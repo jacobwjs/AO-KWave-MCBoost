@@ -157,7 +157,7 @@ MC_Boost::Generate_MC_RNG_seeds(Medium * medium, coords LaserInjectionCoords)
 
 
 
-    cout << "... done\n"
+    cout << ".... Generating seeds done\n"
 		 << "Simulated: " << MAX_NUM_PHOTONS << '\n'
     	 << "Detected: " << Logger::getInstance()->Get_num_detected_seed_photons() << " photons\n";
 
@@ -174,6 +174,7 @@ MC_Boost::Run_MC_sim_timestep(Medium *medium, coords LaserInjectionCoords, int t
 
     /// Update the user on what is going to simulated and set/create instances of needed objects.
     cout << "\n\n............. Running MC-Boost .............. \n";
+    cout << "(time step: " << time << ")\n";
     if (Params.DISPLACE)
     {
         cout << "Displacement enabled\n";
@@ -200,7 +201,6 @@ MC_Boost::Run_MC_sim_timestep(Medium *medium, coords LaserInjectionCoords, int t
         /// take care of that in main().
         return;
     }
-    cout << "(time step: " << time << ")\n";
     cout.flush();
 
     /// The logger is a singleton.  To bypass any problems with using singletons in a multi-threaded application
@@ -362,7 +362,7 @@ MC_Boost::Run_MC_sim_timestep(Medium *medium, coords LaserInjectionCoords, int t
     
     
     /// Notify the user of what was detected if any of the acousto-optics mechanisms were turned on.
-    cout << "... MC-Boost done\n";
+    cout << ".... MC-Boost done\n";
     if (Params.DISPLACE || Params.REFRACTIVE_TOTAL || Params.REFRACTIVE_GRADIENT || Params.MODULATION_DEPTH)
     {
         cout << "Detected: " << Logger::getInstance()->Get_num_exited_photons() << " photons\n";

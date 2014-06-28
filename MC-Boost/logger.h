@@ -34,8 +34,12 @@ class Photon;
 class Vector3d;
 //class MultiKey;
 
-/// Multikey map for storing the OPL's with comparison of modulation depth.
-typedef std::map<MultiKey, std::vector<double> > MultiKeyMap;
+/// Multikey map for storing the optical path lengths (OPL's) for comparison of modulation depth.
+typedef struct {
+    double refractive_index_OPL;
+    double displacement_OPL;
+} OPL;
+typedef std::map<MultiKey, std::vector<OPL> > MultiKeyMap;
 
 
 
@@ -66,7 +70,7 @@ public:
                                          float disp_x, float disp_y, float disp_z);
     
     /// Stores the OPL of a photon as it exits through the detector.
-    void    Store_OPL(RNGSeeds &seeds, double OPL);
+    void    Store_OPL(RNGSeeds &seeds, double refractive_OPL, double displacment_OPL);
     
     /// Writes all the stored OPL data to disk.
     void    Write_OPL_data(void);

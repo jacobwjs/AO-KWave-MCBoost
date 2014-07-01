@@ -365,7 +365,7 @@ MC_Boost::Run_MC_sim_timestep(Medium *medium, coords LaserInjectionCoords, int t
     cout << ".... MC-Boost done\n";
     if (Params.DISPLACE || Params.REFRACTIVE_TOTAL || Params.REFRACTIVE_GRADIENT || Params.MODULATION_DEPTH)
     {
-        cout << "Detected: " << Logger::getInstance()->Get_num_exited_photons() << " photons\n";
+        cout << "Detected: " << Logger::getInstance()->Get_num_exited_photons() << " photons\n\n";
     }
     
     

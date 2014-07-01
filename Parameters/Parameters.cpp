@@ -435,7 +435,9 @@ TParameters::TParameters() :
         absorb_eta_scalar(0.0f), absorb_tau_scalar (0.0f),
         BonA_scalar_flag(false), BonA_scalar (0.0f),
         rho0_scalar_flag(false), rho0_scalar(0.0f), rho0_sgx_scalar(0.0f), rho0_sgy_scalar(0.0f), rho0_sgz_scalar(0.0f)
-        
+        /// ------------------------- JWJS ------------
+        , time_steps_for_PI_phase_shift(0)
+        /// ------------------------------/
 {                         
             
 }// end of TFFT1DParameters

@@ -182,9 +182,12 @@ public:
     string GetOutputFileName()          const {return CommandLinesParameters.GetOutputFileName();};
 
     /// ------------------------------ JWJS ---------------------------------------
+    /// Get the ultrasound frequency used based on what was passed in via the commandline.
+    float Get_US_freq()                 const {return CommandLinesParameters.Get_US_freq();};
+    
     /// Get input RNG seed file name
     string GetRNGSeedFileName()         const {return CommandLinesParameters.GetRNGSeedsFileName();};
-    /// ------------------------------------
+    /// ------------------------------------/
        
     /// Get compression level
     int GetCompressionLevel()           const {return CommandLinesParameters.GetCompressionLevel();};
@@ -203,7 +206,12 @@ public:
     
     /// Set end time index for sensor recording
     void SetEndTimeIndex(const int end_time) {CommandLinesParameters.SetEndTimeIndex(end_time);};
-    /// ------------------------------
+    
+    /// Set the number of simulation time steps it takes to create a 180 degree phase shift in
+    /// the ultrasound propagation.
+    void   SetTimeStepsForPiPhaseShift(const size_t steps) {time_steps_for_PI_phase_shift = steps;};
+    size_t GetTimeStepsForPiPhaseShift() const {return time_steps_for_PI_phase_shift;};
+    /// ------------------------------/
    
     /// Is --version specified at the command line
     bool IsVersion()                    const {return CommandLinesParameters.IsVersion();};
@@ -232,8 +240,11 @@ public:
     
     
     /// ------------------------ JWJS --------------------------------------------------------------------------------------
+    /// Is --US_freq specified at the command line
+    bool IsUS_freq_known()                  const {return CommandLinesParameters.IsUS_freq_known();};
+    
     /// Is --save_seeds specified at the command line
-    bool IsStore_RNG_seeds()                          const {return CommandLinesParameters.IsStore_RNG_seeds();};
+    bool IsStore_RNG_seeds()                      const {return CommandLinesParameters.IsStore_RNG_seeds();};
 
     /// Is --load_seeds specified at the command line
     bool IsLoad_seeds()                           const {return CommandLinesParameters.IsLoad_seeds();};
@@ -417,6 +428,11 @@ protected:
     /// singleton instance
     static TParameters *ParametersSingleInstance;
     
+        
+        
+    /// -------------------------------------------- JWJS ------------------
+    size_t time_steps_for_PI_phase_shift;
+    /// -------------------------------------------------/
     
         
         

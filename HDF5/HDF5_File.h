@@ -189,9 +189,9 @@ sensor_mask_index               (Nsens, 1, 1)   long          real
 
   5.3 Transducer Source Terms (defined if (transducer_source_flag == 1))
 
-  u_source_index        	(Nsrc, 1, 1)    long          real
+  u_source_index                (Nsrc, 1, 1)    long          real
   transducer_source_input       (Nt_src, 1, 1)  float         real
-  delay_mask			(Nsrc, 1, 1)    float         real
+  delay_mask                    (Nsrc, 1, 1)    float         real
 
   5.4 IVP Source Terms (defined if ( p0_source_flag ==1)       
 

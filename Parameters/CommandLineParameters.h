@@ -109,14 +109,22 @@ Output flags:
                                       (default = 1)
  
  /// ----------------------------- JWJS -------------------------------------------------
- -n                               : Store index of refraction\n");
+ --US_freq                        : Ultrasound frequency used in the simulation (used with 'phase_inversion' option)
+ --phase_inversion                : Run the acousto-optic simulation at time 't' with ultrasound phase (phi) and (phi+180)
+ 
+ --save_seeds                     : Save the RNG seeds that created photon paths that were detected
+ --load_seeds <input_file_name>   : Load RNG seeds to use for photon propagation
+ 
+ --modulation_depth               : Save the optical path lengths to disk for comparison
+ 
+ --n                               : Store index of refraction\n");
                                         (all axial components nx, ny, nz)
  --refractive_total               : Store the norm of the index of refraction
  --refractive_x                   : Store the x-component of the index of refraction
  --refractive_y                   : Store the y-component of the index of refraction
  --refractive_z                   : Store the z-component of the index of refraction
  
- -d                               : Store displacements
+ --d                               : Store displacements
                                         (all axial components disp_x, disp_y, disp_z)
  --disp_x                         : Store displacement along x-axis
  --disp_y                         : Store displacement along y-axis
@@ -196,6 +204,8 @@ public:
     
     
     /// ---------------------- JWJS -----------------------------------
+    float Get_US_freq()                 const {return US_freq;};
+    
     /// Get end time index when sensor data collection ends
     int GetEndTimeIndex()               const {return EndTimeStep;};
     
@@ -228,8 +238,11 @@ public:
     
     
     /// ------------------- JWJS ------------------------------------
+    /// Is --US_freq set
+    bool IsUS_freq_known()              const {return US_freq_known;};
+    
     /// Is --save_seeds set
-    bool IsStore_RNG_seeds()           const {return Store_seeds;};
+    bool IsStore_RNG_seeds()            const {return Store_seeds;};
 
     /// Is --load_seeds set
     bool IsLoad_seeds()                 const {return Load_seeds;};
@@ -322,6 +335,11 @@ private:
     
     
     /// -------------------------- JWJS --------------------------------------------
+    /// Used to signal if the US frequency is input via commandline option.
+    bool        US_freq_known;
+    /// The ultrasound frequency used in the simulation.
+    float       US_freq;
+    
     /// Store the RNG seeds used in monte-carlo simulation.
     bool        Store_seeds;
 

@@ -238,11 +238,13 @@ public:
 
     
 protected:
-    TInputHDF5Stream* refractive_total_InputStream;
-    TInputHDF5Stream* refractive_x_InputStream;
-    TInputHDF5Stream* refractive_y_InputStream;
-    TInputHDF5Stream* refractive_z_InputStream;
     
+    
+    TInputHDF5Stream* refractive_total_InputStream;
+//    TInputHDF5Stream* refractive_x_InputStream;
+//    TInputHDF5Stream* refractive_y_InputStream;
+//    TInputHDF5Stream* refractive_z_InputStream;
+//    
     TInputHDF5Stream* displacement_x_InputStream;
     TInputHDF5Stream* displacement_y_InputStream;
     TInputHDF5Stream* displacement_z_InputStream;

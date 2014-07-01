@@ -946,7 +946,7 @@ void Photon::alterOPLFromAverageRefractiveChanges(void)
 	// NOTE:
 	// - Because the step size is much smaller than the size of a voxel, which means any given step
 	//   at best will at one end lie in a voxel adjecent to the other end, we only have a chance of
-	//   having different values of refrective index at the far ends of the segment connecting the previous location
+	//   having different values of refractive index at the far ends of the segment connecting the previous location
 	//   and the current location.  Therefore, only check those to simplify things.
 	//   -----------------------------------------------------------------------------------------------------------
 	// Transform the location of the photon in the medium to discrete locations in the grid based
@@ -1052,6 +1052,10 @@ void Photon::displacePhotonAndAlterOPLFromAverageRefractiveChanges(void)
 	/// If we make it here, both have been turned on, and to remove any disambiguity we assign
 	/// 'combined_OPL' the value of 'refractiveIndex_optical_path_length' to
 	/// reduce the overhead of having to redo what is essentially embedded in 'refractiveIndex_optical_path_length'.
+    /// FIXME:
+    /// - This is very confusing and should be updated someday to track non-displaced coordinates for separating
+    ///   the mechanisms clearly.
+    /// - Or another way?
 	combined_OPL = refractiveIndex_optical_path_length;
 
 }

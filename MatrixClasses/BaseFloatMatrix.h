@@ -87,6 +87,7 @@ public:
     /// ------------------------------------------------------------- JWJS ---------------
     /// Initialize all elements of the matrix to the supplied value.
     virtual void InitMatrix(const float value);
+    /// ------------------------------------------------------------------/
     
     /// divide scalar/ matrix_element[i]
     virtual void ScalarDividedBy(const float scalar);    

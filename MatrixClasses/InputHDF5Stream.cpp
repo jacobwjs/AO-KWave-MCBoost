@@ -80,7 +80,7 @@ void TInputHDF5Stream::CloseStream()
  * @param [in, out] TempBuffer - Temp buffer to make the data block contiguous
  *
  */
-void TInputHDF5Stream::ReadData(const char * DatasetName, float * TempBuffer)
+void TInputHDF5Stream::ReadData(const char * DatasetName, TLongMatrix& Index, float * TempBuffer)
 {
     
     
@@ -99,16 +99,19 @@ void TInputHDF5Stream::ReadData(const char * DatasetName, float * TempBuffer)
 ///    HDF5_File.ReadCompleteDataset(Nt_Name, ScalarSizes, &Nt);
     
     HDF5_Dataset_id = HDF5_File->OpenDataset(DatasetName);
-    TDimensionSizes Dims = HDF5_File->GetDatasetDimensionSizes(DatasetName);
+    //TDimensionSizes Dims = HDF5_File->GetDatasetDimensionSizes(DatasetName);
     
     /// The size of the block of data for this timestep.
-    TDimensionSizes BlockSize(Dims.X,1,1);
+    //TDimensionSizes BlockSize(Dims.X,1,1);
+    TDimensionSizes BlockSize(Index.GetTotalElementCount(),1,1);
     
     /// Dims.X is the total number of sensor elements.
-    Position.X = Dims.X;
+    //Position.X = Dims.X;
+    Position.X = 0;
     
     /// Always one.
-    Position.Z = 1;
+    //Position.Z = 1;
+    Position.Z = 0;
     
     /// Read the appropriate hyperslab from the HDF5 file.
     /// Note: What ends up getting passed to ReadHyperSlab is,

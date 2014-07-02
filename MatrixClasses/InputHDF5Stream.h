@@ -59,7 +59,7 @@ public:
     virtual void CloseStream();
     
     /// Add data into stream
-    virtual void ReadData(const char * DatasetName, float * DataIn);
+    virtual void ReadData(const char * DatasetName, TLongMatrix& Index, float * DataIn);
     
     /// Destructor
     virtual ~TInputHDF5Stream();

@@ -22,6 +22,7 @@ using namespace VectorMath;
 
 
 void PrintMatrix(TRealMatrix &matrix, TParameters *params);
+void PrintMatrixSensor(TRealMatrix &matrix, TParameters *params);
 void PrintMatrix(Medium * m_medium, TParameters *params);
 
 
@@ -367,7 +368,7 @@ AO_Sim::Run_acousto_optics_sim(TParameters * Parameters)
     /// If any of the above mechanisms are turned on, we need the sensor mask indices to map the sensor
     /// to the respective medium (refractive index medium, displacement medium, etc.) so that
     /// it can be updated each run.
-    const long * sensor_index = KSpaceSolver->FromAO_sim_Get_sensor_mask_ind().GetRawData();
+    //const long * sensor_index = KSpaceSolver->FromAO_sim_Get_sensor_mask_ind().GetRawData();
 
 
 
@@ -379,7 +380,7 @@ AO_Sim::Run_acousto_optics_sim(TParameters * Parameters)
 //    ActPercent = 0;
     KSpaceSolver->FromAO_sim_PrintOutputHeader();
     KSpaceSolver->IterationTimeStart();
-	size_t k_wave_Nt = Parameters->Get_Nt();
+	int k_wave_Nt = Parameters->Get_Nt();
 	k_wave_Nt = 252;
     for (KSpaceSolver->SetTimeIndex(0); KSpaceSolver->GetTimeIndex() < k_wave_Nt; KSpaceSolver->IncrementTimeIndex()){
 
@@ -557,6 +558,9 @@ AO_Sim::Run_acousto_optics_sim(TParameters * Parameters)
                          (curr_time <= Parameters->GetEndTimeIndex())) ||
                         (curr_time == 0))
                     {
+                        PrintMatrix((*refractive_total_full_medium), Parameters);
+                        PrintMatrix((*disp_x_full_medium), Parameters);
+                        
                         da_boost->Run_MC_sim_timestep(m_medium,
                                                       m_Laser_injection_coords,
                                                       KSpaceSolver->GetTimeIndex());
@@ -760,30 +764,22 @@ AO_Sim::Run_acousto_optics_sim_loadData(TParameters * Parameters)
     HDF5_OutputFile.ReadCompleteDataset(Nz_Name,  ScalarSizes, &Nz);
 
     /// The dimensions of the recorded data from kWave.
-    /// FIXME:
-    /// - Should take into account the PML sizes if the sensor.mask
-    ///   size did also during the generation of the INPUT h5 file from matlab.
-    ///   This might take changing the matlab code for
-    ///   saving these values to the INPUT h5 file, which will be written
-    ///   out to the OUTPUT h5 file.
-    /// NOTE:
-    /// - This is not correct if the sensor.mask was not the full medium.
-    TDimensionSizes FullDim(Nx, Ny, Nz);
+    TDimensionSizes FullDim = Parameters->GetFullDimensionSizes();
     TDimensionSizes SensorDims(Parameters->Get_sensor_mask_index_size(), 1, 1);
     TDimensionSizes SensorMaskDims(1, 1, Parameters->Get_sensor_mask_index_size());
     
     
-    //-- index matrices --//
-    //MatrixContainer[sensor_mask_ind].SetAllValues(NULL,TMatrixRecord::mdtIndex, TDimensionSizes(1 ,1, Params->Get_sensor_mask_index_size()), true, sensor_mask_index_Name);
-    
-    
+    /// The sensor mask indices where data was recorded. This is used to re-populate the 'full medium'.
     sensor_mask_ind = new TLongMatrix(SensorMaskDims);
     if (!sensor_mask_ind)  throw bad_alloc();
     
     
     /// Read in the sensor data indices. This will be used to map the sensor to the full medium.
-    //sim_InputStream->ReadData(sensor_mask_index_Name, sensor_mask_ind->GetRawData());
     HDF5_InputFile.ReadCompleteDataset(sensor_mask_index_Name, SensorMaskDims, sensor_mask_ind->GetRawData());
+    
+    /// Move index counts from Matlab->C++
+    sensor_mask_ind->RecomputeIndices();
+    
     
     /// Is simulation of refractive index changes (total) enabled.  If so create the
     /// input stream to read the data from the HDF5 file and create the refracitve_map
@@ -866,15 +862,17 @@ AO_Sim::Run_acousto_optics_sim_loadData(TParameters * Parameters)
             {
                 /// Read refractive total data in from the HDF5 file that holds the precomputed values for
                 /// a previously run kWave simulation.
-                refractive_total_InputStream->ReadData(refractive_total_sensor_Name, refractive_total_sensor->GetRawData());
+                refractive_total_InputStream->ReadData(refractive_total_sensor_Name, (*sensor_mask_ind), refractive_total_sensor->GetRawData());
                 
                 /// Initialize the full medium with the background (i.e. unmodulated) refractive index value.
                 /// XXX:
-                /// - This must match was was simulated in the generation of the sensor data, otherwise the modulated values
+                /// - This must match what was simulated in the generation of the sensor data, otherwise the modulated values
                 ///   will not be consistent.
                 /// - The saving of the origin OUTPUT h5 file should contain the refractive index value (if homogeneous) and
                 ///   load it in here to populate the full medium.
                 refractive_total_full_medium->InitMatrix(1.33);
+                
+                
                 float * nmap = refractive_total_full_medium->GetRawData();
                 const float * sensor = refractive_total_sensor->GetRawData();
                 const size_t  sensor_size = sensor_mask_ind->GetTotalElementCount();
@@ -893,22 +891,22 @@ AO_Sim::Run_acousto_optics_sim_loadData(TParameters * Parameters)
             {
                 /// Read displacment data in from the HDF5 file that holds the precomputed values for
                 /// a previously run kWave simulation.
-                displacement_x_InputStream->ReadData(disp_x_sensor_Name, disp_x_sensor->GetRawData());
-                displacement_y_InputStream->ReadData(disp_y_sensor_Name, disp_y_sensor->GetRawData());
-                displacement_z_InputStream->ReadData(disp_z_sensor_Name, disp_y_sensor->GetRawData());
+                displacement_x_InputStream->ReadData(disp_x_sensor_Name, (*sensor_mask_ind), disp_x_sensor->GetRawData());
+                displacement_y_InputStream->ReadData(disp_y_sensor_Name, (*sensor_mask_ind), disp_y_sensor->GetRawData());
+                displacement_z_InputStream->ReadData(disp_z_sensor_Name, (*sensor_mask_ind), disp_z_sensor->GetRawData());
+                
                 
                 /// Update the 'full_medium' from the sensor data.
                 ///
                 float * dmap_x = disp_x_full_medium->GetRawData();
-                float * dmap_y = disp_x_full_medium->GetRawData();
-                float * dmap_z = disp_x_full_medium->GetRawData();
+                float * dmap_y = disp_y_full_medium->GetRawData();
+                float * dmap_z = disp_z_full_medium->GetRawData();
                 
                 const float * x_sensor = disp_x_sensor->GetRawData();
                 const float * y_sensor = disp_y_sensor->GetRawData();
                 const float * z_sensor = disp_z_sensor->GetRawData();
                 const size_t  sensor_size = sensor_mask_ind->GetTotalElementCount();
                 const long *  index = sensor_mask_ind->GetRawData();
-                
                 for (size_t i = 0; i < sensor_size; i++)
                 {
                     dmap_x[index[i]] = x_sensor[i];
@@ -957,7 +955,7 @@ AO_Sim::Run_acousto_optics_sim_loadData(TParameters * Parameters)
             {
                 /// Read refractive total data in from the HDF5 file that holds the precomputed values for
                 /// a previously run kWave simulation.
-                refractive_total_InputStream->ReadData(refractive_total_sensor_Name, refractive_total_sensor->GetRawData());
+                refractive_total_InputStream->ReadData(refractive_total_sensor_Name, (*sensor_mask_ind), refractive_total_sensor->GetRawData());
                 
                 /// Initialize the full medium with the background (i.e. unmodulated) refractive index value.
                 /// XXX:
@@ -978,6 +976,9 @@ AO_Sim::Run_acousto_optics_sim_loadData(TParameters * Parameters)
                 
                 /// Assign a refractive map (total) based upon the pressure and density changes at this time step.
                 m_medium->Create_refractive_map_from_full_medium(refractive_total_full_medium);
+                
+                
+                //PrintMatrix((*refractive_total_full_medium), Parameters);
             }
 
             if (sim_displacement)
@@ -985,16 +986,16 @@ AO_Sim::Run_acousto_optics_sim_loadData(TParameters * Parameters)
                 
                 /// Read displacment data in from the HDF5 file that holds the precomputed values for
                 /// a previously run kWave simulation.
-                displacement_x_InputStream->ReadData(disp_x_sensor_Name, disp_x_sensor->GetRawData());
-                displacement_y_InputStream->ReadData(disp_y_sensor_Name, disp_y_sensor->GetRawData());
-                displacement_z_InputStream->ReadData(disp_z_sensor_Name, disp_y_sensor->GetRawData());
+                displacement_x_InputStream->ReadData(disp_x_sensor_Name, (*sensor_mask_ind), disp_x_sensor->GetRawData());
+                displacement_y_InputStream->ReadData(disp_y_sensor_Name, (*sensor_mask_ind), disp_y_sensor->GetRawData());
+                displacement_z_InputStream->ReadData(disp_z_sensor_Name, (*sensor_mask_ind), disp_z_sensor->GetRawData());
 
                 
                 /// Update the 'full_medium' from the sensor data.
                 ///
                 float * dmap_x = disp_x_full_medium->GetRawData();
-                float * dmap_y = disp_x_full_medium->GetRawData();
-                float * dmap_z = disp_x_full_medium->GetRawData();
+                float * dmap_y = disp_y_full_medium->GetRawData();
+                float * dmap_z = disp_z_full_medium->GetRawData();
                 
                 const float * x_sensor = disp_x_sensor->GetRawData();
                 const float * y_sensor = disp_y_sensor->GetRawData();
@@ -1022,7 +1023,7 @@ AO_Sim::Run_acousto_optics_sim_loadData(TParameters * Parameters)
                 /// Create a displacement map based on the values read in from the HDF5 file.
                 //m_medium->Create_displacement_map(disp_x, disp_y, disp_z);
 
-                ///PrintMatrix((*disp_x), Parameters);
+                //PrintMatrixSensor((*disp_x_sensor), Parameters);
                 ///PrintMatrix(m_medium, Parameters);
 
                 /// Zero out the matrices for the next read in from the HDF5 file.
@@ -1450,33 +1451,6 @@ AO_Sim::Test_Read_HDF5_File(TParameters * Parameters)
 /// --------------------------------------- END WORKING VERS ---------------------------
 
 
-
-
-/// --------------------------------------- BEGIN InputHDF5Stream WORKING VERS ---------
-    THDF5_File& HDF5_OutputFile = Parameters->HDF5_OutputFile;
-    THDF5_File& HDF5_InputFile  = Parameters->HDF5_InputFile;
-
-
-
-    TDimensionSizes temp = HDF5_OutputFile.GetDatasetDimensionSizes(refractive_total_full_medium_Name);
-
-    long int Nx, Ny, Nz;
-    TDimensionSizes ScalarSizes(1,1,1);
-    HDF5_OutputFile.ReadCompleteDataset(Nx_Name,  ScalarSizes, &Nx);
-    HDF5_OutputFile.ReadCompleteDataset(Ny_Name,  ScalarSizes, &Ny);
-    HDF5_OutputFile.ReadCompleteDataset(Nz_Name,  ScalarSizes, &Nz);
-
-    
-    /// FIXME:
-    /// - This is incorrect when sensor.mask does not match the full size of the medium.
-    TDimensionSizes sensor_size(Nx, Ny, Nz);
-    TRealMatrix refract_total_full_medium(sensor_size);
-
-    refractive_total_InputStream->ReadData(refractive_total_full_medium_Name, refract_total_full_medium.GetRawData());
-    PrintMatrix(refract_total_full_medium, Parameters);
-/// --------------------------------------- END InputHDF5Stream WORKING VERS ---------
-
-
 }
 /// end Test_Read_HDF5_File()
 
@@ -1569,8 +1543,8 @@ void PrintMatrix(TRealMatrix &data, TParameters *Parameters)
 	}
 
 
-    int x, y, z;
-    z = 151;
+    size_t x, y, z;
+    z = 55;
     for (x = 0; x < Dims.X; x++)
     {
         for (y = 0; y < Dims.Y; y++)
@@ -1582,6 +1556,51 @@ void PrintMatrix(TRealMatrix &data, TParameters *Parameters)
 
     data_file_stream.close();
 }
+
+
+void PrintMatrixSensor(TRealMatrix &data, TParameters *Parameters)
+{
+    TDimensionSizes Dims;
+    
+//    Dims.X = Parameters->GetReducedDimensionSizes().X;
+//    Dims.Y = Parameters->GetReducedDimensionSizes().Y;
+//    Dims.Z = Parameters->GetReducedDimensionSizes().Z;
+    Dims.X = Dims.Y = Dims.Z = 88;
+    
+    
+    
+    static int time_step;
+    std::string filename = "matrix_data";
+    std::stringstream ss;
+    ss << time_step++;
+    filename = filename + "_" + ss.str() + ".txt";
+    
+    cout << "Writing Matrix to file: " << filename << '\n';
+    
+    std::ofstream data_file_stream;	// Velocity and displacement stream;
+    data_file_stream.open(filename.c_str());
+	if (!data_file_stream)
+	{
+		cout << "!!! ERROR: Could not open file for writing.  Check directory structure.\n";
+		exit(1);
+	}
+    
+    
+    size_t x, y, z;
+    z = 25;
+    for (x = 0; x < Dims.X; x++)
+    {
+        for (y = 0; y < Dims.Y; y++)
+        {
+            //data_file_stream << data.GetElementFrom3D(x, y, z) << ' ';
+            data_file_stream << data[x*y] << ' ';
+        }
+        data_file_stream << '\n';
+    }
+    
+    data_file_stream.close();
+}
+
 
 
 
@@ -1612,7 +1631,7 @@ void PrintMatrix(Medium * m_medium, TParameters *Parameters)
 	}
 
 
-    int x, y, z;
+    size_t x, y, z;
     z = 151;
     for (x = 0; x < Dims.X; x++)
     {

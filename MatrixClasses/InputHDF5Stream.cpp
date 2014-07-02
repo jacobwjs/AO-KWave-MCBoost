@@ -107,6 +107,9 @@ void TInputHDF5Stream::ReadData(const char * DatasetName, float * TempBuffer)
     /// Dims.X is the total number of sensor elements.
     Position.X = Dims.X;
     
+    /// Always one.
+    Position.Z = 1;
+    
     /// Read the appropriate hyperslab from the HDF5 file.
     /// Note: What ends up getting passed to ReadHyperSlab is,
     ///       Position  = {1, timestep, Nx*Ny*Nz}

@@ -768,7 +768,8 @@ AO_Sim::Run_acousto_optics_sim_loadData(TParameters * Parameters)
     ///   out to the OUTPUT h5 file.
     /// NOTE:
     /// - This is not correct if the sensor.mask was not the full medium.
-    TDimensionSizes FullDim(Nx, Ny, Nz);
+    //TDimensionSizes FullDim(Nx, Ny, Nz);
+    TDimensionSizes FullDim = Parameters->GetFullDimensionSizes();
     TDimensionSizes SensorDims(Parameters->Get_sensor_mask_index_size(), 1, 1);
     TDimensionSizes SensorMaskDims(1, 1, Parameters->Get_sensor_mask_index_size());
     
@@ -784,6 +785,8 @@ AO_Sim::Run_acousto_optics_sim_loadData(TParameters * Parameters)
     /// Read in the sensor data indices. This will be used to map the sensor to the full medium.
     //sim_InputStream->ReadData(sensor_mask_index_Name, sensor_mask_ind->GetRawData());
     HDF5_InputFile.ReadCompleteDataset(sensor_mask_index_Name, SensorMaskDims, sensor_mask_ind->GetRawData());
+    sensor_mask_ind->RecomputeIndices();
+    //Get_sensor_mask_ind().RecomputeIndices();
     
     /// Is simulation of refractive index changes (total) enabled.  If so create the
     /// input stream to read the data from the HDF5 file and create the refracitve_map
@@ -978,6 +981,9 @@ AO_Sim::Run_acousto_optics_sim_loadData(TParameters * Parameters)
                 
                 /// Assign a refractive map (total) based upon the pressure and density changes at this time step.
                 m_medium->Create_refractive_map_from_full_medium(refractive_total_full_medium);
+                
+                
+                PrintMatrix((*refractive_total_full_medium), Parameters);
             }
 
             if (sim_displacement)
@@ -987,14 +993,14 @@ AO_Sim::Run_acousto_optics_sim_loadData(TParameters * Parameters)
                 /// a previously run kWave simulation.
                 displacement_x_InputStream->ReadData(disp_x_sensor_Name, disp_x_sensor->GetRawData());
                 displacement_y_InputStream->ReadData(disp_y_sensor_Name, disp_y_sensor->GetRawData());
-                displacement_z_InputStream->ReadData(disp_z_sensor_Name, disp_y_sensor->GetRawData());
+                displacement_z_InputStream->ReadData(disp_z_sensor_Name, disp_z_sensor->GetRawData());
 
                 
                 /// Update the 'full_medium' from the sensor data.
                 ///
                 float * dmap_x = disp_x_full_medium->GetRawData();
-                float * dmap_y = disp_x_full_medium->GetRawData();
-                float * dmap_z = disp_x_full_medium->GetRawData();
+                float * dmap_y = disp_y_full_medium->GetRawData();
+                float * dmap_z = disp_z_full_medium->GetRawData();
                 
                 const float * x_sensor = disp_x_sensor->GetRawData();
                 const float * y_sensor = disp_y_sensor->GetRawData();
@@ -1022,7 +1028,7 @@ AO_Sim::Run_acousto_optics_sim_loadData(TParameters * Parameters)
                 /// Create a displacement map based on the values read in from the HDF5 file.
                 //m_medium->Create_displacement_map(disp_x, disp_y, disp_z);
 
-                ///PrintMatrix((*disp_x), Parameters);
+                PrintMatrix((*disp_x_full_medium), Parameters);
                 ///PrintMatrix(m_medium, Parameters);
 
                 /// Zero out the matrices for the next read in from the HDF5 file.
@@ -1570,7 +1576,7 @@ void PrintMatrix(TRealMatrix &data, TParameters *Parameters)
 
 
     int x, y, z;
-    z = 151;
+    z = 55;
     for (x = 0; x < Dims.X; x++)
     {
         for (y = 0; y < Dims.Y; y++)

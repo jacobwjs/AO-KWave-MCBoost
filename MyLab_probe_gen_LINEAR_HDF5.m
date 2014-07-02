@@ -109,10 +109,10 @@ medium.density     = rho0;  % [kg/m^3]
 % DEFINE THE SENSOR PARAMETERS
 % =========================================================================
 % Place sensors over a region of interest in the medium.
-sensor.mask = zeros(Nx, Ny, Nz);
-sensor.mask(PML_X_SIZE*2:(Nx-2*PML_X_SIZE),...
-            PML_Y_SIZE*2:(Ny-2*PML_Y_SIZE),...
-            PML_Z_SIZE*2:(Nz-2*PML_Z_SIZE)) = 1;
+sensor.mask = ones(Nx, Ny, Nz);
+%sensor.mask(PML_X_SIZE*2:(Nx-2*PML_X_SIZE),...
+%            PML_Y_SIZE*2:(Ny-2*PML_Y_SIZE),...
+%            PML_Z_SIZE*2:(Nz-2*PML_Z_SIZE)) = 1;
 
 
 % create the time array
@@ -164,7 +164,7 @@ kgrid.t_array = 0:dt:(Nt-1)*dt;
 
 % define properties of the input signal
 % Measured peak-to-peak
-source_strength = 1.0e6;    	% [Pa] 
+source_strength = 0.25e6;    	% [Pa] 
 tone_burst_freq = 5.0e6;        % [Hz]
 source_freq = tone_burst_freq;
 tone_burst_cycles = 5;
@@ -322,10 +322,7 @@ transducer.properties
 % % =========================================================================
 % % RUN THE SIMULATION
 % % =========================================================================
-% 
-% 
-% % Set whether or not to return velocity fields.
-info.return_velocity = false;
+
 % 
 % set the input settings
 input_args = {...

@@ -22,6 +22,7 @@ using namespace VectorMath;
 
 
 void PrintMatrix(TRealMatrix &matrix, TParameters *params);
+void PrintMatrixSensor(TRealMatrix &matrix, TParameters *params);
 void PrintMatrix(Medium * m_medium, TParameters *params);
 
 
@@ -43,7 +44,7 @@ AO_Sim::AO_Sim()
 
     /// For use when data is loaded from a previous simulation of ultrasound.
     refractive_total_InputStream = NULL;
-    refractive_x_InputStream = refractive_y_InputStream = refractive_z_InputStream = NULL;
+//    refractive_x_InputStream = refractive_y_InputStream = refractive_z_InputStream = NULL;
     displacement_x_InputStream = displacement_y_InputStream = displacement_z_InputStream = NULL;
 }
 
@@ -63,6 +64,31 @@ AO_Sim::~AO_Sim()
 
 //    if (m_medium)
 //        delete m_medium;
+}
+
+
+/// Run the monte-carlo simulation.
+void
+AO_Sim::Run_monte_carlo_sim(TParameters * Parameters)
+{
+    /// Explicitly set that we are not running anything other than the monte-carlo simulation.
+    da_boost->Simulate_refractive_gradient(false);
+    da_boost->Simulate_refractive_total(false);
+    da_boost->Simulate_displacement(false);
+    
+    
+    /// Set the monte-carlo simulation to use, or save, RNG seeds based on command line args.
+    if (Parameters->IsStore_RNG_seeds())
+    {
+        Generate_exit_seeds();
+    }
+    else
+    {
+        size_t time = 0;
+        da_boost->Run_MC_sim_timestep(m_medium,
+                                      m_Laser_injection_coords,
+                                      time);
+    }
 }
 
 
@@ -100,6 +126,13 @@ AO_Sim::Run_kWave_sim(TParameters * Parameters)
     /// Decide what to simulate (refractive gradient, refractive_total, displacement).
     if (sim_refractive_grad)
     {
+        /// If the simulation of refractive index changes should take place, we need
+        /// to initialze the entire medium with the background value.
+        /// XXX:
+        /// - This assumes the entire medium has a homogeneous refractive index value.
+        ///   This becomes problematic when we want a spatially varying refractive index,
+        ///   for example when multiple layers are present in the medium.
+        KSpaceSolver->FromAO_sim_init_refractive_index_matrix(1.33);
         da_boost->Simulate_refractive_gradient(true);
         cout << "Refractive gradient: ON\n";
     }
@@ -232,30 +265,6 @@ AO_Sim::Run_kWave_sim(TParameters * Parameters)
 
 }
 
-/// Run the monte-carlo simulation.
-void
-AO_Sim::Run_monte_carlo_sim(TParameters * Parameters)
-{
-    /// Explicitly set that we are not running anything other than the monte-carlo simulation.
-    da_boost->Simulate_refractive_gradient(false);
-    da_boost->Simulate_refractive_total(false);
-    da_boost->Simulate_displacement(false);
-  
-    
-    /// Set the monte-carlo simulation to use, or save, RNG seeds based on command line args.
-    //Parameters->IsStore_seeds()   ?   da_boost->Save_RNG_seeds(true) : da_boost->Save_RNG_seeds(false);
-    //Parameters->IsLoad_seeds()    ?   da_boost->Use_RNG_seeds(true)  : da_boost->Use_RNG_seeds(false);
-
-    
-    size_t time = 1;
-    da_boost->Run_MC_sim_timestep(m_medium,
-                                  m_Laser_injection_coords,
-                                  time);
-    
-}
-
-
-
 
 
 /// Run the acousto-optic simulation.
@@ -268,23 +277,30 @@ AO_Sim::Run_acousto_optics_sim(TParameters * Parameters)
     bool sim_refractive_total = Parameters->IsSim_refractive_total();
     bool sim_refractive_grad  = Parameters->IsSim_refractive_grad();
     bool sim_displacement     = Parameters->IsSim_displacement();
-
-    /// Decide what to simulate (refractive gradient, refractive_total, displacement).
-    if (sim_refractive_grad)
-    {
-       da_boost->Simulate_refractive_gradient(true);
-       cout << "Refractive gradient: ON\n";
-    }
-    if (sim_refractive_total)
-    {
-       da_boost->Simulate_refractive_total(true);
-       cout << "Refraction: ON\n";
-    }
-    if (sim_displacement)
-    {
-       da_boost->Simulate_displacement(true);
-       cout << "Displacement: ON\n";
-    }
+    bool sim_modulation_depth = Parameters->IsStore_modulation_depth();
+    bool sim_phase_inversion  = Parameters->IsPhase_inversion();
+    
+    /// Variables used to calculate the phase inversion timing of ultrasound propagation
+    /// and when we should run the MC_sim.
+    /// --------------------------------------------------------------------------------
+    /// When there is a acoustically heterogeneous medium defined, c0 and c_ref differ by the avg (c0) and the max (c_ref).
+    /// We take the average of those to calculate the PI phase shift.
+    /// When the medium is acoustically homogeneous c0 = c_ref.
+    const float c0             = Parameters->Get_c0_scalar();
+    const float c_ref          = Parameters->Get_c_ref();
+    const float c_avg          = (c0 + c_ref)/2;
+    const float US_freq        = Parameters->Get_US_freq();
+    const float US_wavelength  = c_avg/US_freq;
+    const float PI_phase_shift = (US_wavelength/2) * (1/c0);  /// [sec]
+    
+//    /// Simulation time ticks, which are whole integers, and assumes the time steps of the simulation (dt)
+//    /// fit evenly into the time it took for achieving 'PI_phase_shift' of the ultrasound. Otherwise the
+//    /// 180 degree phase shift will NOT be fully accurate.
+//    const size_t sim_time_steps_for_PI_phase_shift = PI_phase_shift/Parameters->Get_dt();
+    
+    
+    
+    
     
     /// FIXME:
     /// - Need to die gracefully with an appropriate error message.
@@ -293,11 +309,6 @@ AO_Sim::Run_acousto_optics_sim(TParameters * Parameters)
         /// Should fail here, since nothing has been enabled for the AO_sim.
     }
 
-    
-    /// If any of the above are turned on, we need the sensor mask indices to map the sensor
-    /// to the respective medium (refractive index medium, displacement medium, etc.) so that
-    /// it can be updated each run.
-    const long * sensor_index = KSpaceSolver->FromAO_sim_Get_sensor_mask_ind().GetRawData();
 
     /// Load data from disk
     cout << "Loading k-Wave data ........";
@@ -311,6 +322,53 @@ AO_Sim::Run_acousto_optics_sim(TParameters * Parameters)
         exit(EXIT_FAILURE);
     }
     cout << ".... done\n";
+    
+    
+    /// NOTE:
+    /// - Order is important here. Some computation happens in 'KSpaceSolver' after loading input data.
+    ///   This must happen after 'LoadInputData' for the phase inversion time.
+    /// -----------------------------------------------------------------------------------------------
+    ///
+    /// Decide what to simulate (refractive gradient, refractive_total, displacement).
+    if (sim_refractive_grad)
+    {
+        da_boost->Simulate_refractive_gradient(true);
+        cout << "Refractive gradient: ON\n";
+    }
+    if (sim_refractive_total)
+    {
+        /// If the simulation of refractive index changes should take place, we need
+        /// to initialize the entire medium with the background value.
+        /// XXX:
+        /// - This assumes the entire medium has a homogeneous refractive index value.
+        ///   This becomes problematic when we want a spatially varying refractive index,
+        ///   for example when multiple layers are present in the medium.
+        KSpaceSolver->FromAO_sim_init_refractive_index_matrix(1.33);
+        da_boost->Simulate_refractive_total(true);
+        cout << "Refraction: ON\n";
+    }
+    if (sim_displacement)
+    {
+        da_boost->Simulate_displacement(true);
+        cout << "Displacement: ON\n";
+    }
+    if (sim_modulation_depth)
+    {
+        da_boost->Simulate_modulation_depth(true);
+        cout << "Modulation depth: ON\n";
+    }
+    if (sim_phase_inversion)
+    {
+        cout << "Phase inversion: ON\n"
+        << " - ultrasound frequency: " << US_freq/1e6 << " MHz\n"
+        << " - PI phase shift: " << PI_phase_shift << " [sec], " << Parameters->GetTimeStepsForPiPhaseShift() << " [simulation time steps]\n";
+    }
+    cout << "\n\n";
+    
+    /// If any of the above mechanisms are turned on, we need the sensor mask indices to map the sensor
+    /// to the respective medium (refractive index medium, displacement medium, etc.) so that
+    /// it can be updated each run.
+    //const long * sensor_index = KSpaceSolver->FromAO_sim_Get_sensor_mask_ind().GetRawData();
 
 
 
@@ -322,8 +380,8 @@ AO_Sim::Run_acousto_optics_sim(TParameters * Parameters)
 //    ActPercent = 0;
     KSpaceSolver->FromAO_sim_PrintOutputHeader();
     KSpaceSolver->IterationTimeStart();
-	size_t k_wave_Nt = Parameters->Get_Nt();
-	//k_wave_Nt = 952;
+	int k_wave_Nt = Parameters->Get_Nt();
+	//k_wave_Nt = 305;
     for (KSpaceSolver->SetTimeIndex(0); KSpaceSolver->GetTimeIndex() < k_wave_Nt; KSpaceSolver->IncrementTimeIndex()){
 
         cout << ".......... Running k-Wave ........... ("
@@ -483,40 +541,67 @@ AO_Sim::Run_acousto_optics_sim(TParameters * Parameters)
             ///     should be made over there and loaded from the INPUT h5 file at runtime. This ensures no mistakes
             ///     arise. The problem can occur when the US wave is advanced beyond a PI phase shift and light is never
             ///     injected at the proper time. This will reduce the detected tagged fraction.
-        	static size_t cnt = MC_time_step/Parameters->Get_dt();
+        	///
+            //static size_t cnt = MC_time_step/Parameters->Get_dt();
             size_t curr_time = KSpaceSolver->GetTimeIndex();
-        	if (((curr_time % cnt) == 0) && (curr_time >= 0))
-        	{
+            if (sim_phase_inversion)
+            {
                 
-            	da_boost->Run_MC_sim_timestep(m_medium,
-                                              m_Laser_injection_coords,
-                                              KSpaceSolver->GetTimeIndex());
-                
-                /// If the 'phase_inversion' option is enabled, then we only save data during PI phase shifts.
-                if (Parameters->IsPhase_inversion())
+                /// Check if this time step is 'PI_phase_shift' advanced from the previous one.
+                if (((curr_time % Parameters->GetTimeStepsForPiPhaseShift()) == 0) &&
+                    (curr_time >= 0))
                 {
+                    
+                    /// Restrict the MC_sim to only execute between the specified start and end times
+                    /// given via the commandline.
+                    if (((curr_time >= Parameters->GetStartTimeIndex()) &&
+                         (curr_time <= Parameters->GetEndTimeIndex())) ||
+                        (curr_time == 0))
+                    {
+                        PrintMatrix((*refractive_total_full_medium), Parameters);
+                        PrintMatrix((*disp_x_full_medium), Parameters);
+                        
+                        da_boost->Run_MC_sim_timestep(m_medium,
+                                                      m_Laser_injection_coords,
+                                                      KSpaceSolver->GetTimeIndex());
+                    }
+                    
+                    /// If the 'phase_inversion' option is enabled, then we only save data during PI phase shifts.
                     /// Here is where data is stored in their respective sensor data structure if enabled via the commandline.
                     /// The stored data is updated over the run of the simulation and written out to disk at the completion
                     /// of the simulation.
                     KSpaceSolver->FromAO_sim_StoreSensorData();
+                    
                 }
-        	}
-		} // END if (sim_refractive_grad || sim_displacement )
+
+                
+                
+            }
+            else
+            {
+                /// Phase inversion is NOT enabled, therefore we run the simulation every time step (dt) over the interval specified.
+                
+                /// Restrict the MC_sim to only execute between the specified start and end times
+                /// given via the commandline.
+                if (((curr_time >= Parameters->GetStartTimeIndex()) &&
+                     (curr_time <= Parameters->GetEndTimeIndex())) ||
+                    (curr_time == 0))
+                {
+                    da_boost->Run_MC_sim_timestep(m_medium,
+                                                  m_Laser_injection_coords,
+                                                  KSpaceSolver->GetTimeIndex());
+                }
+                /// Here is where data is stored in their respective sensor data structure if enabled via the commandline.
+                /// The stored data is updated over the run of the simulation and written out to disk at the completion
+                /// of the simulation.
+                KSpaceSolver->FromAO_sim_StoreSensorData();
+            }
+        } // END if (sim_refractive_grad || sim_displacement )
 
         //PrintMatrix(KSpaceSolver->FromAO_sim_Get_refractive_total());
         ///
         /// --------------------------- End Monte-Carlo Simulation ------------------------------------------------------
 
-        
-        //-- store the initial pressure at the first time step --//
-        /// If 'phase_inversion' is NOT enabled, then we save data every time step over the time period specified on the commandline.
-        if (! Parameters->IsPhase_inversion())
-        {
-            /// Here is where data is stored in their respective sensor data structure if enabled via the commandline.
-            /// The stored data is updated over the run of the simulation and written out to disk at the completion
-            /// of the simulation.
-            KSpaceSolver->FromAO_sim_StoreSensorData();
-        }
         
         KSpaceSolver->FromAO_sim_PrintStatistics();
         
@@ -553,19 +638,95 @@ AO_Sim::Run_acousto_optics_sim(TParameters * Parameters)
 
 
 
+/// We make it here by specifying the '--AO_sim_loadData' flag.
+/// If '--phase_inversion' is true, and we make it here, it serves a completely different
+/// purpose. Phase inversion here means at each time step, the data that was saved is
+/// inverted in place (i.e. it doesn't propagate further, it's values are simply inverted
+/// as if the US transducer had pushed instead of pulled on the first cycle (or vice-versa).
+/// The validity of this approach is questionable when the medium supports non-linear US
+/// propagation.
 void
 AO_Sim::Run_acousto_optics_sim_loadData(TParameters * Parameters)
 {
     
-    /// FIXME:
-    /// - Needs to be an update to this section. Sensor data is read in, but that might not
-    ///   be the size of the full medium. This needs to be taken into account by reading
-    ///   in sensor data from the h5 file and populating a larger matrix that accounts for
-    ///   the full medium.
+    /// Configure the monte-carlo simulation to run what was specified via the commandline.
     ///
-    cout << "\n\n\n**************** Implement me *********************\n";
-    cout << "AO_Sim::Run_acousto_optics_sim_loadData(TParameters * Parameters)\n\n\n";
-    /*
+    bool sim_refractive_total = Parameters->IsSim_refractive_total();
+    bool sim_refractive_grad  = Parameters->IsSim_refractive_grad();
+    bool sim_displacement     = Parameters->IsSim_displacement();
+    bool sim_modulation_depth = Parameters->IsStore_modulation_depth();
+    bool sim_phase_inversion  = Parameters->IsPhase_inversion();
+    
+    
+    
+    THDF5_File& HDF5_OutputFile = Parameters->HDF5_OutputFile;
+    THDF5_File& HDF5_InputFile  = Parameters->HDF5_InputFile;
+    
+  
+    
+    /// Decide what to simulate (refractive gradient, refractive_total, displacement).
+    if (sim_refractive_grad)
+    {
+        da_boost->Simulate_refractive_gradient(true);
+        cout << "Refractive gradient: ON\n";
+    }
+    if (sim_refractive_total)
+    {
+        /// Inform the MC_sim that refraction mechanisms should be turned on.
+        da_boost->Simulate_refractive_total(true);
+        
+        /// Allocate an input stream to read data from the previously saved HDF5 file.
+        refractive_total_InputStream = new TInputHDF5Stream();
+        if (!refractive_total_InputStream)  throw bad_alloc();
+        
+        /// The output file contains the saved data from the previous run. Set it here.
+        refractive_total_InputStream->SetHDF5File(HDF5_OutputFile);
+        
+        cout << "Refraction: ON\n";
+    }
+    if (sim_displacement)
+    {
+        /// Inform the MC_sim that displacement mechanisms should be turned on.
+        da_boost->Simulate_displacement(true);
+        
+        /// Allocate input streams to read data from the previously saved HDF5 file.
+        displacement_x_InputStream = new TInputHDF5Stream();
+        if (!displacement_x_InputStream)  throw bad_alloc();
+        displacement_x_InputStream->SetHDF5File(HDF5_OutputFile);
+        
+        displacement_y_InputStream = new TInputHDF5Stream();
+        if (!displacement_y_InputStream)  throw bad_alloc();
+        displacement_y_InputStream->SetHDF5File(HDF5_OutputFile);
+        
+        displacement_z_InputStream = new TInputHDF5Stream();
+        if (!displacement_z_InputStream)  throw bad_alloc();
+        displacement_z_InputStream->SetHDF5File(HDF5_OutputFile);
+        
+        cout << "Displacement: ON\n";
+    }
+    if (sim_modulation_depth)
+    {
+        da_boost->Simulate_modulation_depth(true);
+        cout << "Modulation depth: ON\n";
+    }
+    if (sim_phase_inversion)
+    {
+        cout << "Phase inversion: ON\n";
+        /// If the nonlinear flag is true, which means simulation had non-linear US propagation characteristics
+        /// turned on, we can not guarantee that inverting the values for a given timestep will be valid due
+        /// to the non-linear wave distortion that accumulates during US propagation. In the linear case we
+        /// can safely get away with inverting the values as the positive and negative peaks should be interchangable.
+        /// This is not true during non-linear propagation.
+        /// We allow this simulation to proceed after a warning message.
+        if (Parameters->Get_nonlinear_flag())
+        {
+            cout << "\nWARNING: Non-linear propagation enabled for saved data. Inverting to achieve phase-inversion. Errors might occur\n";
+        }
+    }
+    cout << "\n\n";
+    
+    
+    
     cout << ".............. Loading precomputed kWave data .............. \n";
     cout << "Opened: " << Parameters->GetOutputFileName() << '\n';
 
@@ -580,18 +741,20 @@ AO_Sim::Run_acousto_optics_sim_loadData(TParameters * Parameters)
     /// and/or displacement data recorded.
     size_t recorded_time_steps = -1;
 
-    TRealMatrix *refractive_total_sensor = NULL;
+    TRealMatrix *refractive_total_full_medium = NULL;
+    TRealMatrix *refractive_total_sensor      = NULL;
     //TRealMatrix *refractive_x = NULL;
     //TRealMatrix *refractive_y = NULL;
     //TRealMatrix *refractive_z = NULL;
 
-    TRealMatrix *disp_x = NULL;
-    TRealMatrix *disp_y = NULL;
-    TRealMatrix *disp_z = NULL;
-
-
-    THDF5_File& HDF5_OutputFile = Parameters->HDF5_OutputFile;
-    //THDF5_File& HDF5_InputFile  = Parameters->HDF5_InputFile;
+    TRealMatrix *disp_x_full_medium = NULL;
+    TRealMatrix *disp_x_sensor      = NULL;
+    TRealMatrix *disp_y_full_medium = NULL;
+    TRealMatrix *disp_y_sensor      = NULL;
+    TRealMatrix *disp_z_full_medium = NULL;
+    TRealMatrix *disp_z_sensor      = NULL;
+    
+    TLongMatrix *sensor_mask_ind    = NULL;
 
 
     long int Nx, Ny, Nz;
@@ -601,78 +764,72 @@ AO_Sim::Run_acousto_optics_sim_loadData(TParameters * Parameters)
     HDF5_OutputFile.ReadCompleteDataset(Nz_Name,  ScalarSizes, &Nz);
 
     /// The dimensions of the recorded data from kWave.
-    /// FIXME:
-    /// - Should take into account the PML sizes if the sensor.mask
-    ///   size did also during the generation of the INPUT h5 file from matlab.
-    ///   This might take changing the matlab code for
-    ///   saving these values to the INPUT h5 file, which will be written
-    ///   out to the OUTPUT h5 file.
-    /// NOTE:
-    /// - This is not correct if the sensor.mask was not the full medium.
-    TDimensionSizes sensor_size(Nx, Ny, Nz);
-
+    TDimensionSizes FullDim = Parameters->GetFullDimensionSizes();
+    TDimensionSizes SensorDims(Parameters->Get_sensor_mask_index_size(), 1, 1);
+    TDimensionSizes SensorMaskDims(1, 1, Parameters->Get_sensor_mask_index_size());
+    
+    
+    /// The sensor mask indices where data was recorded. This is used to re-populate the 'full medium'.
+    sensor_mask_ind = new TLongMatrix(SensorMaskDims);
+    if (!sensor_mask_ind)  throw bad_alloc();
+    
+    
+    /// Read in the sensor data indices. This will be used to map the sensor to the full medium.
+    HDF5_InputFile.ReadCompleteDataset(sensor_mask_index_Name, SensorMaskDims, sensor_mask_ind->GetRawData());
+    
+    /// Move index counts from Matlab->C++
+    sensor_mask_ind->RecomputeIndices();
+    
+    
     /// Is simulation of refractive index changes (total) enabled.  If so create the
     /// input stream to read the data from the HDF5 file and create the refracitve_map
     /// in the medium in which the monte-carlo simulation will propagate through.
-    if (Parameters->IsSim_refractive_total())
+    if (sim_refractive_total)
     {
-        /// Notify the monte-carlo simulation that the optical path length should be altered based on spatially varying
-        /// refractive index values created from ultrasound via the kWave simulation.
-        da_boost->Simulate_refractive_total(true);
-
-        refractive_total_InputStream = new TInputHDF5Stream();
-        if (!refractive_total_InputStream)  throw bad_alloc();
-
-        /// Set the HDF5 file to read from, which was the output file from the previous run.
-        refractive_total_InputStream->SetHDF5File(HDF5_OutputFile);
-
         /// FIXME: Currently not used, but the number of time steps to run the simulation are found
         ///      from how many time steps of the ultrasound propagation were recoreded (e.g. refract_total_size.Y).
-        TDimensionSizes refract_total_size = HDF5_OutputFile.GetDatasetDimensionSizes(refractive_total_sensor_Name);
+        TDimensionSizes refract_total_sensor_size = HDF5_OutputFile.GetDatasetDimensionSizes(refractive_total_sensor_Name);
+        
 
-
-        refractive_total_sensor = new TRealMatrix(sensor_size);
+        refractive_total_full_medium = new TRealMatrix(FullDim);
         if (!refractive_total_full_medium) throw bad_alloc();
+        
+        refractive_total_sensor = new TRealMatrix(SensorDims);
+        if (!refractive_total_sensor) throw bad_alloc();
+        
 
         /// Set the number of iterations to load in data from the HDF5 file.
         /// Due to the way data is written out to the file, the 'Y' dimension of the
         /// data structure contains the number of iterations that were actually written to the HDF5.
-        recorded_time_steps = refract_total_size.Y;
+        recorded_time_steps = refract_total_sensor_size.Y;
 
     }
-
+    
     /// Is simulation of displacements enabled.  If so create the
     /// input stream to read the data from the HDF5 file and create the displacement_map
     /// in the medium in which the monte-carlo simulation will propagate through.
-    if (Parameters->IsSim_displacement())
+    if (sim_displacement)
     {
         /// Notify the monte-carlo simulation that scattering events should be displaced based on ultrasound from
         /// the kWave simulation.
         da_boost->Simulate_displacement(true);
 
-        displacement_x_InputStream = new TInputHDF5Stream();
-        displacement_y_InputStream = new TInputHDF5Stream();
-        displacement_z_InputStream = new TInputHDF5Stream();
-
-        if ((!displacement_x_InputStream) || (!displacement_y_InputStream) || (!displacement_z_InputStream))
-            throw bad_alloc();
-
-        /// Set the HDF5 file to read from, which was the output file from the previous kWave/AO_sim run,
-        /// which is when the data was stored.
-        displacement_x_InputStream->SetHDF5File(HDF5_OutputFile);
-        displacement_y_InputStream->SetHDF5File(HDF5_OutputFile);
-        displacement_z_InputStream->SetHDF5File(HDF5_OutputFile);
-
         /// FIXME: Currently not used, but the number of time steps to run the simulation are found
         ///      from how many time steps of the ultrasound propagation were recoreded (e.g. disp_x_size.Y).
-        TDimensionSizes disp_x_size = HDF5_OutputFile.GetDatasetDimensionSizes(disp_x_Name);
-        TDimensionSizes disp_y_size = HDF5_OutputFile.GetDatasetDimensionSizes(disp_y_Name);
-        TDimensionSizes disp_z_size = HDF5_OutputFile.GetDatasetDimensionSizes(disp_z_Name);
+        TDimensionSizes disp_x_sensor_size = HDF5_OutputFile.GetDatasetDimensionSizes(disp_x_sensor_Name);
+        TDimensionSizes disp_y_sensor_size = HDF5_OutputFile.GetDatasetDimensionSizes(disp_y_sensor_Name);
+        TDimensionSizes disp_z_sensor_size = HDF5_OutputFile.GetDatasetDimensionSizes(disp_z_sensor_Name);
 
-        disp_x = new TRealMatrix(sensor_size);
-        disp_y = new TRealMatrix(sensor_size);
-        disp_z = new TRealMatrix(sensor_size);
-        if ((!disp_x) || (!disp_y) || (!disp_z)) throw bad_alloc();
+        disp_x_full_medium = new TRealMatrix(FullDim);
+        disp_y_full_medium = new TRealMatrix(FullDim);
+        disp_z_full_medium = new TRealMatrix(FullDim);
+        if ((!disp_x_full_medium) || (!disp_y_full_medium) || (!disp_z_full_medium)) throw bad_alloc();
+        
+        disp_x_sensor = new TRealMatrix(SensorDims);
+        disp_y_sensor = new TRealMatrix(SensorDims);
+        disp_z_sensor = new TRealMatrix(SensorDims);
+        if ((!disp_x_sensor) || (!disp_y_sensor) || (!disp_z_sensor)) throw bad_alloc();
+        
 
         /// Set the number of iterations to load in data from the HDF5 file.
         /// Due to the way data is written out to the file, the 'Y' dimension of the
@@ -680,21 +837,14 @@ AO_Sim::Run_acousto_optics_sim_loadData(TParameters * Parameters)
         /// NOTE:
         /// - The number of iterations of recording data for displacement data will always be the same,
         ///   so we simply use the x-axis displacement number of iterations recorded.
-        recorded_time_steps = disp_x_size.Y;
+        recorded_time_steps = disp_x_sensor_size.Y;
     }
 
     /// Print the number of time steps that were recorded and stored out of the total
     /// number of time steps simulated.
     cout << "Simulation time steps (recorded): " << recorded_time_steps << '\n';
-
-    /// Is storage of the modulation depth enabled?  If so inform the monte-carlo simulation
-    /// to log the optical path lengths via the logger.
-    if (Parameters->IsStore_modulation_depth())
-    {
-        da_boost->Simulate_modulation_depth(true);
-    }
-
-
+    
+     
     /// Typically when we want to look at the modulation depth (taggged ratio to untagged) we only want
     /// to look at the resulting acousto-optic signal at the ultrasound focus and with the ultrasound
     /// at with a 180 degree phase shift at the same location (i.e. a given propagation time 't'). To achieve
@@ -702,71 +852,97 @@ AO_Sim::Run_acousto_optics_sim_loadData(TParameters * Parameters)
     /// and run the monte-carlo simulation twice, with the recorded data at time 't' and the 180 degree phase
     /// shifted data, also at time 't'. To create the "phase inversion" we simply multiply the recorded data
     /// by -1, which is done with the calls below.
-    if (Parameters->IsPhase_inversion())
+    if (sim_phase_inversion)
     {
-        /// Typically when data is saved to the HDF5 file, the first recorded time step is the displacement
-        /// values at t=1, when no ultrasound is present. Therefore we read past it and use the next
-        /// chunk of data, which if the data has been saved correctly, should be at time t=focus.
-        /// FIXME:
-        /// - Should be able to choose which set of data to invert in cases of when many time steps
-        ///   of data were saved. For the time being this will need to be altered here.
-        const size_t INVERT_RECORDED_TIME_STEP = 2;
-        for (size_t i = 1; i <= INVERT_RECORDED_TIME_STEP; i++)
+        /// For each time step that was saved we run the MC_sim with and without inverting the values, effectively
+        /// creating a phase inversion at the same location and time.
+        for (size_t time_step = 1; time_step <= recorded_time_steps; time_step++)
         {
-            if (Parameters->IsSim_refractive_total())
+            if (sim_refractive_total)
             {
                 /// Read refractive total data in from the HDF5 file that holds the precomputed values for
                 /// a previously run kWave simulation.
-                refractive_total_InputStream->ReadData(refractive_total_sensor_Name, refractive_total_sensor->GetRawData());
+                refractive_total_InputStream->ReadData(refractive_total_sensor_Name, (*sensor_mask_ind), refractive_total_sensor->GetRawData());
+                
+                /// Initialize the full medium with the background (i.e. unmodulated) refractive index value.
+                /// XXX:
+                /// - This must match what was simulated in the generation of the sensor data, otherwise the modulated values
+                ///   will not be consistent.
+                /// - The saving of the origin OUTPUT h5 file should contain the refractive index value (if homogeneous) and
+                ///   load it in here to populate the full medium.
+                refractive_total_full_medium->InitMatrix(1.33);
+                
+                
+                float * nmap = refractive_total_full_medium->GetRawData();
+                const float * sensor = refractive_total_sensor->GetRawData();
+                const size_t  sensor_size = sensor_mask_ind->GetTotalElementCount();
+                const long *  index = sensor_mask_ind->GetRawData();
+                
+                for (size_t i = 0; i < sensor_size; i++)
+                {
+                    nmap[index[i]] = sensor[i];
+                }
+                
+                /// Update the refractive map
+                m_medium->Create_refractive_map_from_full_medium(refractive_total_full_medium);
             }
 
-            if (Parameters->IsSim_displacement())
+            if (sim_displacement)
             {
                 /// Read displacment data in from the HDF5 file that holds the precomputed values for
                 /// a previously run kWave simulation.
-                displacement_x_InputStream->ReadData(disp_x_Name, disp_x->GetRawData());
-                displacement_y_InputStream->ReadData(disp_y_Name, disp_y->GetRawData());
-                displacement_z_InputStream->ReadData(disp_z_Name, disp_y->GetRawData());
+                displacement_x_InputStream->ReadData(disp_x_sensor_Name, (*sensor_mask_ind), disp_x_sensor->GetRawData());
+                displacement_y_InputStream->ReadData(disp_y_sensor_Name, (*sensor_mask_ind), disp_y_sensor->GetRawData());
+                displacement_z_InputStream->ReadData(disp_z_sensor_Name, (*sensor_mask_ind), disp_z_sensor->GetRawData());
+                
+                
+                /// Update the 'full_medium' from the sensor data.
+                ///
+                float * dmap_x = disp_x_full_medium->GetRawData();
+                float * dmap_y = disp_y_full_medium->GetRawData();
+                float * dmap_z = disp_z_full_medium->GetRawData();
+                
+                const float * x_sensor = disp_x_sensor->GetRawData();
+                const float * y_sensor = disp_y_sensor->GetRawData();
+                const float * z_sensor = disp_z_sensor->GetRawData();
+                const size_t  sensor_size = sensor_mask_ind->GetTotalElementCount();
+                const long *  index = sensor_mask_ind->GetRawData();
+                for (size_t i = 0; i < sensor_size; i++)
+                {
+                    dmap_x[index[i]] = x_sensor[i];
+                    dmap_y[index[i]] = y_sensor[i];
+                    dmap_z[index[i]] = z_sensor[i];
+                }
+                
+                /// Update the displacement map
+                m_medium->Create_displacement_map(disp_x_full_medium, disp_y_full_medium, disp_z_full_medium);
             }
-        }
+            
+            
+            
+            cout << "-------------------- Running Phase Inversion (original phase) --------------------\n";
+            da_boost->Run_MC_sim_timestep(m_medium,
+                                          m_Laser_injection_coords,
+                                          time_step);
+            
+            /// Now perform the inversion and run the simulation as if the ultrasound focus had reached the
+            /// same location and same time, but with a phase that had been shifted 180 degrees.
+            if (sim_refractive_total)
+            {
+                /// Notify the medium to invert the data for creating the phase shift.
+                m_medium->Invert_refractive_map_phase();
+            }
+            if (sim_displacement)
+            {
+                /// Notify the medium to invert the data for creating the phase shift.
+                m_medium->Invert_displacement_map_phase();
+            }
+            cout << "-------------------- Running Phase Inversion (180 deg shifted) ------------------\n";
+            da_boost->Run_MC_sim_timestep(m_medium,
+                                          m_Laser_injection_coords,
+                                          time_step);
 
-        /// Now that we have read past the time t=1 and have the appropriate time step read from the
-        /// HDF5 file (i.e. time t=focus), we run the monte-carlo simulation twice - once with the
-        /// data in the original recorded phase, and again with a 180 degree phase shift.
-        ///
-        /// First simulation with original phase.
-        if (Parameters->IsSim_refractive_total())
-        {
-            /// Create a refractive map (total) based on the values read in from the HDF5 file.
-            //m_medium->Create_refractive_map(refractive_total_sensor, sensor_size);
-            cout << "\n\n\n ********* Implement me *********  \n\n\n Parameters->IsSim_refractive_total()\n\n\n";
         }
-        if (Parameters->IsSim_displacement())
-        {
-            /// Create a displacement map based on the values read in from the HDF5 file.
-            m_medium->Create_displacement_map(disp_x, disp_y, disp_z);
-        }
-        cout << "-------------------- Running Phase Inversion (original phase) --------------------\n";
-        da_boost->Run_MC_sim_timestep(m_medium,
-                                      m_Laser_injection_coords,
-                                      INVERT_RECORDED_TIME_STEP);
-
-        /// Now perform the inversion and run the simulation as if the ultrasound focus had reached the
-        /// same location and same time, but with a phase that had been shifted 180 degrees.
-        if (Parameters->IsSim_refractive_total())
-        {
-            /// Notify the medium to invert the data for creating the phase shift.
-            m_medium->Invert_refractive_map_phase();
-        }
-        if (Parameters->IsSim_displacement())
-        {
-            /// Notify the medium to invert the data for creating the phase shift.
-            m_medium->Invert_displacement_map_phase();
-        }
-        cout << "-------------------- Running Phase Inversion (180 deg shifted) ------------------\n";
-        da_boost->Run_MC_sim_timestep(m_medium,
-                                      m_Laser_injection_coords,
-                                      INVERT_RECORDED_TIME_STEP);
 
     }
     else {
@@ -775,57 +951,88 @@ AO_Sim::Run_acousto_optics_sim_loadData(TParameters * Parameters)
         /// that point in time.
         for (size_t i = 0; i < recorded_time_steps; i++)
         {
-            if (Parameters->IsSim_refractive_total())
+            if (sim_refractive_total)
             {
                 /// Read refractive total data in from the HDF5 file that holds the precomputed values for
                 /// a previously run kWave simulation.
-                refractive_total_InputStream->ReadData(refractive_total_Name, refractive_total_sensor->GetRawData());
-
-
-                /// Create a refractive map (total) based on the values read in from the HDF5 file.
-                //m_medium->Create_refractive_map(refractive_total_sensor, sensor_size);
-                cout << "\n\n\n ********* Implement me *********  \n\n\n Parameters->IsSim_refractive_total()\n\n\n";
+                refractive_total_InputStream->ReadData(refractive_total_sensor_Name, (*sensor_mask_ind), refractive_total_sensor->GetRawData());
                 
-                ///PrintMatrix((*refractive_total_sensor), Parameters);
-
-                /// Zero out the matrix for the next read in from the HDF5 file.
-                ///refractive_total_sensor->ZeroMatrix();
+                /// Initialize the full medium with the background (i.e. unmodulated) refractive index value.
+                /// XXX:
+                /// - This must match was was simulated in the generation of the sensor data, otherwise the modulated values
+                ///   will not be consistent.
+                /// - The saving of the origin OUTPUT h5 file should contain the refractive index value (if homogeneous) and
+                ///   load it in here to populate the full medium.
+                refractive_total_full_medium->InitMatrix(1.33);
+                float * nmap = refractive_total_full_medium->GetRawData();
+                const float * sensor = refractive_total_sensor->GetRawData();
+                const size_t  sensor_size = sensor_mask_ind->GetTotalElementCount();
+                const long *  index = sensor_mask_ind->GetRawData();
+                for (size_t i = 0; i < sensor_size; i++)
+                {
+                    nmap[index[i]] = sensor[i];
+                }
+                
+                
+                /// Assign a refractive map (total) based upon the pressure and density changes at this time step.
+                m_medium->Create_refractive_map_from_full_medium(refractive_total_full_medium);
+                
+                
+                //PrintMatrix((*refractive_total_full_medium), Parameters);
             }
 
-            if (Parameters->IsSim_displacement())
+            if (sim_displacement)
             {
+                
                 /// Read displacment data in from the HDF5 file that holds the precomputed values for
                 /// a previously run kWave simulation.
-                displacement_x_InputStream->ReadData(disp_x_Name, disp_x->GetRawData());
-                displacement_y_InputStream->ReadData(disp_y_Name, disp_y->GetRawData());
-                displacement_z_InputStream->ReadData(disp_z_Name, disp_y->GetRawData());
+                displacement_x_InputStream->ReadData(disp_x_sensor_Name, (*sensor_mask_ind), disp_x_sensor->GetRawData());
+                displacement_y_InputStream->ReadData(disp_y_sensor_Name, (*sensor_mask_ind), disp_y_sensor->GetRawData());
+                displacement_z_InputStream->ReadData(disp_z_sensor_Name, (*sensor_mask_ind), disp_z_sensor->GetRawData());
+
+                
+                /// Update the 'full_medium' from the sensor data.
+                ///
+                float * dmap_x = disp_x_full_medium->GetRawData();
+                float * dmap_y = disp_y_full_medium->GetRawData();
+                float * dmap_z = disp_z_full_medium->GetRawData();
+                
+                const float * x_sensor = disp_x_sensor->GetRawData();
+                const float * y_sensor = disp_y_sensor->GetRawData();
+                const float * z_sensor = disp_z_sensor->GetRawData();
+                const size_t  sensor_size = sensor_mask_ind->GetTotalElementCount();
+                const long *  index = sensor_mask_ind->GetRawData();
+                for (size_t i = 0; i < sensor_size; i++)
+                {
+                    dmap_x[index[i]] = x_sensor[i];
+                    dmap_y[index[i]] = y_sensor[i];
+                    dmap_z[index[i]] = z_sensor[i];
+                }
+                
+                
+                /// Assign a displacement map based on the values read in from the HDF5 file.
+                m_medium->Create_displacement_map(disp_x_full_medium, disp_y_full_medium, disp_z_full_medium);
+                
+                /// Read displacment data in from the HDF5 file that holds the precomputed values for
+                /// a previously run kWave simulation.
+                //displacement_x_InputStream->ReadData(disp_x_sensor_Name, disp_x_sensor->GetRawData());
+                //displacement_y_InputStream->ReadData(disp_y_sensor_Name, disp_y_sensor->GetRawData());
+                //displacement_z_InputStream->ReadData(disp_z_sensor_Name, disp_y_sensor->GetRawData());
 
 
                 /// Create a displacement map based on the values read in from the HDF5 file.
-                m_medium->Create_displacement_map(disp_x, disp_y, disp_z);
+                //m_medium->Create_displacement_map(disp_x, disp_y, disp_z);
 
-                ///PrintMatrix((*disp_x), Parameters);
+                //PrintMatrixSensor((*disp_x_sensor), Parameters);
                 ///PrintMatrix(m_medium, Parameters);
 
                 /// Zero out the matrices for the next read in from the HDF5 file.
                 //disp_x->ZeroMatrix();
                 //disp_y->ZeroMatrix();
                 //disp_z->ZeroMatrix();
-
-
             }
 
-            /// Set the monte-carlo simulation to use, or save, RNG seeds based on command line args.
-            //Parameters->IsStore_seeds()   ?   da_boost->Save_RNG_seeds(true) : da_boost->Save_RNG_seeds(false);
-            //Parameters->IsLoad_seeds()    ?   da_boost->Use_RNG_seeds(true)  : da_boost->Use_RNG_seeds(false);
-
             int time_step = i;
-            /// Run the monte-carlo simulation with the loaded in data (displacements, refractive index vals).
-            /// XXX:
-            /// - Needs testing!!!
-            ///cout << "............. Running MC-Boost ........... ";
-            ///cout << "(time step: " << time_step << ")\n";
-            ///cout.flush();
             da_boost->Run_MC_sim_timestep(m_medium,
                                           m_Laser_injection_coords,
                                           time_step);
@@ -836,21 +1043,28 @@ AO_Sim::Run_acousto_optics_sim_loadData(TParameters * Parameters)
 
 
     /// Clean up memory.
-    if (Parameters->IsSim_refractive_total())
+    if (sim_refractive_total)
     {
         delete refractive_total_sensor;
-        refractive_total_sensor = NULL;
+        delete refractive_total_full_medium;
+        
+        refractive_total_sensor      = NULL;
+        refractive_total_full_medium = NULL;
     }
-    if (Parameters->IsSim_displacement())
+    if (sim_displacement)
     {
-        delete disp_x;
-        delete disp_y;
-        delete disp_z;
-        disp_x = disp_y = disp_z = NULL;
-    }
+        delete disp_x_sensor;
+        delete disp_x_full_medium;
 
-     */
-     
+        delete disp_y_sensor;
+        delete disp_y_full_medium;
+        
+        delete disp_z_sensor;
+        delete disp_z_full_medium;
+        
+        disp_x_sensor = disp_y_sensor = disp_z_sensor                = NULL;
+        disp_x_full_medium = disp_y_full_medium = disp_z_full_medium = NULL;
+    }
 }
 
 
@@ -1237,33 +1451,6 @@ AO_Sim::Test_Read_HDF5_File(TParameters * Parameters)
 /// --------------------------------------- END WORKING VERS ---------------------------
 
 
-
-
-/// --------------------------------------- BEGIN InputHDF5Stream WORKING VERS ---------
-    THDF5_File& HDF5_OutputFile = Parameters->HDF5_OutputFile;
-    THDF5_File& HDF5_InputFile  = Parameters->HDF5_InputFile;
-
-
-
-    TDimensionSizes temp = HDF5_OutputFile.GetDatasetDimensionSizes(refractive_total_full_medium_Name);
-
-    long int Nx, Ny, Nz;
-    TDimensionSizes ScalarSizes(1,1,1);
-    HDF5_OutputFile.ReadCompleteDataset(Nx_Name,  ScalarSizes, &Nx);
-    HDF5_OutputFile.ReadCompleteDataset(Ny_Name,  ScalarSizes, &Ny);
-    HDF5_OutputFile.ReadCompleteDataset(Nz_Name,  ScalarSizes, &Nz);
-
-    
-    /// FIXME:
-    /// - This is incorrect when sensor.mask does not match the full size of the medium.
-    TDimensionSizes sensor_size(Nx, Ny, Nz);
-    TRealMatrix refract_total_full_medium(sensor_size);
-
-    refractive_total_InputStream->ReadData(refractive_total_full_medium_Name, refract_total_full_medium.GetRawData());
-    PrintMatrix(refract_total_full_medium, Parameters);
-/// --------------------------------------- END InputHDF5Stream WORKING VERS ---------
-
-
 }
 /// end Test_Read_HDF5_File()
 
@@ -1356,8 +1543,8 @@ void PrintMatrix(TRealMatrix &data, TParameters *Parameters)
 	}
 
 
-    int x, y, z;
-    z = 151;
+    size_t x, y, z;
+    z = 55;
     for (x = 0; x < Dims.X; x++)
     {
         for (y = 0; y < Dims.Y; y++)
@@ -1369,6 +1556,51 @@ void PrintMatrix(TRealMatrix &data, TParameters *Parameters)
 
     data_file_stream.close();
 }
+
+
+void PrintMatrixSensor(TRealMatrix &data, TParameters *Parameters)
+{
+    TDimensionSizes Dims;
+    
+//    Dims.X = Parameters->GetReducedDimensionSizes().X;
+//    Dims.Y = Parameters->GetReducedDimensionSizes().Y;
+//    Dims.Z = Parameters->GetReducedDimensionSizes().Z;
+    Dims.X = Dims.Y = Dims.Z = 88;
+    
+    
+    
+    static int time_step;
+    std::string filename = "matrix_data";
+    std::stringstream ss;
+    ss << time_step++;
+    filename = filename + "_" + ss.str() + ".txt";
+    
+    cout << "Writing Matrix to file: " << filename << '\n';
+    
+    std::ofstream data_file_stream;	// Velocity and displacement stream;
+    data_file_stream.open(filename.c_str());
+	if (!data_file_stream)
+	{
+		cout << "!!! ERROR: Could not open file for writing.  Check directory structure.\n";
+		exit(1);
+	}
+    
+    
+    size_t x, y, z;
+    z = 25;
+    for (x = 0; x < Dims.X; x++)
+    {
+        for (y = 0; y < Dims.Y; y++)
+        {
+            //data_file_stream << data.GetElementFrom3D(x, y, z) << ' ';
+            data_file_stream << data[x*y] << ' ';
+        }
+        data_file_stream << '\n';
+    }
+    
+    data_file_stream.close();
+}
+
 
 
 
@@ -1399,7 +1631,7 @@ void PrintMatrix(Medium * m_medium, TParameters *Parameters)
 	}
 
 
-    int x, y, z;
+    size_t x, y, z;
     z = 151;
     for (x = 0; x < Dims.X; x++)
     {

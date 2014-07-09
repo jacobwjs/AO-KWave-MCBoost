@@ -445,7 +445,7 @@ void Medium::Create_refractive_map_from_full_medium(TRealMatrix * refractive_tot
     /// XXX:
     /// - This is defined here, but would change depending on temperature changes, if that
     ///   is ever incorporated into this simulation, which in turn would affect density and SOS.
-    background_refractive_index = 1.33;
+    //background_refractive_index = 1.33;
     
     if(kwave.nmap == NULL)
     {

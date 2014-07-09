@@ -60,6 +60,7 @@ TCommandLineParameters::TCommandLineParameters() :
         Store_u_raw(false), Store_u_rms(false), Store_u_max(false), Store_u_final(false),
         Store_I_avg(false), Store_I_max(false),
         /// ------------------- JWJS ----------------------
+        US_freq_known(false), US_freq(0.0f),
         Store_seeds(false), Load_seeds(false),
         Phase_inversion(false),
         Store_modulation_depth(false),
@@ -127,10 +128,12 @@ void TCommandLineParameters::PrintUsageAndExit(){
  printf("  --I_max                         : Store max of intensity\n");
  printf("\n");
  /// --------------------- JWJS ---------------------------------------------------------------------
+ printf(" --US_freq                        : Ultrasound frequency used in the simulation (used with 'phase_inversion' option)\n");
+ printf(" --phase_inversion                : Run the acousto-optic simulation at time 't' with ultrasound phase (phi) and (phi+180)\n");
+ printf("\n");
  printf(" --save_seeds                     : Save the RNG seeds that created photon paths that were detected\n");
  printf(" --load_seeds <input_file_name>   : Load RNG seeds to use for photon propagation\n");
  printf("\n");
- printf(" --phase_inversion                : Run the acousto-optic simulation at time 't' with ultrasound phase (phi) and (phi+180)\n");
  printf(" --modulation_depth               : Save the optical path lengths to disk for comparison\n");
  printf("\n");
  printf("  --n                             : Store index of refraction\n");
@@ -251,6 +254,7 @@ void TCommandLineParameters::ParseCommandLine(int argc, char** argv){
         { "I_max", no_argument, NULL, 0 },
 
         /// ---------------- JWJS -----------------------
+        { "US_freq", required_argument, NULL, 0},
         { "save_seeds", no_argument, NULL, 0},
         { "load_seeds", required_argument, NULL, 0},
 
@@ -426,6 +430,10 @@ void TCommandLineParameters::ParseCommandLine(int argc, char** argv){
                     Store_I_max = true;
                 } else
                /// -------------------- JWJS -----------------------------
+                if( strcmp( "US_freq", longOpts[longIndex].name ) == 0) {
+                    US_freq_known = true;
+                    US_freq = atof(optarg);
+                } else
                 if( strcmp( "save_seeds", longOpts[longIndex].name ) == 0) {
                     Store_seeds = true;
                 } else
@@ -515,6 +523,11 @@ void TCommandLineParameters::ParseCommandLine(int argc, char** argv){
        /// -------------------------------
    {
        fprintf(stderr, "%s", "!!! ERROR: Nothing has been specified to store or simulate. Exiting!\n");
+       PrintUsageAndExit();
+   }
+   if (Phase_inversion && !US_freq_known)
+   {
+       fprintf(stderr, "%s", "!!! ERROR: 'phase_inversion' was specified, but the ultrasound frequency was not provided. Exiting!\n");
        PrintUsageAndExit();
    }
 

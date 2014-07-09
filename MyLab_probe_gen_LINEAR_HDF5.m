@@ -99,9 +99,9 @@ Nz_tot = Nz;
 
 medium.sound_speed = c0;  % [m/s]
 medium.density     = rho0;  % [kg/m^3]
-medium.alpha_coeff = 0.0;   % [dB/(MHz^y cm)] 	
-medium.alpha_power = 0.0;
-medium.BonA = 0.0;
+%medium.alpha_coeff = 0.0;   % [dB/(MHz^y cm)] 	
+%medium.alpha_power = 0.0;
+%medium.BonA = 0.0;
 
 
 

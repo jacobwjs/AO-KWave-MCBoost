@@ -186,6 +186,9 @@ public:
     void    FromAO_sim_compute_refractive_index_total() {Compute_refractive_index_total_data();};
     void    FromAO_sim_compute_refractive_index()     {Compute_refractive_index_gradient_data();};
     void    FromAO_sim_compute_displacement()         {Compute_displacement_data();};
+    
+    void    FromAO_sim_init_refractive_index_matrix(const float refractive_index_val)
+                    {Get_refractive_total_full_medium().InitMatrix(refractive_index_val);};
 
     ///TRealMatrix & FromAO_sim_Get_refractive_total_sensor()      {return Get_refractive_total_sensor();};
     TRealMatrix & FromAO_sim_Get_refractive_total_full_medium() {return Get_refractive_total_full_medium();};

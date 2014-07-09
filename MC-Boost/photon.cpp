@@ -203,7 +203,7 @@ void Photon::propagatePhoton(const int iterations)
 	{
 
 		/// If we are saving seeds, then we are propagating photons until they
-		/// exit, using the continous stream of the RNG in th process.  Otherwise
+		/// exit, using the continous stream of the RNG in the process.  Otherwise
 		/// the exit seeds have already been generated, which means we have the seeds
 		/// and each iteration should use seeds that detected photons (i.e. photons that
 		/// exited the medium through the aperture).  So, the RNG is updated each iteration
@@ -946,7 +946,7 @@ void Photon::alterOPLFromAverageRefractiveChanges(void)
 	// NOTE:
 	// - Because the step size is much smaller than the size of a voxel, which means any given step
 	//   at best will at one end lie in a voxel adjecent to the other end, we only have a chance of
-	//   having different values of refrective index at the far ends of the segment connecting the previous location
+	//   having different values of refractive index at the far ends of the segment connecting the previous location
 	//   and the current location.  Therefore, only check those to simplify things.
 	//   -----------------------------------------------------------------------------------------------------------
 	// Transform the location of the photon in the medium to discrete locations in the grid based
@@ -1052,6 +1052,10 @@ void Photon::displacePhotonAndAlterOPLFromAverageRefractiveChanges(void)
 	/// If we make it here, both have been turned on, and to remove any disambiguity we assign
 	/// 'combined_OPL' the value of 'refractiveIndex_optical_path_length' to
 	/// reduce the overhead of having to redo what is essentially embedded in 'refractiveIndex_optical_path_length'.
+    /// FIXME:
+    /// - This is very confusing and should be updated someday to track non-displaced coordinates for separating
+    ///   the mechanisms clearly.
+    /// - Or another way?
 	combined_OPL = refractiveIndex_optical_path_length;
 
 }
@@ -1121,6 +1125,11 @@ void Photon::transmit(const char *type)
 		}
 		else // Transmitted to new layer.
 		{
+            
+            /// FIXME:
+            /// - If multiple layers are ever used, with different spatial refractive index values,
+            ///   this all becomes error prone. Especially under insonification at the medium boundaries
+            ///   and use with 'AO_sim'.
 			// Store index of refraction from layer the photon is coming from.
 			double ni = currLayer->getRefractiveIndex();
 
@@ -1163,6 +1172,10 @@ void Photon::transmit(const char *type)
             if (SIM_DISPLACEMENT || SIM_REFRACTIVE_TOTAL || SIM_REFRACTIVE_GRADIENT)
          	{
 
+                /// FIXME:
+                /// - This will produce an error in the exit angles if insonification occurs
+                ///   near the exit aperture. This is because the background medium (i.e. unmodulated)
+                ///   is being probed for the refractive index value.
                 double ni = currLayer->getRefractiveIndex();
                 currLocation->setDirZ(cos(this->transmission_angle));
                 currLocation->setDirY(currLocation->getDirY()*ni);
@@ -1171,17 +1184,13 @@ void Photon::transmit(const char *type)
                 // Write exit data via the logger.
                 Logger::getInstance()->Write_weight_OPLs_coords(*this);
 
-                // Write time-of-flight data to logger.
-                //Logger::getInstance()->writeTOFData(time_of_flight);
+                /// Is simulation of modulation depth enabled? And if so store the values for later use for
+                /// calculating modulation depth.
+                if (SIM_MODULATION_DEPTH)
+                {
+                    Logger::getInstance()->Store_OPL(exit_seeds, displaced_optical_path_length, refractiveIndex_optical_path_length);
+                }
          	}
-
-            /// Is simulation of modulation depth enabled?
-            if (SIM_MODULATION_DEPTH)
-            {
-                if (SIM_DISPLACEMENT)       Logger::getInstance()->Store_OPL(exit_seeds, displaced_optical_path_length);
-                if (SIM_REFRACTIVE_TOTAL)   Logger::getInstance()->Store_OPL(exit_seeds, refractiveIndex_optical_path_length);
-
-            }
 
 			// Write out the seeds that caused this photon to hop, drop and spin its way out the
 			// exit-aperture.

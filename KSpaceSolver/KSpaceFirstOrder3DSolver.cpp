@@ -320,12 +320,55 @@ void TKSpaceFirstOrder3DSolver::LoadInputData(){
 
    HDF5_OutputFile.Create(Parameters->GetOutputFileName().c_str());
 
-    /// ----------------------------------------------------------------------- JWJS -------------------------------------------------------
-   ///TDimensionSizes TotalSizes(Get_sensor_mask_ind().GetTotalElementCount(),Parameters->Get_Nt() - Parameters->GetStartTimeIndex(), 1);
-   /// Only store data over the time range specified on the commandline.  The '+ 2' is for the storage of data at t=0 and because the range
-   /// specified (e.g. store from t = 30->35) needs to take care of the edge case (i.e. avoid the fence post error).
-   TDimensionSizes TotalSizes(Get_sensor_mask_ind().GetTotalElementCount(), (Parameters->GetEndTimeIndex() - Parameters->GetStartTimeIndex()) + 2, 1);
-    /// -----------------------------------------------------------------------------
+    /// ----------------------------------------------------------------------- JWJS -----------------------------------------------------
+    int total_time_steps_to_save_data = 0;
+    if (Parameters->IsPhase_inversion())
+    {
+        /// Variables used to calculate the phase inversion timing of ultrasound propagation
+        /// and when we should run the MC_sim.
+        /// --------------------------------------------------------------------------------
+        /// When there is a acoustically heterogeneous medium defined, c0 and c_ref differ by the avg (c0) and the max (c_ref).
+        /// We take the average of those to calculate the PI phase shift.
+        /// When the medium is acoustically homogeneous c0 = c_ref.
+        const float c0             = Parameters->Get_c0_scalar();
+        const float c_ref          = Parameters->Get_c_ref();
+        const float c_avg          = (c0 + c_ref)/2;
+        const float US_freq        = Parameters->Get_US_freq();
+        const float US_wavelength  = c_avg/US_freq;
+        const float PI_phase_shift = (US_wavelength/2) * (1/c0);  /// [sec]
+        
+        /// Simulation time ticks, which are whole integers, that must elapse before a 180 degree phase shift
+        /// of the ultrasound occurs. Assumes the time steps of the simulation (dt)
+        /// fit evenly into the time it took for achieving 'PI_phase_shift' of the ultrasound. Otherwise the
+        /// 180 degree phase shift will NOT be fully accurate.
+        const size_t time_steps_for_PI_phase_shift = PI_phase_shift/Parameters->Get_dt();
+        Parameters->SetTimeStepsForPiPhaseShift(time_steps_for_PI_phase_shift);
+        
+        /// When creating the TDimensionSizes for saving data (i.e. 'TotalSizes'), if phase inversion is occurring we don't simply want to create
+        /// an output stream the size of 'endTime - startTime', because we will only save data at some portion within that bounds (i.e. PI phase shifts)
+        /// if '--phase_inversion' has been specified via the commandline. Therefore we find out how many times that will occur and allocate the appropriate amount.
+        for (size_t i = 0; i < Parameters->Get_Nt(); i++)
+        {
+            if ((((i % time_steps_for_PI_phase_shift) == 0) &&
+                (i <= Parameters->GetEndTimeIndex()) &&
+                (i >= Parameters->GetStartTimeIndex())) ||
+                (i == 0))
+            {
+                total_time_steps_to_save_data++;
+            }
+        }
+    }
+    else
+    {
+        /// No phase inversion over the time range specified, so we allocate the entire time interval. The '+ 2' is for the storage of data at t=0 and because the range
+        /// specified (e.g. store from t = 30->35) needs to take care of the edge case (i.e. avoid the fence post error).
+        total_time_steps_to_save_data = (Parameters->GetEndTimeIndex() - Parameters->GetStartTimeIndex()) + 2;
+    }
+    
+    ///TDimensionSizes TotalSizes(Get_sensor_mask_ind().GetTotalElementCount(),Parameters->Get_Nt() - Parameters->GetStartTimeIndex(), 1);
+    /// Only store data over the time range specified on the commandline.
+    TDimensionSizes TotalSizes(Get_sensor_mask_ind().GetTotalElementCount(), total_time_steps_to_save_data, 1);
+    /// -----------------------------------------------------------------------------/
 
 
    TDimensionSizes ChunkSizes(Get_sensor_mask_ind().GetTotalElementCount(),1, 1);
@@ -2877,7 +2920,7 @@ void TKSpaceFirstOrder3DSolver::StoreSensorData(){
 
     if (Parameters->IsStore_p_raw()) {
         cout << "Storing raw pressure values (x,y,z)\n";
-       p_sensor_raw_OutputStream->AddData(Get_p(),Get_sensor_mask_ind(),Get_Temp_1_RS3D().GetRawData());
+        p_sensor_raw_OutputStream->AddData(Get_p(),Get_sensor_mask_ind(),Get_Temp_1_RS3D().GetRawData());
     }
 
     if (Parameters->IsStore_u_raw()) {
@@ -2899,6 +2942,7 @@ void TKSpaceFirstOrder3DSolver::StoreSensorData(){
         /// ------------------------------ JWJS --------------------------------------------
         
         float temp_max = 0.0f;
+        {
         /// -----------------------------------/
          #ifndef __NO_OMP__
                 #pragma omp parallel for schedule (static) if (sensor_size > 1e5)
@@ -2915,12 +2959,13 @@ void TKSpaceFirstOrder3DSolver::StoreSensorData(){
              
          }
         /// -------------------------------------- JWJS ------------------------------------
+        }/// parallel
         /// Update the max pressure and display it.
         if (stats.max_pressure < temp_max)
         {
         	stats.max_pressure = temp_max;
             stats.pressure_t_index = t_index;
-        	cout << "Updating max pressure: " << stats.max_pressure/1e6 << " [MPa]\n";
+        	cout << "Updating max pressure: " << stats.max_pressure/1e6 << " [MPa] @ t=" << t_index << "\n";
         }
         /// -------------------------------------------/
       }// p_max

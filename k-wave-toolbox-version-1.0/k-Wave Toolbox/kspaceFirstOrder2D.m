@@ -768,6 +768,7 @@ for t_index = index_start:index_step:index_end
         - dt./ rho0_sgy .* real(ifft2( bsxfun(@times, ddy_k_shift_pos, kappa .* p_k) )) ...
         );  
     
+    
     % override lazy execution if using the Accelereyes GPU toolbox (this
     % has a significant effect on performance)
     if force_geval

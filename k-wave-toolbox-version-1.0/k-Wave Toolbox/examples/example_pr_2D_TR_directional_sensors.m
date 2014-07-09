@@ -80,8 +80,8 @@ sensor_data = kspaceFirstOrder2D(kgrid, medium, source, sensor, input_args{:});
 sensor.directivity_angle = zeros(kgrid.Nx, kgrid.Ny);
 sensor.directivity_angle(1, :) = 0;    	 % max sensitivity in x direction
 sensor.directivity_angle(end, :) = 0;  	 % max sensitivity in x direction
-sensor.directivity_angle(:, 1) = pi/2;   % max sensitivity in y direction
-sensor.directivity_angle(:, end) = pi/2; % max sensitivity in y direction
+sensor.directivity_angle(:, 1) = 0; %pi/2;   % max sensitivity in y direction
+sensor.directivity_angle(:, end) = 0; %pi/2; % max sensitivity in y direction
 
 % define the directivity size
 sensor.directivity_size = 20*kgrid.dx;

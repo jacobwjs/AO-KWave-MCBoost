@@ -152,7 +152,7 @@ AO_Sim::Run_kWave_sim(TParameters * Parameters)
     KSpaceSolver->FromAO_sim_PrintOutputHeader();
     KSpaceSolver->IterationTimeStart();
 	size_t k_wave_Nt = Parameters->Get_Nt();
-    //k_wave_Nt = 270;
+    k_wave_Nt = 700;
     for (KSpaceSolver->SetTimeIndex(0); KSpaceSolver->GetTimeIndex() < k_wave_Nt; KSpaceSolver->IncrementTimeIndex()){
 
         cout << ".......... Running k-Wave ........... ("

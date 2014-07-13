@@ -185,6 +185,9 @@ public:
     /// Get the ultrasound frequency used based on what was passed in via the commandline.
     float Get_US_freq()                 const {return CommandLinesParameters.Get_US_freq();};
     
+    /// Get the axis to propagate the plane wave.
+    string GetPlaneWaveAxis()           const {return CommandLinesParameters.GetPlaneWaveAxis();};
+    
     /// Get input RNG seed file name
     string GetRNGSeedFileName()         const {return CommandLinesParameters.GetRNGSeedsFileName();};
     /// ------------------------------------/
@@ -240,29 +243,32 @@ public:
     
     
     /// ------------------------ JWJS --------------------------------------------------------------------------------------
+    /// Is --Phase_wave specified at the command line
+    bool IsPlane_wave()                 const {return CommandLinesParameters.IsPlane_wave();};
+    
     /// Is --US_freq specified at the command line
-    bool IsUS_freq_known()                  const {return CommandLinesParameters.IsUS_freq_known();};
+    bool IsUS_freq_known()              const {return CommandLinesParameters.IsUS_freq_known();};
     
     /// Is --save_seeds specified at the command line
-    bool IsStore_RNG_seeds()                      const {return CommandLinesParameters.IsStore_RNG_seeds();};
+    bool IsStore_RNG_seeds()            const {return CommandLinesParameters.IsStore_RNG_seeds();};
 
     /// Is --load_seeds specified at the command line
-    bool IsLoad_seeds()                           const {return CommandLinesParameters.IsLoad_seeds();};
+    bool IsLoad_seeds()                 const {return CommandLinesParameters.IsLoad_seeds();};
 
     /// Is --phase_inversion specified at the command line
-    bool IsPhase_inversion()                      const {return CommandLinesParameters.IsPhase_inversion();};
+    bool IsPhase_inversion()            const {return CommandLinesParameters.IsPhase_inversion();};
 
     /// Is --modulation_depth specified at the command line
-    bool IsStore_modulation_depth()               const {return CommandLinesParameters.IsStore_modulation_depth();};
+    bool IsStore_modulation_depth()     const {return CommandLinesParameters.IsStore_modulation_depth();};
     
     /// Is --n_total specified at the command line
-    bool IsStore_refractive_total()               const {return CommandLinesParameters.IsStore_refractive_total();};
+    bool IsStore_refractive_total()     const {return CommandLinesParameters.IsStore_refractive_total();};
     /// Is --nx specified at the command line
-    bool IsStore_refractive_x()                   const {return CommandLinesParameters.IsStore_refractive_x();};
+    bool IsStore_refractive_x()         const {return CommandLinesParameters.IsStore_refractive_x();};
     /// Is --nx specified at the command line
-    bool IsStore_refractive_y()                   const {return CommandLinesParameters.IsStore_refractive_y();};
+    bool IsStore_refractive_y()         const {return CommandLinesParameters.IsStore_refractive_y();};
     /// Is --nx specified at the command line
-    bool IsStore_refractive_z()                   const {return CommandLinesParameters.IsStore_refractive_z();};
+    bool IsStore_refractive_z()         const {return CommandLinesParameters.IsStore_refractive_z();};
     
     /// Is --disp_x specified at the command line
     bool IsStore_disp_x()               const {return CommandLinesParameters.IsStore_disp_x();};

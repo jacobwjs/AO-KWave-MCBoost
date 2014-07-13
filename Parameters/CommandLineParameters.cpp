@@ -60,6 +60,7 @@ TCommandLineParameters::TCommandLineParameters() :
         Store_u_raw(false), Store_u_rms(false), Store_u_max(false), Store_u_final(false),
         Store_I_avg(false), Store_I_max(false),
         /// ------------------- JWJS ----------------------
+        Plane_wave(false),
         US_freq_known(false), US_freq(0.0f),
         Store_seeds(false), Load_seeds(false),
         Phase_inversion(false),
@@ -87,7 +88,7 @@ void TCommandLineParameters::PrintUsageAndExit(){
  printf(" --MC_sim                         : Run the Monte-Carlo simulation (light propagation only)\n");
  printf(" --kWave_sim                      : Run the kWave simulation (ultrasound propagation only)\n");
 
- /// --------------------------------------------
+ /// --------------------------------------------/
  printf("\n");
  printf("Mandatory parameters:\n");
  printf("  -i <input_file_name>            : HDF5 input file\n");
@@ -128,6 +129,8 @@ void TCommandLineParameters::PrintUsageAndExit(){
  printf("  --I_max                         : Store max of intensity\n");
  printf("\n");
  /// --------------------- JWJS ---------------------------------------------------------------------
+ printf(" --Plane_wave <axis>              : Create a 'perfect' plane wave that propagates along a specfied axis\n");
+ printf("\n");
  printf(" --US_freq                        : Ultrasound frequency used in the simulation (used with 'phase_inversion' option)\n");
  printf(" --phase_inversion                : Run the acousto-optic simulation at time 't' with ultrasound phase (phi) and (phi+180)\n");
  printf("\n");
@@ -150,7 +153,7 @@ void TCommandLineParameters::PrintUsageAndExit(){
  printf("  --disp_z                        : Store displacement along z-axis\n");
  printf("\n");
  printf("  -e <timestep>                   : Time step when data collection ends\n");
- /// ----------------------------
+ /// ----------------------------/
  printf("  -s <timestep>                   : Time step when data collection begins\n");
  printf("                                      (default = 1)\n");
  printf("--------------------------------------------------------------------------\n");
@@ -200,6 +203,9 @@ void TCommandLineParameters::PrintSetup(){
     printf("  Store I_max           %d\n", Store_I_max);
     printf("\n");
     /// ---------------- JWJS ----------------------------------------------------
+    printf("  Plane wave                      %d\n", Plane_wave);
+    printf("  US freq                         %d\n", US_freq_known);
+    printf("  Phase inversion                 %d\n", Phase_inversion);
     printf("  Save seeds                      %d\n", Store_seeds);
     printf("  Load seeds                      %d\n", Load_seeds);
     printf("\n");
@@ -254,6 +260,7 @@ void TCommandLineParameters::ParseCommandLine(int argc, char** argv){
         { "I_max", no_argument, NULL, 0 },
 
         /// ---------------- JWJS -----------------------
+        { "Plane_wave", required_argument, NULL, 0},
         { "US_freq", required_argument, NULL, 0},
         { "save_seeds", no_argument, NULL, 0},
         { "load_seeds", required_argument, NULL, 0},
@@ -430,6 +437,10 @@ void TCommandLineParameters::ParseCommandLine(int argc, char** argv){
                     Store_I_max = true;
                 } else
                /// -------------------- JWJS -----------------------------
+                if( strcmp( "Plane_wave", longOpts[longIndex].name ) == 0) {
+                    Plane_wave = true;
+                    Plane_wave_axis = optarg;
+                } else
                 if( strcmp( "US_freq", longOpts[longIndex].name ) == 0) {
                     US_freq_known = true;
                     US_freq = atof(optarg);

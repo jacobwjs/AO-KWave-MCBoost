@@ -182,6 +182,8 @@ public:
     std::string GetOutputFileName()     const {return OutputFileName;};
 
     /// ------------------------------- JWJS --------------------------------------------------
+    std::string GetPlaneWaveAxis()      const {return Plane_wave_axis;};
+    
     /// Get input file name for RNG seeds. Used for loading seeds in monte-carlo simulation.
     std::string GetRNGSeedsFileName()   const {return InputRNGSeedsFileName;};
     /// ------------------------------------
@@ -238,6 +240,9 @@ public:
     
     
     /// ------------------- JWJS ------------------------------------
+    /// Is --Plane_wave
+    bool IsPlane_wave()                 const {return Plane_wave;};
+    
     /// Is --US_freq set
     bool IsUS_freq_known()              const {return US_freq_known;};
     
@@ -335,6 +340,13 @@ private:
     
     
     /// -------------------------- JWJS --------------------------------------------
+    ///
+    /// Used to signify that a 'perfect' plane wave is propagated. That is,
+    /// the wave equation is only propagated along 1-dimension.
+    bool        Plane_wave;
+    /// Input name for the axis to propagate the plane wave along (e.g. x-axis)
+    std::string Plane_wave_axis;
+    
     /// Used to signal if the US frequency is input via commandline option.
     bool        US_freq_known;
     /// The ultrasound frequency used in the simulation.

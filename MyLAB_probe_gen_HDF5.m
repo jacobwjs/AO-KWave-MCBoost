@@ -297,18 +297,18 @@ transducer.properties
 Nx_tot = Nx;
 Ny_tot = Ny;
 Nz_tot = Nz;
-% 
-% define a random distribution of scatterers for the medium
+
+% define a random distribution of ultrasound scatterers for the medium
 background_map_mean = 1;
 background_map_std = 0.008;
 background_map = background_map_mean + background_map_std*randn([Nx, Ny, Nz]);
 
-
- 
 % % define properties
 sound_speed_map = c0*ones(Nx, Ny, Nz).*background_map;
 density_map     = rho0*ones(Nx, Ny, Nz).*background_map;
 
+medium.sound_speed = sound_speed_map(:, :, :);  % [m/s]
+medium.density = density_map(:, :, :);          % [kg/m^3]
  
 % % =========================================================================
 % % RUN THE SIMULATION
@@ -324,14 +324,6 @@ input_args = {...
     %'DisplayMask', transducer.mask,...
     %'PlotScale', [-(source_strength+source_strength/2), (source_strength+source_strength/2)],...
      };
-    
-
-
-
-
-medium.sound_speed = sound_speed_map(:, :, :);  % [m/s]
-medium.density = density_map(:, :, :);          % [kg/m^3]
-
 
 % Place sensors over the entire medium.
 sensor.mask = ones(Nx, Ny, Nz);

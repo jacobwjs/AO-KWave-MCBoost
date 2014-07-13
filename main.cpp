@@ -595,7 +595,7 @@ using namespace std;
  * ------------------------------------------------------- Various functions for Monte-Carlo -----------------
  */
 // Number of photons to simulate.
-const int MAX_PHOTONS = 1e6;
+const int MAX_PHOTONS = 100e3;
 
 // Testing routines.
 void testVectorMath(void);

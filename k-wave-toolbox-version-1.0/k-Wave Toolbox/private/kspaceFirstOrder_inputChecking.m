@@ -699,6 +699,13 @@ smooth_rho0 = SMOOTH_RHO0_DEF;
 use_kspace = USE_KSPACE_DEF;
 use_sg = USE_SG_DEF;
 
+% --------------------------------------------- JWJS ---------------------
+perfect_plane_wave = false;
+x_planar = false;
+y_planar = false;
+z_planar = false;
+% ---------------------------------------------------/
+
 % set flag to force geval calls when using the Accelereyes Jacket
 force_geval = false;
 
@@ -1005,7 +1012,22 @@ elseif ~isempty(varargin)
                 use_sg = varargin{input_index + 1}; 
                 if ~islogical(use_sg)
                     error('Optional input ''UseSG'' must be Boolean');
-                end                   
+                end 
+% ------------------------------------------------ JWJS ------------------------
+            case 'PerfectPlanar'
+                perfect_plane_wave = true;
+                plane = varargin{input_index + 1};
+                perfect_plane_wave_axis = plane;
+                if (strcmp(plane, 'x-axis'))
+                    %x_plane = true;
+                elseif (strcmp(plane, 'y-axis'))
+                    %y_plane = true;
+                elseif (strcmp(plane, 'z-axis'))
+                    %z_plane = true;
+                else
+                    error('Optional input ''PerfectPlanar'' passed an invalid value');
+                end
+% ------------------------------------------------------/                
             otherwise
                 error(['Unknown optional input ' varargin{input_index}]);
         end

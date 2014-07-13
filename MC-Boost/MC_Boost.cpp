@@ -77,7 +77,7 @@ MC_Boost::Set_num_threads(size_t num_threads_to_run)
 void
 MC_Boost::Generate_MC_RNG_seeds(Medium * medium, coords LaserInjectionCoords)
 {
-    cout << "........... Generating Monte-Carlo Exit Seeds\n";
+    cout << " ......... Generating Monte-Carlo Exit Seeds\n";
     cout.flush();
 
     /// The file that the seeds are written to after calling 'Generate_RNG_seeds'.

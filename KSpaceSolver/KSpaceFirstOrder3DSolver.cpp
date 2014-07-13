@@ -2503,20 +2503,57 @@ void TKSpaceFirstOrder3DSolver::Compute_rhoxyz_linear(){
 
      if (Parameters->Get_rho0_scalar_flag()) { // scalars
          if (Parameters->Get_nonuniform_grid_flag()){
-             Get_ux_sgx().Compute_ux_sgx_normalize_scalar_nonuniform(Get_Temp_1_RS3D(),Parameters->Get_rho0_sgx_scalar(), Get_dxudxn_sgx(), Get_pml_x_sgx());
-             Get_uy_sgy().Compute_uy_sgy_normalize_scalar_nonuniform(Get_Temp_2_RS3D(),Parameters->Get_rho0_sgy_scalar(), Get_dyudyn_sgy(), Get_pml_y_sgy());
-             Get_uz_sgz().Compute_uz_sgz_normalize_scalar_nonuniform(Get_Temp_3_RS3D(),Parameters->Get_rho0_sgz_scalar(), Get_dzudzn_sgz(), Get_pml_z_sgz());
-
+/// -------------------------------------------------------------- JWJS ----------------------
+             if (Parameters->IsPlane_wave())
+             {
+                 if (Parameters->GetPlaneWaveAxis() == "x-axis")
+                     Get_ux_sgx().Compute_ux_sgx_normalize_scalar_nonuniform(Get_Temp_1_RS3D(),Parameters->Get_rho0_sgx_scalar(), Get_dxudxn_sgx(), Get_pml_x_sgx());
+                 if (Parameters->GetPlaneWaveAxis() == "y-axis")
+                     Get_uy_sgy().Compute_uy_sgy_normalize_scalar_nonuniform(Get_Temp_2_RS3D(),Parameters->Get_rho0_sgy_scalar(), Get_dyudyn_sgy(), Get_pml_y_sgy());
+                 if (Parameters->GetPlaneWaveAxis() == "z-axis")
+                    Get_uz_sgz().Compute_uz_sgz_normalize_scalar_nonuniform(Get_Temp_3_RS3D(),Parameters->Get_rho0_sgz_scalar(), Get_dzudzn_sgz(), Get_pml_z_sgz());
+             }
+             else
+             {
+                 Get_ux_sgx().Compute_ux_sgx_normalize_scalar_nonuniform(Get_Temp_1_RS3D(),Parameters->Get_rho0_sgx_scalar(), Get_dxudxn_sgx(), Get_pml_x_sgx());
+                 Get_uy_sgy().Compute_uy_sgy_normalize_scalar_nonuniform(Get_Temp_2_RS3D(),Parameters->Get_rho0_sgy_scalar(), Get_dyudyn_sgy(), Get_pml_y_sgy());
+                 Get_uz_sgz().Compute_uz_sgz_normalize_scalar_nonuniform(Get_Temp_3_RS3D(),Parameters->Get_rho0_sgz_scalar(), Get_dzudzn_sgz(), Get_pml_z_sgz());
+             }
+            
          }else {
-             Get_ux_sgx().Compute_ux_sgx_normalize_scalar_uniform(Get_Temp_1_RS3D(),Parameters->Get_rho0_sgx_scalar(), Get_pml_x_sgx());
-             Get_uy_sgy().Compute_uy_sgy_normalize_scalar_uniform(Get_Temp_2_RS3D(),Parameters->Get_rho0_sgy_scalar(), Get_pml_y_sgy());
-             Get_uz_sgz().Compute_uz_sgz_normalize_scalar_uniform(Get_Temp_3_RS3D(),Parameters->Get_rho0_sgz_scalar(), Get_pml_z_sgz());
+             if (Parameters->IsPlane_wave())
+             {
+                 if (Parameters->GetPlaneWaveAxis() == "x-axis")
+                     Get_ux_sgx().Compute_ux_sgx_normalize_scalar_uniform(Get_Temp_1_RS3D(),Parameters->Get_rho0_sgx_scalar(), Get_pml_x_sgx());
+                 if (Parameters->GetPlaneWaveAxis() == "y-axis")
+                     Get_uy_sgy().Compute_uy_sgy_normalize_scalar_uniform(Get_Temp_2_RS3D(),Parameters->Get_rho0_sgy_scalar(), Get_pml_y_sgy());
+                 if (Parameters->GetPlaneWaveAxis() == "z-axis")
+                     Get_uz_sgz().Compute_uz_sgz_normalize_scalar_uniform(Get_Temp_3_RS3D(),Parameters->Get_rho0_sgz_scalar(), Get_pml_z_sgz());
+             }
+             else
+             {
+                 Get_ux_sgx().Compute_ux_sgx_normalize_scalar_uniform(Get_Temp_1_RS3D(),Parameters->Get_rho0_sgx_scalar(), Get_pml_x_sgx());
+                 Get_uy_sgy().Compute_uy_sgy_normalize_scalar_uniform(Get_Temp_2_RS3D(),Parameters->Get_rho0_sgy_scalar(), Get_pml_y_sgy());
+                 Get_uz_sgz().Compute_uz_sgz_normalize_scalar_uniform(Get_Temp_3_RS3D(),Parameters->Get_rho0_sgz_scalar(), Get_pml_z_sgz());
+             }
          }
 
      }else {// matrices
-        Get_ux_sgx().Compute_ux_sgx_normalize(Get_Temp_1_RS3D(),Get_dt_rho0_sgx(), Get_pml_x_sgx());
-        Get_uy_sgy().Compute_uy_sgy_normalize(Get_Temp_2_RS3D(),Get_dt_rho0_sgy(), Get_pml_y_sgy());
-        Get_uz_sgz().Compute_uz_sgz_normalize(Get_Temp_3_RS3D(),Get_dt_rho0_sgz(), Get_pml_z_sgz());
+         if (Parameters->IsPlane_wave())
+         {
+             if (Parameters->GetPlaneWaveAxis() == "x-axis")
+                 Get_ux_sgx().Compute_ux_sgx_normalize(Get_Temp_1_RS3D(),Get_dt_rho0_sgx(), Get_pml_x_sgx());
+             if (Parameters->GetPlaneWaveAxis() == "y-axis")
+                 Get_uy_sgy().Compute_uy_sgy_normalize(Get_Temp_2_RS3D(),Get_dt_rho0_sgy(), Get_pml_y_sgy());
+             if (Parameters->GetPlaneWaveAxis() == "z-axis")
+                 Get_uz_sgz().Compute_uz_sgz_normalize(Get_Temp_3_RS3D(),Get_dt_rho0_sgz(), Get_pml_z_sgz());
+         }
+         else
+         {
+             Get_ux_sgx().Compute_ux_sgx_normalize(Get_Temp_1_RS3D(),Get_dt_rho0_sgx(), Get_pml_x_sgx());
+             Get_uy_sgy().Compute_uy_sgy_normalize(Get_Temp_2_RS3D(),Get_dt_rho0_sgy(), Get_pml_y_sgy());
+             Get_uz_sgz().Compute_uz_sgz_normalize(Get_Temp_3_RS3D(),Get_dt_rho0_sgz(), Get_pml_z_sgz());
+         }
       }
 
     } // parallel

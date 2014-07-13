@@ -25,15 +25,19 @@ Nz = 512;  % dz*Nz = 15.7 [mm]
 % To better approximate the US transducer simulated, voxel size is based
 % upon pitch size of the transducer.
 % Definitions to match the SL3323 MyLAB probe
+kerf = 1; 
 elevation_height = 5e-3;
 pitch            = 0.245e-3;
 SL3323_active_elements  = 64;
-kerf = 1;                           % Assume kerf of 1.
+                          % Assume kerf of 1.
 
 % dx = x/Nx                  % [m]
 dx = pitch/8;                % [m]
 dy = dx;                     % [m]
 dz = dx;                     % [m]
+
+% Make room for the kerf, which we do by removing voxel dimensions.
+pitch = pitch - kerf*dz;
 
 % create the k-space grid
 kgrid = makeGrid(Nx, dx, Ny, dy, Nz, dz);
@@ -144,7 +148,9 @@ end
 
 % Calculate the number of steps we must take to allow the ultrasound to
 % reach the distance created by t_end/dt.
-Nt = t_end/dt;
+%Nt = t_end/dt;
+display('Manually setting time steps of simulation (Nt):');
+Nt = 4000
 
 % !!!!!!!!!!!!!!!!!!!!!!!!!! FOR DEBUGGING AND TESTING !!!!!!!!!!!!!!!!!!!!
 % For testing purposes (i.e. looking at particle displacement) we don't
@@ -164,7 +170,7 @@ kgrid.t_array = 0:dt:(Nt-1)*dt;
 
 % define properties of the input signal
 % Measured peak-to-peak
-source_strength = 0.25e6;    	% [Pa] 
+source_strength = 0.1551e6;    	% [Pa] This input value procudes P_max ~ 1.0 MPa
 tone_burst_freq = 5.0e6;        % [Hz]
 source_freq = tone_burst_freq;
 tone_burst_cycles = 5;

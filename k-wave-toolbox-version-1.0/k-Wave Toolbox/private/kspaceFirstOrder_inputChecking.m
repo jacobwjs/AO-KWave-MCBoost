@@ -700,6 +700,7 @@ use_kspace = USE_KSPACE_DEF;
 use_sg = USE_SG_DEF;
 
 % --------------------------------------------- JWJS ---------------------
+perfect_plane_wave = false;
 x_planar = false;
 y_planar = false;
 z_planar = false;

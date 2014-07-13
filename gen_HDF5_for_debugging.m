@@ -1,53 +1,5 @@
 
-% Defining An Ultrasound Transducer Example
-%
-% In principle, simulations using ultrasound transducers can be run
-% following the examples given under Time Varying Source Problems. However,
-% assigning the grid points that belong to each transducer element, and
-% then assigning the correctly delayed input signals to each point of each
-% element can be a laborious task. For this purpose, a special input object
-% created using makeTransducer can be substituted for either the source or
-% sensor inputs (or both). This example illustrates how this object is
-% created and can be used to simulate the field produced by an ultrasound
-% transducer.
-%
-% Note, transducer inputs can only be used in 3D simulations and thus these
-% examples are inherently memory and CPU intensive. Whilst the grid sizes
-% and source frequencies used in the examples have been scaled down for the
-% purpose of demonstrating the capabilities of the toolbox (the inputs do
-% not necessarily represent realistic ultrasound settings), they still
-% require a comparatively large amount of computational resources. To
-% reduce this load, it is advised to run the simulations in single
-% precision by setting the optional input 'DataCast' to 'single'.
-% Similarly, if you have access to a recent model GPU and a GPU toolbox
-% (for example, the MATLAB Parallel Computing Toolbox R2012a or later, or
-% Accelereyes Jacket), the simulation times can be significantly reduced by
-% setting 'DataCast' to 'gpuArray-single' or 'gsingle'. Alternatively, the
-% simulations can be run using the optimised C++ code. See the k-Wave
-% Manual for more information.   
-%
-% The creation of a kWaveTransducer object will only work in versions of
-% MATLAB recent enough to support user defined classes. 
-%
-% author: Bradley Treeby
-% date: 20th July 2011
-% last update: 25th September 2012
-%  
-% This function is part of the k-Wave Toolbox (http://www.k-wave.org)
-% Copyright (C) 2009-2012 Bradley Treeby and Ben Cox
-
-% This file is part of k-Wave. k-Wave is free software: you can
-% redistribute it and/or modify it under the terms of the GNU Lesser
-% General Public License as published by the Free Software Foundation,
-% either version 3 of the License, or (at your option) any later version.
-% 
-% k-Wave is distributed in the hope that it will be useful, but WITHOUT ANY
-% WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-% FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for
-% more details. 
-% 
-% You should have received a copy of the GNU Lesser General Public License
-% along with k-Wave. If not, see <http://www.gnu.org/licenses/>. 
+% Defining An Ultrasound Transducer for Debugging.
 
 clear all;
 
@@ -70,7 +22,7 @@ PML_Y_SIZE = 10;            % [grid points]
 PML_Z_SIZE = 10;            % [grid points]
 
 % set total number of grid points not including the PML
-x_axis_num_points = 128;
+x_axis_num_points = 128*2;
 y_axis_num_points = 128;
 z_axis_num_points = 128;
 Nx = x_axis_num_points; 
@@ -85,7 +37,6 @@ x = 40e-3;                  % [m]
 
 % calculate the spacing between the grid points
 dx = x/Nx;                  % [m]
-dx = dx/2;
 dy = dx;                    % [m]
 dz = dx;                    % [m]
 
@@ -152,39 +103,105 @@ Nt = floor(t_end/dt);
 kgrid.t_array = 0:dt:(Nt-1)*dt;
 
 
+
+sensor_Nx = [];
+sensor_Ny = [];
+sensor_Nz = [];
+num_cycles = 0;
+source_strength = 0;
 % =========================================================================
 % DEFINE THE INPUT SIGNAL
 % =========================================================================
 
 % define properties of the input signal
 %
-% source_strength = 0.889825*1e6;   % [Pa] 11 cycles
-% num_cycles = 11;    
+% 11 cycles:
+% ---------------------------------------------------
+x_size = round(lambda/dx*11); % Reserve '11 cycles' of voxels.
+y_size = 22;
+z_size = 16;
+
+sensor_Nx = round(Nx/2-(x_size/2):Nx/2+(x_size/2));
+sensor_Ny = round(Ny/2-(y_size/2):Ny/2+(y_size/2));
+sensor_Nz = round(Nz/2-(z_size/2):Nz/2+(z_size/2));
+
+if (PLANAR_WAVE)
+    source_strength = 1.0e6;
+    num_cycles = 100;
+else
+    source_strength = 0.889825*1e6;   % [Pa] 11 cycles
+    num_cycles = 11;
+end
+    
+% % 9 cycles:
+% % ---------------------------------------------------
+% if (PLANAR_WAVE)
+%     x_size = round(lambda/dx*9); % Reserve '9 cycles' of voxels.
+%     y_size = 14;
+%     z_size = 16;
+%     
+%     sensor_Nx = round(Nx/2-(x_size/2):Nx/2+(x_size/2));
+%     sensor_Ny = round(Ny/2-(y_size/2):Ny/2+(y_size/2));
+%     sensor_Nz = round(Nz/2-(z_size/2):Nz/2+(z_size/2));
+%     
+%     source_strength = 1.0e6;
+%     num_cycles = 100;
+% else
+%     source_strength = 0.9038*1e6; % [Pa] 9cycles
+%     num_cycles = 9;
+% end
+
+% % 7 cycles:
+% % ----------------------------------------------------
+% if (PLANAR_WAVE)
+%     x_size = round(lambda/dx*7); % Reserve '7 cycles' of voxels.
+%     y_size = 6;
+%     z_size = 16;
+%     
+%     sensor_Nx = round(Nx/2-(x_size/2):Nx/2+(x_size/2));
+%     sensor_Ny = round(Ny/2-(y_size/2):Ny/2+(y_size/2));
+%     sensor_Nz = round(Nz/2-(z_size/2):Nz/2+(z_size/2));
+%     
+%     source_strength = 1.0e6;
+%     num_cycles = 100;
+% else
+%     source_strength = 0.932*1e6;  % [Pa] 7cycles
+%     num_cycles = 7;
+% end
+
+% % 5 cycles:
+% % ----------------------------------------------------
+% if (PLANAR_WAVE)
+%     x_size = round(lambda/dx*5); % Reserve '5 cycles' of voxels.
+%     y_size = 6;
+%     z_size = 16;
+%     
+%     sensor_Nx = round(Nx/2-(x_size/2):Nx/2+(x_size/2));
+%     sensor_Ny = round(Ny/2-(y_size/2):Ny/2+(y_size/2));
+%     sensor_Nz = round(Nz/2-(z_size/2):Nz/2+(z_size/2));
+%     
+%     source_strength = 1.0e6;
+%     num_cycles = 100;
+% else
+%     source_strength = 1.0052*1e6;      % [Pa] 5cycles
+%     num_cycles = 5;
+% end
 
 % source_strength = 0.8612*1e6;  % [Pa] 10cycles
 % num_cycles = 10;
 
-% source_strength = 0.9038*1e6; % [Pa] 9cycles
-% num_cycles = 9;
-
 % source_strength = 0.8612*1e6; % [Pa] 8cycles
 % num_cycles = 8;
-
-% source_strength = 0.932*1e6;  % [Pa] 7cycles
-% num_cycles = 7;
 
 % source_strength = 0.8619*1e6; % [Pa] 6cycles
 % num_cycles = 6;
 
-source_strength = 1.0052*1e6;      % [Pa] 5cycles
-num_cycles = 5;
 
 tone_burst_freq = US_freq;     % [Hz]
 tone_burst_cycles = num_cycles;
 
 % create the input signal using toneBurst 
 if (PLANAR_WAVE)
-    tone_burst_cycles = 100;
     input_signal = toneBurst(1/kgrid.dt, tone_burst_freq, tone_burst_cycles, 'Envelope', 'Rectangular');
 else
     input_signal = toneBurst(1/kgrid.dt, tone_burst_freq, tone_burst_cycles);
@@ -249,31 +266,28 @@ transducer.properties;
 % DEFINE SENSOR MASK
 % =========================================================================
 % Define the region that data is recorded over the medium.
-sensor_Nx = PML_X_SIZE*3:(Nx - PML_X_SIZE*3);
-sensor_Ny = PML_Y_SIZE*3:(Ny - PML_Y_SIZE*3);
-%sensor_Nz = PML_Z_SIZE*3:(Nz - PML_Z_SIZE*3);
-sensor_Nz = Nz/2;
-sensor_dims = [size(sensor_Nx,2), size(sensor_Ny,2), size(sensor_Nz,2)];
-reshape_dims = sensor_dims(sensor_dims ~= 1);
-
-% create a binary sensor mask with four detection positions
-if (SAVE_TO_DISK)
-    % Create sensor map of entire medium for use with AO simulation.
-    sensor.mask = ones(Nx, Ny, Nz);
-    
-%     sensor.mask = zeros(Nx, Ny, Nz);
-%     sensor.mask(sensor_Nx,...
-%                 sensor_Ny,...
-%                 sensor_Nz) = 1;
-else
+% if (~PLANAR_WAVE)
+%     sensor.mask = ones(Nx, Ny, Nz);
+%     sensor_Nx = Nx;
+%     sensor_Ny = Ny;
+%     sensor_Nz = Nz;
+%else
     % Otherwise only interested in a small portion.
     sensor.mask = zeros(Nx, Ny, Nz);
     sensor.mask(sensor_Nx,...
                 sensor_Ny,...
                 sensor_Nz) = 1;
-            
+%end
+% sensor_Nx = PML_X_SIZE*3:(Nx - PML_X_SIZE*3);
+% sensor_Ny = PML_Y_SIZE*3:(Ny - PML_Y_SIZE*3);
+% %sensor_Nz = PML_Z_SIZE*3:(Nz - PML_Z_SIZE*3);
+% sensor_Nz = Nz/2;
+sensor_dims = [size(sensor_Nx,2), size(sensor_Ny,2), size(sensor_Nz,2)];
+reshape_dims = sensor_dims(sensor_dims ~= 1);
+
+if (~SAVE_TO_DISK)
     % Define what to save over the sensor mask.
-    sensor.record = {'p_max', 'p', 'I'};
+    sensor.record = {'p_max'};
 end
 % =========================================================================
 % RUN THE SIMULATION
@@ -290,7 +304,7 @@ else
     input_args = {'DisplayMask', transducer.all_elements_mask | sensor.mask, ...
         'PMLInside', true, 'PlotPML', false, 'PMLSize', [PML_X_SIZE, PML_Y_SIZE, PML_Z_SIZE], ...
         'DataCast', DATA_CAST, 'PlotScale', [-source_strength/2, source_strength/2],...
-        'PerfectPlanar', 'x-axis'};
+        }; %'PerfectPlanar', 'x-axis'};
 end
 
 % run the simulation

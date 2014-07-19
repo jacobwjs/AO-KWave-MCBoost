@@ -186,7 +186,7 @@ public:
     
     /// Get input file name for RNG seeds. Used for loading seeds in monte-carlo simulation.
     std::string GetRNGSeedsFileName()   const {return InputRNGSeedsFileName;};
-    /// ------------------------------------
+    /// ------------------------------------/
     
     /// Is --benchmark flag set?
     bool IsBenchmarkFlag()              const {return BenchmarkFlag;};
@@ -213,7 +213,7 @@ public:
     
     /// Set end time index when sensor data collection ends
     void SetEndTimeIndex(const int end) 	  {EndTimeStep = end;};
-    /// ----------------------------
+    /// ----------------------------/
    
     /// Is --p_raw set?
     bool IsStore_p_raw()                const {return Store_p_raw;};
@@ -239,7 +239,7 @@ public:
     bool IsStore_I_max()                const {return Store_I_max;};
     
     
-    /// ------------------- JWJS ------------------------------------
+    /// ---------------------------------------------- JWJS ------------------------------------
     /// Is --Plane_wave
     bool IsPlane_wave()                 const {return Plane_wave;};
     
@@ -282,7 +282,10 @@ public:
     bool IsRun_MC_sim()                 const {return Run_MC_sim;};
     /// Is --kWave_sim set
     bool IsRun_kWave_sim()              const {return Run_kWave_sim;};
-    /// -------------------------
+    /// Is --AO_sim_sphere set
+    bool IsRun_AO_sim_sphere()          const {return Run_AO_sim_sphere;};
+    
+    /// ---------------------------------------------------/
     
 
     /// Print usage and exit
@@ -339,7 +342,7 @@ private:
     bool        Store_u_final;
     
     
-    /// -------------------------- JWJS --------------------------------------------
+    /// -------------------------------------------- JWJS --------------------------------------------
     ///
     /// Used to signify that a 'perfect' plane wave is propagated. That is,
     /// the wave equation is only propagated along 1-dimension.
@@ -396,7 +399,10 @@ private:
     bool        Run_MC_sim;
     /// Run only the kWave simulation
     bool        Run_kWave_sim;
-    /// ---------------------------------
+    /// Run AO_sim that approximates the tagging volume by a sphere filled with given values.
+    bool        Run_AO_sim_sphere;
+    
+    /// -------------------------------------------------/
     
     
     /// Store_I_avg value

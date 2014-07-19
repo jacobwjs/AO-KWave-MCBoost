@@ -60,6 +60,7 @@ TCommandLineParameters::TCommandLineParameters() :
         Store_u_raw(false), Store_u_rms(false), Store_u_max(false), Store_u_final(false),
         Store_I_avg(false), Store_I_max(false),
         /// ------------------- JWJS ----------------------
+        Run_AO_sim(false), Run_AO_sim_loadData(false), Run_MC_sim(false), Run_kWave_sim(false), Run_AO_sim_sphere(false),
         Plane_wave(false),
         US_freq_known(false), US_freq(0.0f),
         Store_seeds(false), Load_seeds(false),
@@ -87,7 +88,7 @@ void TCommandLineParameters::PrintUsageAndExit(){
  printf(" --AO_sim_loadData                : Run the Acousto-Optic simulation with precomputed data\n");
  printf(" --MC_sim                         : Run the Monte-Carlo simulation (light propagation only)\n");
  printf(" --kWave_sim                      : Run the kWave simulation (ultrasound propagation only)\n");
-
+ printf(" --AO_sim_sphere                  : Run the Acousto-Optic simulation with an approximated sphere for the tagging volume\n");
  /// --------------------------------------------/
  printf("\n");
  printf("Mandatory parameters:\n");
@@ -177,7 +178,8 @@ void TCommandLineParameters::PrintSetup(){
     printf("  Simulate Acousto-Optics (precomputed data) %d\n", Run_AO_sim_loadData);
     printf("  Simulate Monte-Carlo      %d\n", Run_MC_sim);
     printf("  Simulate kWave            %d\n", Run_kWave_sim);
-    /// -----------------------------------
+    printf("  Simulate Acousto-Optics (approx. tagging volume w/ sphere) %d\n", Run_AO_sim_sphere);
+    /// ----------------------------------/
 
     printf("  Input  file           %s\n",InputFileName.c_str());
     printf("  Output file           %s\n",OutputFileName.c_str());
@@ -259,7 +261,7 @@ void TCommandLineParameters::ParseCommandLine(int argc, char** argv){
         { "I_avg", no_argument, NULL, 'I' },
         { "I_max", no_argument, NULL, 0 },
 
-        /// ---------------- JWJS -----------------------
+        /// ------------------------------------------------ JWJS -----------------------
         { "Plane_wave", required_argument, NULL, 0},
         { "US_freq", required_argument, NULL, 0},
         { "save_seeds", no_argument, NULL, 0},
@@ -286,7 +288,9 @@ void TCommandLineParameters::ParseCommandLine(int argc, char** argv){
         { "AO_sim_loadData", no_argument, NULL, 0},
         { "MC_sim",          no_argument, NULL, 0},
         { "kWave_sim",       no_argument, NULL, 0},
-        /// ----------------------
+        { "AO_sim_sphere",   no_argument, NULL, 0},
+       
+        /// -----------------------------------------------------/
 
         { NULL, no_argument, NULL, 0 }
     };
@@ -490,6 +494,9 @@ void TCommandLineParameters::ParseCommandLine(int argc, char** argv){
                 } else
                 if( strcmp( "kWave_sim", longOpts[longIndex].name ) == 0) {
                     Run_kWave_sim = true;
+                } else
+                if( strcmp( "AO_sim_sphere", longOpts[longIndex].name ) == 0) {
+                    Run_AO_sim_sphere = true;
                 }
                /// ---------------------------
                 else {
@@ -518,7 +525,7 @@ void TCommandLineParameters::ParseCommandLine(int argc, char** argv){
     /// We don't need to open an output file when only running the
     /// monte-carlo simulation.
     //if (OutputFileName == "") {
-    if ((OutputFileName == "") && (!Run_MC_sim)) {
+    if ((OutputFileName == "") && (!Run_MC_sim) && (!Run_AO_sim_sphere)) {
     /// -----------------------------------
        fprintf(stderr,"%s",CommandlineParameters_ERR_FMT_NoOutputFile);
        PrintUsageAndExit();

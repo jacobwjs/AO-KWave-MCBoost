@@ -61,6 +61,9 @@ public:
     /// Run the acousto-optic simulation from precomputed data from kWave.
     void        Run_acousto_optics_sim_loadData(TParameters * Parameters);
     
+    /// Run the acousto-optic simulation with a approximation to the tagging volume using a sphere.
+    void        Run_acousto_optics_sim_sphere_tagging_volume(TParameters * Parameters);
+    
     
     
     

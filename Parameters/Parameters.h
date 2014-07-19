@@ -242,7 +242,7 @@ public:
     bool IsStore_I_max()                const {return CommandLinesParameters.IsStore_I_max();};
     
     
-    /// ------------------------ JWJS --------------------------------------------------------------------------------------
+    /// ------------------------------------------------------------ JWJS ---------------------------------------
     /// Is --Phase_wave specified at the command line
     bool IsPlane_wave()                 const {return CommandLinesParameters.IsPlane_wave();};
     
@@ -286,6 +286,9 @@ public:
     bool IsRun_MC_sim()                 const {return CommandLinesParameters.IsRun_MC_sim();};
     /// Is --kWave_sim specified at the command line
     bool IsRun_kWave_sim()              const {return CommandLinesParameters.IsRun_kWave_sim();};
+    /// Is --AO_sim_sphere specified at the command line
+    bool IsRun_AO_sim_sphere()          const {return CommandLinesParameters.IsRun_AO_sim_sphere();};
+    
     
     /// Reuse commandline flags for deciding what AO mechanism to simulate.
     bool IsSim_refractive_total()       const {return (IsStore_refractive_total());};
@@ -295,7 +298,8 @@ public:
     bool IsSim_displacement()           const {return (IsStore_disp_x() ||
                                                        IsStore_disp_y() ||
                                                        IsStore_disp_z());};
-    /// ------------------------------------------------------------
+    
+    /// ---------------------------------------------------------------/
     
             
     /// Handle to the input HDF5 file

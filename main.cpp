@@ -595,7 +595,7 @@ using namespace std;
  * ------------------------------------------------------- Various functions for Monte-Carlo -----------------
  */
 // Number of photons to simulate.
-const int MAX_PHOTONS = 100e3;
+const int MAX_PHOTONS = 15e6;
 
 // Testing routines.
 void testVectorMath(void);
@@ -658,12 +658,13 @@ int main(int argc, char** argv)
 	bool sim_acousto_optics          = Parameters->IsRun_AO_sim();
     bool sim_acousto_optics_loadData = Parameters->IsRun_AO_sim_loadData();
     bool sim_modulation_depth        = Parameters->IsStore_modulation_depth();
+    bool sim_acousto_optics_sphere   = Parameters->IsRun_AO_sim_sphere();
 
 
     /// ----------------------------------------------------------------------------------------------------
     /// MC-Boost attributes
     /// ----------------------------------------------------------------------------------------------------
-    if (sim_monte_carlo || sim_acousto_optics || sim_acousto_optics_loadData)
+    if (sim_monte_carlo || sim_acousto_optics || sim_acousto_optics_loadData || sim_acousto_optics_sphere)
 	{
 
         /// If use of RNG seeds was specified at the command line, we pass along the
@@ -707,6 +708,7 @@ int main(int argc, char** argv)
 
         
     	layer_props.refractive_index = 1.33f;
+        //layer_props.refractive_index = 1.0f;
     	layer_props.anisotropy  = 0.9f;
     	layer_props.start_depth = 0.0f;
         layer_props.end_depth   = AO_simulation.Get_MC_Zaxis_depth();
@@ -716,13 +718,14 @@ int main(int argc, char** argv)
         /// Note:
         ///  - The absober is centered in the US focus, which is co-aligned with
         ///    the injection of light and the detector on the front and back aperture.
-//        SphereAbsorber *absorber_middle_of_medium = new SphereAbsorber(0.002,
-//                                                                       0.0225,
+//        double absorber_radius = 0.002;     // Radius of absorber [meters]
+//        SphereAbsorber *absorber_middle_of_medium = new SphereAbsorber(absorber_radius,
+//                                                                       AO_simulation.Get_MC_Xaxis_depth()/2,
 //                                                                       AO_simulation.Get_MC_Yaxis_depth()/2,
 //                                                                       AO_simulation.Get_MC_Zaxis_depth()/2);
 //        /// Set the inclusion to (some value)x the background absorption, and to the same
 //        /// properties as the rest of the background layer.
-//        absorber_middle_of_medium->setAbsorberAbsorptionCoeff(layer_props.mu_a * 1);  /// Set it to the background for reference meas.
+//        absorber_middle_of_medium->setAbsorberAbsorptionCoeff(layer_props.mu_a);  /// Set it to the background for reference meas.
 //        absorber_middle_of_medium->setAbsorberScatterCoeff(layer_props.mu_s);
 //        absorber_middle_of_medium->setAbsorberAnisotropy(layer_props.anisotropy);
 //        absorber_middle_of_medium->setAbsorberRefractiveIndex(layer_props.refractive_index);
@@ -736,16 +739,16 @@ int main(int argc, char** argv)
     	/// to the CCD camera.
     	/// NOTE: Centering the detector on the x-y plane.
     	Detector_Properties detector_props;
-        detector_props.radius = 0.0020;
-    	detector_props.x_coord = 0.0225;    //  Upon inspection, the US focus is located here.  //AO_simulation.Get_MC_Xaxis_depth()/2;
-
-
+        detector_props.radius = 0.0030;
+    	//detector_props.x_coord = 0.0225;    //  Upon inspection, the US focus is located here.
+        detector_props.x_coord = AO_simulation.Get_MC_Xaxis_depth()/2;  // Perfectly centered in the medium.
         detector_props.y_coord = AO_simulation.Get_MC_Yaxis_depth()/2;
         /// Transmission mode
-        /// detector_props.z_coord = AO_simulation.Get_MC_Zaxis_depth();
-
+        /// -----------------
+         detector_props.z_coord = AO_simulation.Get_MC_Zaxis_depth();
         /// Reflection mode
-        detector_props.z_coord = 0.0f;
+        /// ---------------
+        //detector_props.z_coord = 0.0f;
 		detector_props.xy_plane = true;
     	AO_simulation.Add_circular_detector_MC_medium(detector_props);
 
@@ -755,7 +758,7 @@ int main(int argc, char** argv)
 		/// Align the injection with the detection aperture.
 		LaserInjectionCoords.x = detector_props.x_coord;	//AO_simulation.Get_MC_Xaxis_depth()/2; // Centered
 		LaserInjectionCoords.y = detector_props.y_coord; 	//AO_simulation.Get_MC_Yaxis_depth()/2; // Centered
-		LaserInjectionCoords.z = 1e-16f;   // Just below the surface of the 'air' layer.
+		LaserInjectionCoords.z = 1e-16f;                    // Just below the surface of the 'air' layer.
     	AO_simulation.Set_laser_injection_coords(LaserInjectionCoords);
 
 
@@ -884,6 +887,32 @@ int main(int argc, char** argv)
 
         /// Test case.
         //AO_simulation.Test_Read_HDF5_File(Parameters);
+    }
+    else if (sim_acousto_optics_sphere)
+    {
+        cout << FMT_SmallSeparator;
+        cout << "Simulation: Acousto-Optics Sphere Tagging Volume\n";
+        cout << FMT_SmallSeparator;
+        
+        /// Has modulation depth commandline argument been set.
+        /// If so we notify the logger to save the OPL's to file.
+        if (sim_modulation_depth)
+        {
+            
+            Logger::getInstance()->Open_modulation_depth_file("Data/optical_path_lengths_" + Logger::getInstance()->getCurrTime() + ".dat");
+            
+        }
+        
+        /// Run the AO simulation.
+    	AO_simulation.Run_acousto_optics_sim_sphere_tagging_volume(Parameters);
+        
+        /// FIXME:
+        /// - Data is not being written out unless explicitly called to, thus the need
+        ///   for this if() statement.  Should happen automagically from the logger's destructor.
+        if (sim_modulation_depth)
+        {
+            Logger::getInstance()->Write_OPL_data();
+        }
     }
 	else
 	{

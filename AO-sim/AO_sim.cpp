@@ -104,7 +104,7 @@ AO_Sim::Run_kWave_sim(TParameters * Parameters)
     }catch (ios::failure e) {
         cout << "Failed!\nK-Wave panic: Data loading was not successful!\n%s\n"
         << e.what();
-        cerr << "K-Wave panic: Data loading was not successful! \n%s\n"
+        cerr << "Failed!\nK-Wave panic: Data loading was not successful! \n"
         << e.what();
         exit(EXIT_FAILURE);
     }
@@ -127,7 +127,7 @@ AO_Sim::Run_kWave_sim(TParameters * Parameters)
     if (sim_refractive_grad)
     {
         /// If the simulation of refractive index changes should take place, we need
-        /// to initialze the entire medium with the background value.
+        /// to initialize the entire medium with the background value.
         /// XXX:
         /// - This assumes the entire medium has a homogeneous refractive index value.
         ///   This becomes problematic when we want a spatially varying refractive index,
@@ -264,6 +264,237 @@ AO_Sim::Run_kWave_sim(TParameters * Parameters)
     Print_runtime_ultrasound_statistics(Parameters);
 
 }
+
+
+
+
+/// Run the acousto-optic simulation using a sphere as an approximation to the TV.
+void
+AO_Sim::Run_acousto_optics_sim_sphere_tagging_volume(TParameters * Parameters)
+{
+    /// ------------------ Begin MC-Boost Configuration ------------------------------------------
+    /// Configure the monte-carlo simulation to run what was specified via the commandline.
+    ///
+    bool sim_refractive_total = Parameters->IsSim_refractive_total();
+    bool sim_refractive_grad  = Parameters->IsSim_refractive_grad();
+    bool sim_displacement     = Parameters->IsSim_displacement();
+    bool sim_modulation_depth = Parameters->IsStore_modulation_depth();
+    
+    
+    /// The gate keeper.
+    if (!(sim_refractive_grad || sim_displacement || sim_refractive_total))
+    {
+        cout << "Failed!\nAO_Sim::Run_acousto_optics_sim_sphere_tagging_volume()\n"
+             << "Need to set simulation type (e.g. --refractive_total)\n";
+        
+        exit(EXIT_FAILURE);
+    }
+    
+    
+    TLongMatrix *sensor_mask_ind    = NULL;
+    THDF5_File& HDF5_InputFile  = Parameters->HDF5_InputFile;
+    
+    TRealMatrix *refractive_total_full_medium = NULL;
+    
+    TRealMatrix *refractive_x = NULL;
+    TRealMatrix *refractive_y = NULL;
+    TRealMatrix *refractive_z = NULL;
+    
+    TRealMatrix *disp_x_full_medium = NULL;
+    TRealMatrix *disp_y_full_medium = NULL;
+    TRealMatrix *disp_z_full_medium = NULL;
+    
+    size_t time_step = 0;
+    
+   
+    
+    
+    /// Load data from disk
+//    cout << "Loading k-Wave data ........";
+//    try {
+//        KSpaceSolver->LoadInputData();
+//    }catch (ios::failure e) {
+//        cout << "Failed!\nK-Wave panic: Data loading was not successful!\n%s\n"
+//        << e.what();
+//        cerr << "K-Wave panic: Data loading was not successful! \n%s\n"
+//        << e.what();
+//        exit(EXIT_FAILURE);
+//    }
+//    cout << ".... done\n";
+    
+    /// NOTE:
+    /// - Order is important here. Some computation happens in 'KSpaceSolver' after loading input data.
+    ///   This must happen after 'LoadInputData' for the phase inversion time.
+    /// -----------------------------------------------------------------------------------------------
+    ///
+    /// Decide what to simulate (refractive gradient, refractive_total, displacement).
+    if (sim_refractive_grad)
+    {
+        da_boost->Simulate_refractive_gradient(true);
+        cout << "Refractive gradient: ON\n";
+    }
+    if (sim_refractive_total)
+    {
+        /// If the simulation of refractive index changes should take place, we need
+        /// to initialize the entire medium with the background value.
+        /// XXX:
+        /// - This assumes the entire medium has a homogeneous refractive index value.
+        ///   This becomes problematic when we want a spatially varying refractive index,
+        ///   for example when multiple layers are present in the medium.
+        da_boost->Simulate_refractive_total(true);
+        cout << "Refraction: ON\n";
+    }
+    if (sim_displacement)
+    {
+        da_boost->Simulate_displacement(true);
+        cout << "Displacement: ON\n";
+    }
+    if (sim_modulation_depth)
+    {
+        da_boost->Simulate_modulation_depth(true);
+        cout << "Modulation depth: ON\n";
+    }
+    cout << "\n\n";
+    
+    
+
+    
+    /// The sensor mask indices where data should be recorded. Want these so we can properly assign constant
+    /// values to the medium where the sphere resides.
+    /// The dimensions of the recorded data from kWave.
+    TDimensionSizes FullDim = Parameters->GetFullDimensionSizes();
+    TDimensionSizes SensorDims(Parameters->Get_sensor_mask_index_size(), 1, 1);
+    TDimensionSizes SensorMaskDims(1, 1, Parameters->Get_sensor_mask_index_size());
+    
+    sensor_mask_ind = new TLongMatrix(SensorMaskDims);
+    if (!sensor_mask_ind)  throw bad_alloc();
+    
+    refractive_total_full_medium = new TRealMatrix(FullDim);
+    if (!refractive_total_full_medium) throw bad_alloc();
+    
+    /// Read in the sensor data indices. This will be used to map the sensor to the full medium.
+    HDF5_InputFile.ReadCompleteDataset(sensor_mask_index_Name, SensorMaskDims, sensor_mask_ind->GetRawData());
+    
+    /// Move index counts from Matlab->C++
+    sensor_mask_ind->RecomputeIndices();
+    
+    /// XXX:
+    /// - NOT NEEDED.
+    /// start computation of k-Wave simulation.
+    //cout << ".......... k-Wave Computation ...........\n";
+    //KSpaceSolver->PreCompute();
+    
+    
+    
+    
+    
+    
+    /// First run the unpopulated medium for the "unmodulated" case.
+    /// ----------------------------------------------------------------------------------
+    if (sim_refractive_grad)
+    {
+        /// FIXME:
+        /// - Not currently functional.
+        //                KSpaceSolver->FromAO_sim_compute_refractive_index();
+        //                refractive_x = &(KSpaceSolver->FromAO_sim_Get_refractive_x());
+        //                refractive_y = &(KSpaceSolver->FromAO_sim_Get_refractive_y());
+        //                refractive_z = &(KSpaceSolver->FromAO_sim_Get_refractive_z());
+    }
+    if (sim_refractive_total)
+    {
+        float * nmap = refractive_total_full_medium->GetRawData();
+        const size_t  sensor_size = sensor_mask_ind->GetTotalElementCount();
+        const long *  index = sensor_mask_ind->GetRawData();
+        
+        for (size_t i = 0; i < sensor_size; i++)
+        {
+            nmap[index[i]] = 1.33f;  /// Fill the entire sphere (i.e. the sensor mask) with a constant value.
+        }
+        
+        /// Update the refractive map
+        m_medium->Create_refractive_map_from_full_medium(refractive_total_full_medium);
+    }
+    if (sim_displacement)
+    {
+        float * disp_x = disp_x_full_medium->GetRawData();
+        float * disp_y = disp_y_full_medium->GetRawData();
+        float * disp_z = disp_z_full_medium->GetRawData();
+        const size_t  sensor_size = sensor_mask_ind->GetTotalElementCount();
+        const long *  index = sensor_mask_ind->GetRawData();
+        
+        for (size_t i = 0; i < sensor_size; i++)
+        {
+            disp_x[index[i]] = 0.0f;  /// Fill the entire sphere (i.e. the sensor mask) with a constant value.
+            disp_y[index[i]] = 0.0f;
+            disp_z[index[i]] = 0.0f;
+        }
+        
+        /// Create a displacment map based upon the pressure at this time step.
+        m_medium->Create_displacement_map(disp_x_full_medium,
+                                          disp_y_full_medium,
+                                          disp_z_full_medium);
+    }
+    
+    /// Run the MC_sim with the 'unmodulated' values.
+    da_boost->Run_MC_sim_timestep(m_medium,
+                                  m_Laser_injection_coords,
+                                  time_step);
+    
+    /// Run the simulation after populating the sphere with 'modulated' values.
+    /// ------------------------------------------------------------------------------------------------
+    if (sim_refractive_grad)
+    {
+        /// FIXME:
+        /// - Not currently functional.
+        //                KSpaceSolver->FromAO_sim_compute_refractive_index();
+        //                refractive_x = &(KSpaceSolver->FromAO_sim_Get_refractive_x());
+        //                refractive_y = &(KSpaceSolver->FromAO_sim_Get_refractive_y());
+        //                refractive_z = &(KSpaceSolver->FromAO_sim_Get_refractive_z());
+    }
+    if (sim_refractive_total)
+    {
+        float * nmap = refractive_total_full_medium->GetRawData();
+        const size_t  sensor_size = sensor_mask_ind->GetTotalElementCount();
+        const long *  index = sensor_mask_ind->GetRawData();
+        
+        for (size_t i = 0; i < sensor_size; i++)
+        {
+            nmap[index[i]] = 1.3301;  /// Fill the entire sphere (i.e. the sensor mask) with a constant value.
+        }
+        
+        /// Update the refractive map
+        m_medium->Create_refractive_map_from_full_medium(refractive_total_full_medium);
+    }
+    
+    if (sim_displacement)
+    {
+        float * disp_x = disp_x_full_medium->GetRawData();
+        float * disp_y = disp_y_full_medium->GetRawData();
+        float * disp_z = disp_z_full_medium->GetRawData();
+        const size_t  sensor_size = sensor_mask_ind->GetTotalElementCount();
+        const long *  index = sensor_mask_ind->GetRawData();
+        
+        for (size_t i = 0; i < sensor_size; i++)
+        {
+            disp_x[index[i]] = 10e-9;  /// Fill the entire sphere (i.e. the sensor mask) with a constant value.
+            disp_y[index[i]] = 0.0f;
+            disp_z[index[i]] = 0.0f;
+        }
+        
+        /// Create a displacment map based upon the pressure at this time step.
+        m_medium->Create_displacement_map(disp_x_full_medium,
+                                          disp_y_full_medium,
+                                          disp_z_full_medium);
+    }
+    
+    /// Run the MC_sim with the 'modulated' values.
+    da_boost->Run_MC_sim_timestep(m_medium,
+                                  m_Laser_injection_coords,
+                                  ++time_step);
+    
+}
+
+
 
 
 
@@ -681,7 +912,6 @@ AO_Sim::Run_acousto_optics_sim_loadData(TParameters * Parameters)
         
         /// The output file contains the saved data from the previous run. Set it here.
         refractive_total_InputStream->SetHDF5File(HDF5_OutputFile);
-        
         cout << "Refraction: ON\n";
     }
     if (sim_displacement)
@@ -728,14 +958,14 @@ AO_Sim::Run_acousto_optics_sim_loadData(TParameters * Parameters)
     
     
     cout << ".............. Loading precomputed kWave data .............. \n";
-    cout << "Opened: " << Parameters->GetOutputFileName() << '\n';
+    cout << " Opened: " << Parameters->GetOutputFileName() << '\n';
 
 
-    cout << "Domain dims: [" << Parameters->GetFullDimensionSizes().X << ", "
+    cout << " Domain dims: [" << Parameters->GetFullDimensionSizes().X << ", "
                              << Parameters->GetFullDimensionSizes().Y << ", "
                              << Parameters->GetFullDimensionSizes().Z << "]"
                              << '\n';
-    cout << "Simulation time steps (total): " << Parameters->Get_Nt() << '\n';
+    cout << " Simulation time steps (total): " << Parameters->Get_Nt() << '\n';
 
     /// How many time steps in the kWave simulation was the refractive index
     /// and/or displacement data recorded.
@@ -907,6 +1137,7 @@ AO_Sim::Run_acousto_optics_sim_loadData(TParameters * Parameters)
                 const float * z_sensor = disp_z_sensor->GetRawData();
                 const size_t  sensor_size = sensor_mask_ind->GetTotalElementCount();
                 const long *  index = sensor_mask_ind->GetRawData();
+                
                 for (size_t i = 0; i < sensor_size; i++)
                 {
                     dmap_x[index[i]] = x_sensor[i];

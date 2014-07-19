@@ -48,7 +48,7 @@ using namespace std;
 
 
 
-/// ----------------------------------------------------- JWJS ----------------
+/// ----------------------------------------------------- JWJS ---------------------------------
 /// Used to track statistics about the simulation, such as
 /// the maximum pressure, intensity, acoustic particle displacement, etc.
 /// and the time step they occurred at.
@@ -83,6 +83,7 @@ typedef struct {
     
 } Statistics;
 /// ----------------------------------------------------------/
+
 
 /**
  * \class TKSpaceFirstOrder3DSolver
@@ -144,13 +145,11 @@ public:
     /// Get post-processing time
     double GetPostProcessingTime() const { return PostProcessingTime.GetElapsedTime();};
     
-    /// ------------------------------------ JWJS -----------------------------------------
+    
+    
+    /// ------------------------------------------------------------------- JWJS -----------------------------------------
     /// Return the computational loop time.
     double GetIterationTime()      const { return IterationTime.GetElapsedTime(); };
-
-
-    // Begin JWJS
-    /// ---------------------------------------------------------------------------------------
 
     void IterationTimeStart ()                      {IterationTime.Start();};
     void IterationTimeStop  ()                      {IterationTime.Stop();};
@@ -193,9 +192,9 @@ public:
     ///TRealMatrix & FromAO_sim_Get_refractive_total_sensor()      {return Get_refractive_total_sensor();};
     TRealMatrix & FromAO_sim_Get_refractive_total_full_medium() {return Get_refractive_total_full_medium();};
     
-    TRealMatrix & FromAO_sim_Get_refractive_x    ()         {return Get_refractive_x();};
-    TRealMatrix & FromAO_sim_Get_refractive_y    ()         {return Get_refractive_y();};
-    TRealMatrix & FromAO_sim_Get_refractive_z    ()         {return Get_refractive_z();};
+    TRealMatrix & FromAO_sim_Get_refractive_x    ()     {return Get_refractive_x();};
+    TRealMatrix & FromAO_sim_Get_refractive_y    ()     {return Get_refractive_y();};
+    TRealMatrix & FromAO_sim_Get_refractive_z    ()     {return Get_refractive_z();};
 
     ///TRealMatrix & FromAO_sim_Get_disp_x_sensor()        {return Get_disp_x_sensor();};
     TRealMatrix & FromAO_sim_Get_disp_x_full_medium()   {return Get_disp_x_full_medium();};
@@ -205,14 +204,13 @@ public:
     TRealMatrix & FromAO_sim_Get_disp_z_full_medium()   {return Get_disp_z_full_medium();};
     
     
-    TLongMatrix & FromAO_sim_Get_sensor_mask_ind ()   {return Get_sensor_mask_ind();};
+    TLongMatrix & FromAO_sim_Get_sensor_mask_ind ()     {return Get_sensor_mask_ind();};
 
     /// Used to track attributes about the simulations
     /// (max pressure, intensity, etc.)
     Statistics stats;
     
-    /// ---------------------------------------------------------------------------------------
-    // End JWJS
+    /// ------------------------------------------------------------------------/
 
 protected:
 
@@ -238,14 +236,14 @@ protected:
     /// Store intensity data
     void StoreIntensityData();
 
-    /// ------------------------- JWJS --------------------------------------------------
+    /// --------------------------------------------- JWJS --------------------------------------------------
     /// Store refractive index data
     void Compute_refractive_index_gradient_data();
     /// Store max and min of refractive index data over all time
     void Compute_refractive_index_total_data();
     /// Store displacement data
     void Compute_displacement_data();
-    /// -------------------------------
+    /// --------------------------------------------------/
 
     /// Write statistics and header into the output file
     void WriteOutputDataInfo();
@@ -595,7 +593,7 @@ protected:
 
 
 
-    /// ------------------------ JWJS -------------------------------------------------------
+    /// -------------------------------------------------------- JWJS --------------------------------------------
     /// Get the refractive_total_sensor from the container
     ///TRealMatrix         & Get_refractive_total_sensor()
     ///            {return MatrixContainer.GetRealMatrix(refractive_total_sensor);};
@@ -634,7 +632,8 @@ protected:
     /// Get the disp_z from the container
     TRealMatrix         & Get_disp_z_full_medium()
                 {return MatrixContainer.GetRealMatrix(disp_z_full_medium);};
-    /// ------------------------------
+    
+    /// -----------------------------------------------------------/
 
 
 
@@ -648,7 +647,7 @@ protected:
     /// uz raw data output stream (timeseries)
     TOutputHDF5Stream*  uz_sensor_raw_OutputStream;
 
-    /// -------------------------- JWJS ------------------------------------------------------
+    /// ----------------------------------------- JWJS ------------------------------------------------------
     /// refractive_total data output stream (timeseries)
     TOutputHDF5Stream*  refractive_total_OutputStream;
     /// refractive_x data output stream (timeseries)
@@ -664,7 +663,8 @@ protected:
     TOutputHDF5Stream*  disp_y_OutputStream;
     /// disp_z data output stream (timeseries)
     TOutputHDF5Stream*  disp_z_OutputStream;
-    /// ------------------------------------------
+    
+    /// ----------------------------------------------/
 
 
 

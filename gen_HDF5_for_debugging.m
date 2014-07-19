@@ -6,9 +6,7 @@ clear all;
 
 % Decide to run the simulation in matlab or save it to an h5 file for running 
 % in the AO_sim for debugging.
-SAVE_TO_DISK = true;
-BOX_TAGGING_VOL = false;
-SPHERE_TAGGING_VOL = true; 
+SAVE_TO_DISK = false;
 PLANAR_WAVE = true;
 
 % simulation settings
@@ -115,42 +113,29 @@ source_strength = 0;
 % DEFINE THE INPUT SIGNAL
 % =========================================================================
 
-if (SPHERE_TAGGING_VOL)
-    sensor_Nx = Nx/2;
-    sensor_Ny = Ny/2;
-    sensor_Nz = Nz/2;
-    sensor_radius = round(0.00010/dx) % 1.6 mm diameter
-    %sensor_radius = round(0.0010/dx)   % 1.9 mm diameter
-    %sensor_radius = round(0.0011/dx)   % 2.2 mm diameter
-    %sensor_radius = round(0.0012/dx)   % 2.5 mm diameter
-    display('Sphere diameter: '); 
-    2*sensor_radius*dx
-    
-    num_cycles = 1;
-    source_strength = 10;
-elseif (BOX_TAGGING_VOL)
 % define properties of the input signal
 %
 % 11 cycles:
 % ---------------------------------------------------
-% x_size = round(lambda/dx*11); % Reserve '11 cycles' of voxels.
-% y_size = 22;
-% z_size = 16;
-% 
-% sensor_Nx = round(Nx/2-(x_size/2):Nx/2+(x_size/2));
-% sensor_Ny = round(Ny/2-(y_size/2):Ny/2+(y_size/2));
-% sensor_Nz = round(Nz/2-(z_size/2):Nz/2+(z_size/2));
-% 
-% if (PLANAR_WAVE)
-%     source_strength = 1.0e6;
-%     num_cycles = 100;
-% else
-%     source_strength = 0.889825*1e6;   % [Pa] 11 cycles
-%     num_cycles = 11;
-% end
+x_size = round(lambda/dx*11); % Reserve '11 cycles' of voxels.
+y_size = 22;
+z_size = 16;
+
+sensor_Nx = round(Nx/2-(x_size/2):Nx/2+(x_size/2));
+sensor_Ny = round(Ny/2-(y_size/2):Ny/2+(y_size/2));
+sensor_Nz = round(Nz/2-(z_size/2):Nz/2+(z_size/2));
+
+if (PLANAR_WAVE)
+    source_strength = 1.0e6;
+    num_cycles = 100;
+else
+    source_strength = 0.889825*1e6;   % [Pa] 11 cycles
+    num_cycles = 11;
+end
     
 % % 9 cycles:
 % % ---------------------------------------------------
+% if (PLANAR_WAVE)
 %     x_size = round(lambda/dx*9); % Reserve '9 cycles' of voxels.
 %     y_size = 14;
 %     z_size = 16;
@@ -158,8 +143,6 @@ elseif (BOX_TAGGING_VOL)
 %     sensor_Nx = round(Nx/2-(x_size/2):Nx/2+(x_size/2));
 %     sensor_Ny = round(Ny/2-(y_size/2):Ny/2+(y_size/2));
 %     sensor_Nz = round(Nz/2-(z_size/2):Nz/2+(z_size/2));
-% if (PLANAR_WAVE)
-% 
 %     
 %     source_strength = 1.0e6;
 %     num_cycles = 100;
@@ -188,26 +171,31 @@ elseif (BOX_TAGGING_VOL)
 
 % % 5 cycles:
 % % ----------------------------------------------------
-if (PLANAR_WAVE)
-    x_size = round(lambda/dx*5); % Reserve '5 cycles' of voxels.
-    y_size = 6;
-    z_size = 16;
-    
-    sensor_Nx = round(Nx/2-(x_size/2):Nx/2+(x_size/2));
-    sensor_Ny = round(Ny/2-(y_size/2):Ny/2+(y_size/2));
-    sensor_Nz = round(Nz/2-(z_size/2):Nz/2+(z_size/2));
-    
-    source_strength = 1.0e6;
-    num_cycles = 100;
-else
-    source_strength = 1.0052*1e6;      % [Pa] 5cycles
-    num_cycles = 5;
-end
-else
-    display('Nothing chosen to simulate');
-    return;
-end
-        
+% if (PLANAR_WAVE)
+%     x_size = round(lambda/dx*5); % Reserve '5 cycles' of voxels.
+%     y_size = 6;
+%     z_size = 16;
+%     
+%     sensor_Nx = round(Nx/2-(x_size/2):Nx/2+(x_size/2));
+%     sensor_Ny = round(Ny/2-(y_size/2):Ny/2+(y_size/2));
+%     sensor_Nz = round(Nz/2-(z_size/2):Nz/2+(z_size/2));
+%     
+%     source_strength = 1.0e6;
+%     num_cycles = 100;
+% else
+%     source_strength = 1.0052*1e6;      % [Pa] 5cycles
+%     num_cycles = 5;
+% end
+
+% source_strength = 0.8612*1e6;  % [Pa] 10cycles
+% num_cycles = 10;
+
+% source_strength = 0.8612*1e6; % [Pa] 8cycles
+% num_cycles = 8;
+
+% source_strength = 0.8619*1e6; % [Pa] 6cycles
+% num_cycles = 6;
+
 
 tone_burst_freq = US_freq;     % [Hz]
 tone_burst_cycles = num_cycles;
@@ -285,36 +273,17 @@ transducer.properties;
 %     sensor_Nz = Nz;
 %else
     % Otherwise only interested in a small portion.
-sensor.mask = zeros(Nx, Ny, Nz);
-if (SPHERE_TAGGING_VOL)
-    % 'makeSphere()' requires a square grid.
-    % NOTE: It also produces an hollow sphere.
-%     temp = makeSphere(sensor_radius*2+1,...
-%                       sensor_radius*2+1,...
-%                       sensor_radius*2+1,... 
-%                       sensor_radius);
-%     offset = sensor_radius*2;
-%     sensor.mask(Nx/2-offset/2:Nx/2+offset/2,...
-%                 Ny/2-offset/2:Ny/2+offset/2,...
-%                 Nz/2-offset/2:Nz/2+offset/2) = temp;
-
-    sensor.mask = makeBall(Nx, Ny, Nz,...
-                           sensor_Nx, sensor_Ny, sensor_Nz,...
-                           sensor_radius);
-else
+    sensor.mask = zeros(Nx, Ny, Nz);
     sensor.mask(sensor_Nx,...
                 sensor_Ny,...
                 sensor_Nz) = 1;
-end
 %end
 % sensor_Nx = PML_X_SIZE*3:(Nx - PML_X_SIZE*3);
 % sensor_Ny = PML_Y_SIZE*3:(Ny - PML_Y_SIZE*3);
 % %sensor_Nz = PML_Z_SIZE*3:(Nz - PML_Z_SIZE*3);
 % sensor_Nz = Nz/2;
-if (~SPHERE_TAGGING_VOL)
-    sensor_dims = [size(sensor_Nx,2), size(sensor_Ny,2), size(sensor_Nz,2)];
-    reshape_dims = sensor_dims(sensor_dims ~= 1);
-end
+sensor_dims = [size(sensor_Nx,2), size(sensor_Ny,2), size(sensor_Nz,2)];
+reshape_dims = sensor_dims(sensor_dims ~= 1);
 
 if (~SAVE_TO_DISK)
     % Define what to save over the sensor mask.

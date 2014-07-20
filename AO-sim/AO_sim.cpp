@@ -307,26 +307,24 @@ AO_Sim::Run_acousto_optics_sim_sphere_tagging_volume(TParameters * Parameters)
     size_t time_step = 0;
     
    
+    /// The sensor mask indices where data should be recorded. Want these so we can properly assign constant
+    /// values to the medium where the sphere resides.
+    /// The dimensions of the recorded data from kWave.
+    TDimensionSizes FullDim = Parameters->GetFullDimensionSizes();
+    TDimensionSizes SensorDims(Parameters->Get_sensor_mask_index_size(), 1, 1);
+    TDimensionSizes SensorMaskDims(1, 1, Parameters->Get_sensor_mask_index_size());
     
+    sensor_mask_ind = new TLongMatrix(SensorMaskDims);
+    if (!sensor_mask_ind)  throw bad_alloc();
     
-    /// Load data from disk
-//    cout << "Loading k-Wave data ........";
-//    try {
-//        KSpaceSolver->LoadInputData();
-//    }catch (ios::failure e) {
-//        cout << "Failed!\nK-Wave panic: Data loading was not successful!\n%s\n"
-//        << e.what();
-//        cerr << "K-Wave panic: Data loading was not successful! \n%s\n"
-//        << e.what();
-//        exit(EXIT_FAILURE);
-//    }
-//    cout << ".... done\n";
+    /// Read in the sensor data indices. This will be used to map the sensor to the full medium.
+    HDF5_InputFile.ReadCompleteDataset(sensor_mask_index_Name, SensorMaskDims, sensor_mask_ind->GetRawData());
     
-    /// NOTE:
-    /// - Order is important here. Some computation happens in 'KSpaceSolver' after loading input data.
-    ///   This must happen after 'LoadInputData' for the phase inversion time.
-    /// -----------------------------------------------------------------------------------------------
-    ///
+    /// Move index counts from Matlab->C++
+    sensor_mask_ind->RecomputeIndices();
+  
+    
+   
     /// Decide what to simulate (refractive gradient, refractive_total, displacement).
     if (sim_refractive_grad)
     {
@@ -341,11 +339,25 @@ AO_Sim::Run_acousto_optics_sim_sphere_tagging_volume(TParameters * Parameters)
         /// - This assumes the entire medium has a homogeneous refractive index value.
         ///   This becomes problematic when we want a spatially varying refractive index,
         ///   for example when multiple layers are present in the medium.
+        ///
+        
+        refractive_total_full_medium = new TRealMatrix(FullDim);
+        if (!refractive_total_full_medium) throw bad_alloc();
+       
         da_boost->Simulate_refractive_total(true);
         cout << "Refraction: ON\n";
     }
     if (sim_displacement)
     {
+        disp_x_full_medium = new TRealMatrix(FullDim);
+        if (!disp_x_full_medium) throw bad_alloc();
+        
+        disp_y_full_medium = new TRealMatrix(FullDim);
+        if (!disp_y_full_medium) throw bad_alloc();
+        
+        disp_z_full_medium = new TRealMatrix(FullDim);
+        if (!disp_z_full_medium) throw bad_alloc();
+        
         da_boost->Simulate_displacement(true);
         cout << "Displacement: ON\n";
     }
@@ -356,27 +368,7 @@ AO_Sim::Run_acousto_optics_sim_sphere_tagging_volume(TParameters * Parameters)
     }
     cout << "\n\n";
     
-    
 
-    
-    /// The sensor mask indices where data should be recorded. Want these so we can properly assign constant
-    /// values to the medium where the sphere resides.
-    /// The dimensions of the recorded data from kWave.
-    TDimensionSizes FullDim = Parameters->GetFullDimensionSizes();
-    TDimensionSizes SensorDims(Parameters->Get_sensor_mask_index_size(), 1, 1);
-    TDimensionSizes SensorMaskDims(1, 1, Parameters->Get_sensor_mask_index_size());
-    
-    sensor_mask_ind = new TLongMatrix(SensorMaskDims);
-    if (!sensor_mask_ind)  throw bad_alloc();
-    
-    refractive_total_full_medium = new TRealMatrix(FullDim);
-    if (!refractive_total_full_medium) throw bad_alloc();
-    
-    /// Read in the sensor data indices. This will be used to map the sensor to the full medium.
-    HDF5_InputFile.ReadCompleteDataset(sensor_mask_index_Name, SensorMaskDims, sensor_mask_ind->GetRawData());
-    
-    /// Move index counts from Matlab->C++
-    sensor_mask_ind->RecomputeIndices();
     
     /// XXX:
     /// - NOT NEEDED.

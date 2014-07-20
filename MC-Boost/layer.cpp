@@ -84,7 +84,21 @@ void Layer::addAbsorber(Absorber * absorber)
 // is returned.
 double Layer::getRefractiveIndex(const boost::shared_ptr<Vector3d> photonVector)
 {
-    cout << "Layer::getRefractiveIndex(Vector3d) stub\n";
+    // Iterate over all the absorbers in this layer and see if the coordinates
+    // of the photon reside within the bounds of the absorber.  If so, we return
+    // the anisotropy of the absorber, otherwise we return the
+    // anisotropy of the ambient layer.
+    for (std::vector<Absorber *>::iterator it = p_absorbers.begin(); it != p_absorbers.end(); it++)
+    {
+        if ((*it)->inAbsorber(photonVector))
+        {
+            return (*it)->getRefractiveIndex();
+        }
+    }
+    
+    // If we make it out of the loop (i.e. the photon is not in an absorber) we
+    // return the layer's anisotropy.
+    return refractive_index;
 }
 
 

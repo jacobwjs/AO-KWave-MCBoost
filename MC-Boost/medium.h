@@ -123,6 +123,9 @@ public:
 
 	// Returns the scattering coefficient (mu_s) for a given depth (i.e. a layer).
 	double	getLayerScatterCoeff(double depth);
+    
+    /// Returns the refractive index of the current layer.
+    double  getLayerRefractiveIndex(double depth);
 
 	// Return the anisotropy ('g') value for a given depth (i.e. a layer).
 	double	getAnisotropyFromDepth(double depth);
@@ -238,16 +241,6 @@ private:
     size_t X_PML_OFFSET;
     size_t Y_PML_OFFSET;
     size_t Z_PML_OFFSET;
-
-    // The density of the medium.
-    //double density;
-
-    // The acoustic speed-of-sound of the medium.
-    //double speed_of_sound;
-
-    // The adiabatic piezo-optical coefficient of the medium.
-    //float pezio_optical_coeff;
-
 
 };
 

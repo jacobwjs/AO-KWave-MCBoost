@@ -480,11 +480,6 @@ void Photon::hop()
 	currLocation->location.z += step * currLocation->getDirZ();
 
 
-	// Calculate the unmodulated path length, which ignores the
-	// pressure and displacement maps.  This is simply the background
-	// refractive index.
-	//unmodulated_optical_path_length += VectorMath::Distance(currLocation, prevLocation)*currLayer->getRefractiveIndex();;
-
 }
 
 
@@ -732,6 +727,9 @@ void Photon::displacePhotonFromPressure(void)
 	///   the background refractive index.
     /// FIXME:
 	/// - How does this change with non-uniform density???
+    /// - Need to have a refractive index map that contains the variations (without US modulation induced changes),
+    ///   which requires the creation of an unmodulated nmap (i.e. make the computation at t=0 and store it without
+    ///   further pertubation).
 	//double local_refractive_index = m_medium->kwave.nmap->getRefractiveIndexFromGrid(_x, _y, _z);
 	double local_refractive_index = 1.33;
 

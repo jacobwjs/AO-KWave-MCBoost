@@ -32,8 +32,7 @@ public:
     
     
 private:
-    // Radius of the detector.
-    double radius; /// [meters]
+    
 };
 
-#endif
+#endif  /// CIRCULARDETECTOR_H

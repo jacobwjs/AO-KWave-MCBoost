@@ -2,8 +2,8 @@
 //  MC_Boost.h
 //  K_Wave_C
 //
-//  Created by jacob on 11/30/12.
-//  Copyright (c) 2012 BMPI. All rights reserved.
+//  Created by Jacob Staley on 11/30/12.
+//  Copyright (c) 2012 BMPI, University of Twente. All rights reserved.
 //
 
 #ifndef __K_Wave_C__MC_Boost__
@@ -27,8 +27,8 @@ using std::string;
 #include "photon.h"
 
 // Forward class declarations.
-class   Medium;
-
+class Medium;
+class Aperture;
 
 
 
@@ -57,6 +57,9 @@ public:
     // Generates RNG seeds for photon paths that were detected.
     void    Generate_MC_RNG_seeds(Medium *m, coords LaserInjectionCoords);
     
+    /// Generates RNG seeds for photon paths that were detected.
+    void    Generate_MC_RNG_seeds_single_input_aperture(Medium * medium, Aperture *input_aperture);
+    
     /// Return the total number of photons to simulate.
     size_t  Get_num_photons_to_sim(void) {return MAX_NUM_PHOTONS;};
 
@@ -72,6 +75,11 @@ public:
     
     /// Run the monte-carlo simulation using the produced seeds.
     void    Run_MC_sim_timestep(Medium *m, coords LaserInjectionCoords, int timestep);
+    
+    /// Run the MC simulation using the produced seeds.
+    void    Run_MC_sim_timestep_with_single_injection_aperture(Medium *medium,
+                                                               Aperture *input_aperture,
+                                                               int time);
     
     
     /// Set which mechanisms (if any at all) of acousto-optics to simulate.

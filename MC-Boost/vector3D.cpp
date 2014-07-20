@@ -32,7 +32,6 @@ Vector3d::Vector3d(const coords &c, const directionCos &dir)
     location.y = c.y;
     location.z = c.z;
     
-    //previousLocation.x = previousLocation.y = previousLocation.z = 0.0f;
     
     // Initialize the direction cosine structure.
     withDirection();

@@ -22,18 +22,20 @@ CircularDetector::CircularDetector(const Aperture_Properties &props)
 :Detector(),
  Aperture()
 {
-    aperture_center.location.x = props.x_coord;
-    aperture_center.location.y = props.y_coord;
-    aperture_center.location.z = props.z_coord;
+    detector_center.location.x = aperture_center.location.x = props.coordinates.x;
+    detector_center.location.y = aperture_center.location.y = props.coordinates.y;
+    detector_center.location.z = aperture_center.location.z = props.coordinates.z;
+    
+    radius = props.radius;
     
 	/// Notify where the detector is added to the medium.
     cout << "-----------------------------------------------------\n"
-    << "Adding a circular detector to the medium /\n"
-    << "-----------------------------------------\n"
-    << " Location: [x=" << aperture_center.location.x << ", y="
-    << aperture_center.location.y << ", z="
-    << aperture_center.location.z << "] (meters)\n";
-    
+         << "Adding a circular detector to the medium /\n"
+         << "-----------------------------------------\n"
+         << " Location: [x=" << aperture_center.location.x
+         << ", y=" << aperture_center.location.y
+         << ", z=" << aperture_center.location.z << "] (meters)\n";
+    cout << " Radius: " << props.radius << " (meters)\n";
     
     // initialize the vector normal to the plane to have
     // direction since it is only used to know the direction
@@ -62,8 +64,8 @@ CircularDetector::CircularDetector(const Aperture_Properties &props)
 		assert((xy_plane == true) || (xz_plane == true) || (yz_plane == true));  // One plane must be set.
 	}
     
-    cout << " radius: " << props.radius << " (meters)\n";
-    this->radius = props.radius;   
+    
+    
 }
 
 

@@ -194,6 +194,7 @@ $(TARGET):	main.o 					\
 		MC-Boost/cylinderAbsorber.o		\
 		MC-Boost/detector.o			\
 		MC-Boost/displacementMap.o		\
+		MC-Boost/injectionAperture.o		\
 		MC-Boost/layer.o			\
 		MC-Boost/logger.o			\
 		MC-Boost/medium.o			\
@@ -229,6 +230,7 @@ $(TARGET):	main.o 					\
                 MC-Boost/cylinderAbsorber.o            	\
                 MC-Boost/detector.o                     \
                 MC-Boost/displacementMap.o              \
+		MC-Boost/injectionAperture.o		\
                 MC-Boost/layer.o                        \
                 MC-Boost/logger.o                       \
 		MC-Boost/medium.o			\

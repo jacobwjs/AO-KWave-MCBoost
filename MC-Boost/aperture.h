@@ -6,14 +6,17 @@
 //  Copyright 2011 BMPI, University of Twente. All rights reserved.
 //
 
+#ifndef APERTURE_H_
+#define APERTURE_H_
+
 #include "vector3D.h"
+#include "coordinates.h"
 
 
 typedef struct {
     double radius;
-    double x_coord;
-    double y_coord;
-    double z_coord;
+
+    coords coordinates;
     
 	bool xy_plane;
 	bool xz_plane;
@@ -32,6 +35,30 @@ public:
     ~Aperture(void);
     
     
+    /// Return the radius of the aperture. [meters]
+    double Get_radius()     const {return radius;};
+    
+    /// Return the x-coordinate for the center of the aperture.
+    double Get_x_coord()    const {return aperture_center.location.x;};
+    
+    /// Return the x-coordinate for the center of the aperture.
+    double Get_y_coord()    const {return aperture_center.location.y;};
+    
+    /// Return the x-coordinate for the center of the aperture.
+    double Get_z_coord()    const {return aperture_center.location.z;};
+    
+    
+    /// Is the aperture on the x-y plane
+    bool    Is_XY_plane()   const {return xy_plane;};
+    
+    /// Is the aperture on the y-z plane
+    bool    Is_YZ_plane()   const {return yz_plane;};
+    
+    /// Is the aperture on the x-z plane
+    bool    Is_XZ_plane()   const {return xz_plane;};
+    
+    
+    /// Set the plan on which the aperture resides.
     virtual void setAperturePlaneXY(void)
     {
         // Set which plane the detector resides.
@@ -46,7 +73,7 @@ public:
         
     }
     
-    
+    /// Set the plan on which the aperture resides.
     virtual void setAperturePlaneXZ(void)
     {
         // Set which plane the detector resides.
@@ -60,7 +87,7 @@ public:
         normalVector.setDirZ(0.0f);
     }
     
-    
+    /// Set the plan on which the aperture resides.    
     virtual void setAperturePlaneYZ(void)
     {
         // Set which plane the detector resides.
@@ -81,6 +108,9 @@ protected:
     // Center coordinates of the detector in the medium. [meters]
     Vector3d aperture_center;
     
+    // Radius of the aperture. [meters]
+    double radius;
+    
     // Vector that is normal to the plane.
     Vector3d normalVector;
     
@@ -90,4 +120,6 @@ protected:
     bool yz_plane;
     
 };
+
+#endif  /// APERTURE_H_
 

@@ -84,10 +84,14 @@ AO_Sim::Run_monte_carlo_sim(TParameters * Parameters)
     }
     else
     {
-        size_t time = 0;
-        da_boost->Run_MC_sim_timestep(m_medium,
-                                      m_Laser_injection_coords,
-                                      time);
+        size_t time_step = 0;
+//        da_boost->Run_MC_sim_timestep(m_medium,
+//                                      m_Laser_injection_coords,
+//                                      time);
+        /// Run the MC_sim with the 'unmodulated' values.
+        da_boost->Run_MC_sim_timestep_with_single_injection_aperture(m_medium,
+                                                                     m_medium->getInjectionAperture(0),
+                                                                     time_step);
     }
 }
 
@@ -427,10 +431,17 @@ AO_Sim::Run_acousto_optics_sim_sphere_tagging_volume(TParameters * Parameters)
                                           disp_z_full_medium);
     }
     
+//    /// Run the MC_sim with the 'unmodulated' values.
+//    da_boost->Run_MC_sim_timestep(m_medium,
+//                                  m_Laser_injection_coords,
+//                                  time_step);
+    
     /// Run the MC_sim with the 'unmodulated' values.
-    da_boost->Run_MC_sim_timestep(m_medium,
-                                  m_Laser_injection_coords,
-                                  time_step);
+    da_boost->Run_MC_sim_timestep_with_single_injection_aperture(m_medium,
+                                                                 m_medium->getInjectionAperture(0),
+                                                                 time_step);
+    
+    
     
     /// Run the simulation after populating the sphere with 'modulated' values.
     /// ------------------------------------------------------------------------------------------------
@@ -479,11 +490,15 @@ AO_Sim::Run_acousto_optics_sim_sphere_tagging_volume(TParameters * Parameters)
                                           disp_z_full_medium);
     }
     
-    /// Run the MC_sim with the 'modulated' values.
-    da_boost->Run_MC_sim_timestep(m_medium,
-                                  m_Laser_injection_coords,
-                                  ++time_step);
+//    /// Run the MC_sim with the 'modulated' values.
+//    da_boost->Run_MC_sim_timestep(m_medium,
+//                                  m_Laser_injection_coords,
+//                                  ++time_step);
     
+    /// Run the MC_sim with the 'modulated' values.
+    da_boost->Run_MC_sim_timestep_with_single_injection_aperture(m_medium,
+                                                                 m_medium->getInjectionAperture(0),
+                                                                 ++time_step);
 }
 
 
@@ -1382,12 +1397,7 @@ AO_Sim::Create_MC_grid(TParameters * Parameters)
 
     /// Set the time-step used in k-Wave.
     this->m_medium->kwave.dt = Parameters->Get_dt();
-    //this->m_medium->kwave.speed_of_sound            = Parameters->Get_c0_scalar();
-
-
 }
-
-
 
 
 
@@ -1410,11 +1420,21 @@ AO_Sim::Print_MC_sim_params(TParameters * Parameters)
 }
 
 
+
+void
+AO_Sim::Add_injection_aperture_MC_medium(Aperture_Properties &props)
+{
+    
+    assert(m_medium != NULL);
+    
+    m_medium->addInjectionAperture(new InjectionAperture(props));
+}
+
+
+
 void
 AO_Sim::Add_circular_detector_MC_medium(Aperture_Properties &props)
 {
-
-
     
     assert(m_medium != NULL);
 

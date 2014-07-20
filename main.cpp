@@ -576,6 +576,7 @@ Name                            Size           Data type        Domain Type     
 #include <MC-Boost/sphereAbsorber.h>
 #include <MC-Boost/layer.h>
 #include <MC-Boost/logger.h>
+#include <MC-Boost/injectionAperture.h>
 
 #include <cmath>
 #include <ctime>
@@ -738,28 +739,38 @@ int main(int argc, char** argv)
     	/// Add a detector to the medium (i.e. an exit aperture) for collecting photons that will make their way
     	/// to the CCD camera.
     	/// NOTE: Centering the detector on the x-y plane.
-    	Aperture_Properties detector_props;
-        detector_props.radius = 0.0030;
+    	Aperture_Properties detection_aperture;
+        detection_aperture.xy_plane = true;
+        detection_aperture.radius = 0.0030;
     	//detector_props.x_coord = 0.0225;    //  Upon inspection, the US focus is located here.
-        detector_props.x_coord = AO_simulation.Get_MC_Xaxis_depth()/2;  // Perfectly centered in the medium.
-        detector_props.y_coord = AO_simulation.Get_MC_Yaxis_depth()/2;
+        detection_aperture.coordinates.x = AO_simulation.Get_MC_Xaxis_depth()/2;  // Perfectly centered in the medium.
+        detection_aperture.coordinates.y = AO_simulation.Get_MC_Yaxis_depth()/2;
         /// Transmission mode
         /// -----------------
-         detector_props.z_coord = AO_simulation.Get_MC_Zaxis_depth();
+         detection_aperture.coordinates.z = AO_simulation.Get_MC_Zaxis_depth();
         /// Reflection mode
         /// ---------------
-        //detector_props.z_coord = 0.0f;
-		detector_props.xy_plane = true;
-    	AO_simulation.Add_circular_detector_MC_medium(detector_props);
+        //detector_props.coordinates.z= 0.0f;
+        
+    	AO_simulation.Add_circular_detector_MC_medium(detection_aperture);
 
 
     	/// Define the injection point of light in the medium.
-    	coords LaserInjectionCoords;
-		/// Align the injection with the detection aperture.
-		LaserInjectionCoords.x = detector_props.x_coord;	//AO_simulation.Get_MC_Xaxis_depth()/2; // Centered
-		LaserInjectionCoords.y = detector_props.y_coord; 	//AO_simulation.Get_MC_Yaxis_depth()/2; // Centered
-		LaserInjectionCoords.z = 1e-16f;                    // Just below the surface of the 'air' layer.
-    	AO_simulation.Set_laser_injection_coords(LaserInjectionCoords);
+        Aperture_Properties input_aperture;
+        input_aperture.xy_plane = true;
+        input_aperture.radius = detection_aperture.radius;              /// Ensure that the input and detection apertures match.
+        input_aperture.coordinates.x = detection_aperture.coordinates.x;
+        input_aperture.coordinates.y = detection_aperture.coordinates.y;
+        input_aperture.coordinates.z = 0.0f;
+        
+        AO_simulation.Add_injection_aperture_MC_medium(input_aperture);
+        
+//    	coords LaserInjectionCoords;
+//		/// Align the injection with the detection aperture.
+//		LaserInjectionCoords.x = detection_aperture.coordinates.x;	//AO_simulation.Get_MC_Xaxis_depth()/2; // Centered
+//		LaserInjectionCoords.y = detection_aperture.coordinates.y; 	//AO_simulation.Get_MC_Yaxis_depth()/2; // Centered
+//		LaserInjectionCoords.z = 0.0f;                    // Just below the surface of the 'air' layer.
+//    	AO_simulation.Set_laser_injection_coords(LaserInjectionCoords);
 
 
 		/// Set how often the monte-carlo simulation runs.

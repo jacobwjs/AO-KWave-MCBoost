@@ -13,6 +13,8 @@ Aperture::Aperture(void)
     aperture_center.location.x = 0.0f;
     aperture_center.location.y = 0.0f;
     aperture_center.location.z = 0.0f;
+    
+    xz_plane = yz_plane = xz_plane = false;
 }
 
 Aperture::~Aperture(void)

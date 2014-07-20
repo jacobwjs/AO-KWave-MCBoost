@@ -9,6 +9,7 @@
 #include <MC-Boost/displacementMap.h>
 #include <MC-Boost/pressureMap.h>
 #include <MC-Boost/refractiveMap.h>
+#include <MC-Boost/injectionAperture.h>
 
 
 
@@ -23,6 +24,9 @@ Photon::Photon(void)
 	cout << "Creating Photon...\n";
 #endif
 
+    m_medium = NULL;
+    m_input_aperture = NULL;
+    
 	// The current location of the photon.
 	currLocation = boost::shared_ptr<Vector3d> (new Vector3d);
 	currLocation->withDirection();  // Enable direction for this vector.
@@ -90,9 +94,11 @@ void Photon::setIterations(const int num)
 
 void Photon::initTrajectory(void)
 {
-
-    double beam_radius = 0.0015;  /// 3mm diameter.
-    double injection_point = beam_radius * sqrt(getRandNum());
+    double injection_point;
+    if (m_input_aperture != NULL)
+        injection_point = m_input_aperture->Get_radius() * sqrt(getRandNum());
+    else
+        injection_point = 0.003 * sqrt(getRandNum());
 
 	// Randomly set photon trajectory to yield anisotropic source.
 	cos_theta = (2.0 * getRandNum()) - 1;
@@ -100,9 +106,18 @@ void Photon::initTrajectory(void)
 	psi = 2.0 * PI * getRandNum();
 
     /// Set the injection points to spread across the beam diameter (randomly).
-    currLocation->location.x = illuminationCoords.x + injection_point*cos(psi);
-    currLocation->location.y = illuminationCoords.y + injection_point*sin(psi);
-    currLocation->location.z = illuminationCoords.z;
+    if (m_input_aperture != NULL)
+    {
+        currLocation->location.x = m_input_aperture->Get_x_coord() + injection_point*cos(psi);
+        currLocation->location.y = m_input_aperture->Get_y_coord() + injection_point*sin(psi);
+        currLocation->location.z = m_input_aperture->Get_z_coord();
+    }
+    else
+    {
+        currLocation->location.x = illuminationCoords.x + injection_point*cos(psi);
+        currLocation->location.y = illuminationCoords.y + injection_point*sin(psi);
+        currLocation->location.z = illuminationCoords.z;
+    }
 
 	// Set the initial direction cosines for this photon.
     /// Initial direction is ballistic light as it enters the medium.  This means
@@ -159,6 +174,46 @@ void Photon::Inject_photon(Medium * medium, const int num_iterations, RNG_seed_v
 	// object (which is a thread) will execute.
 	propagatePhoton(num_iterations);
 
+}
+
+// BOOST thread library starts execution here.
+// 1) Hop - move the photon
+// 2) Drop - drop weight due to absorption
+// 3) Spin - update trajectory accordingly
+// 4) Roulette - test to see if photon should live or die.
+void Photon::Inject_photon_through_aperture(Medium *medium, const int num_iterations, RNG_seed_vector *rng_seeds, Aperture *input_aperture,
+                                            MC_Parameters &Params)
+{
+    
+	// Before propagation we set the medium which will be used by the photon.
+	this->m_medium = medium;
+    
+    /// We set the input aperture in which photons enter the medium.
+    this->m_input_aperture = input_aperture;
+    
+    
+	// Set the GLOBAL values that dictate what mechanisms of AO are simulated and/or if the seeds
+	// for the RNG should be saved.
+    SIM_MODULATION_DEPTH        = Params.MODULATION_DEPTH;
+	SIM_DISPLACEMENT 			= Params.DISPLACE;
+	SIM_REFRACTIVE_TOTAL        = Params.REFRACTIVE_TOTAL;
+    SIM_REFRACTIVE_GRADIENT     = Params.REFRACTIVE_GRADIENT;
+	SAVE_RNG_SEEDS				= Params.SAVE_SEEDS;
+    
+    
+    // Assign this photon object a random number generator, which is passed in from main().
+    RNG_generator = new RNG();
+    iteration_seeds = rng_seeds;
+    
+    
+	// Set the current layer the photon starts propagating through.  This will
+	// be updated as the photon moves through layers by checking 'hitLayerBoundary'.
+	currLayer = m_medium->getLayerFromDepth(currLocation->location.z);
+    
+	// Move the photon through the medium. 'iterations' represents the number of photons this
+	// object (which is a thread) will execute.
+	propagatePhoton(num_iterations);
+    
 }
 
 

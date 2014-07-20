@@ -595,7 +595,7 @@ using namespace std;
  * ------------------------------------------------------- Various functions for Monte-Carlo -----------------
  */
 // Number of photons to simulate.
-const int MAX_PHOTONS = 15e6;
+const int MAX_PHOTONS = 100e3;
 
 // Testing routines.
 void testVectorMath(void);
@@ -738,7 +738,7 @@ int main(int argc, char** argv)
     	/// Add a detector to the medium (i.e. an exit aperture) for collecting photons that will make their way
     	/// to the CCD camera.
     	/// NOTE: Centering the detector on the x-y plane.
-    	Detector_Properties detector_props;
+    	Aperture_Properties detector_props;
         detector_props.radius = 0.0030;
     	//detector_props.x_coord = 0.0225;    //  Upon inspection, the US focus is located here.
         detector_props.x_coord = AO_simulation.Get_MC_Xaxis_depth()/2;  // Perfectly centered in the medium.

@@ -1411,7 +1411,7 @@ AO_Sim::Print_MC_sim_params(TParameters * Parameters)
 
 
 void
-AO_Sim::Add_circular_detector_MC_medium(Detector_Properties &props)
+AO_Sim::Add_circular_detector_MC_medium(Aperture_Properties &props)
 {
 
 

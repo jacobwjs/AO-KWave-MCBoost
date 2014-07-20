@@ -17,28 +17,11 @@ using namespace VectorMath;
 //#include <boost/math/complex/fabs.hpp>
 
 
-
-
-
-typedef struct {
-    double radius;
-    double x_coord;
-    double y_coord;
-    double z_coord;
-
-	bool xy_plane;
-	bool xz_plane;
-	bool yz_plane;
-    
-} Detector_Properties;
-
-
-
-class Detector 
+class Detector
 {
 public:
+    Detector(void);
     Detector(const double x, const double y, const double z);
-	Detector(const Detector_Properties &props);
     Detector(const Vector3d &centerPoint);
     Detector(const boost::shared_ptr<Vector3d> centerPoint);
     virtual ~Detector();
@@ -49,62 +32,12 @@ public:
     virtual void savePhotonExitCoordinates(const boost::shared_ptr<Vector3d> exitCoords) = 0;
     virtual void savePhotonExitWeight(void) = 0;
     
-    virtual void setDetectorPlaneXY(void)
-    {
-        // Set which plane the detector resides.
-        xz_plane = false;
-        yz_plane = false;
-        xy_plane = true;
-        
-        // Set the direction that the vector that is normal to the plane.
-        normalVector.setDirX(0.0f);
-        normalVector.setDirY(0.0f);
-        normalVector.setDirZ(1.0f); normalVector.location.z = 1.0f;
-        
-    }
-    
-    virtual void setDetectorPlaneXZ(void)
-    {
-        // Set which plane the detector resides.
-        yz_plane = false;
-        xy_plane = false;
-        xz_plane = true;
-        
-        // Set the direction that the vector that is normal to the plane.
-        normalVector.setDirX(0.0f);
-        normalVector.setDirY(1.0f); normalVector.location.y = 1.0f;
-        normalVector.setDirZ(0.0f);
-    }
-    
-    virtual void setDetectorPlaneYZ(void)
-    {
-        // Set which plane the detector resides.
-        xz_plane = false;
-        xy_plane = false;
-        yz_plane = true;
-        
-        // Set the direction that the vector that is normal to the plane.
-        normalVector.setDirX(1.0f); normalVector.location.x = 1.0f;
-        normalVector.setDirY(0.0f);
-        normalVector.setDirZ(0.0f);
-    }
-    
     
     
 protected:
     // Center coordinates of the detector in the medium. [cm]
-    Vector3d center;
+    Vector3d detector_center;
     
-    // Vector that is normal to the plane.
-    Vector3d normalVector;
-    
-    // possible planes that the detector can be placed in 3D space.
-    bool xy_plane;  
-    bool xz_plane;
-    bool yz_plane;
-    
-    
-
 	// Mutex to serialize access to the detector.
 	boost::mutex m_detector_mutex;
 };

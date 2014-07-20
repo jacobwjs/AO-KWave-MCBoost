@@ -137,7 +137,7 @@ public:
     
     /// Add a detector to the medium, which serves as a way to track photons that leave
     /// the medium.  It acts as an exit aperture.
-    void    Add_circular_detector_MC_medium(Detector_Properties &props);
+    void    Add_circular_detector_MC_medium(Aperture_Properties &props);
     
     
     /// Set the location at which light will be injected into the medium.

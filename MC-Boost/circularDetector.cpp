@@ -12,15 +12,56 @@ using std::cout;
 
 #undef DEBUG
 
-// Threshold value for comparing doubles.  Allows some tolerance that might arise from
+// Allows some tolerance that might arise from
 // rounding errors when working with doubles.
 static const double THRESHOLD = 1e-10;
 
 
 
-CircularDetector::CircularDetector(const Detector_Properties &props)
-:Detector(props)
+CircularDetector::CircularDetector(const Aperture_Properties &props)
+:Detector(),
+ Aperture()
 {
+    aperture_center.location.x = props.x_coord;
+    aperture_center.location.y = props.y_coord;
+    aperture_center.location.z = props.z_coord;
+    
+	/// Notify where the detector is added to the medium.
+    cout << "-----------------------------------------------------\n"
+    << "Adding a circular detector to the medium /\n"
+    << "-----------------------------------------\n"
+    << " Location: [x=" << aperture_center.location.x << ", y="
+    << aperture_center.location.y << ", z="
+    << aperture_center.location.z << "] (meters)\n";
+    
+    
+    // initialize the vector normal to the plane to have
+    // direction since it is only used to know the direction
+    // and not location that the plane faces.
+    normalVector.withDirection();
+    
+	/// Set the plane on which the detector lays.
+	if (props.xy_plane)
+	{
+		setAperturePlaneXY();
+        cout << " plane: x-y\n";
+	}
+	else if (props.xz_plane)
+	{
+		setAperturePlaneXZ();
+        cout << " plane: x-z\n";
+	}
+	else if (props.yz_plane)
+	{
+		setAperturePlaneYZ();
+        cout << " plane: y-z\n";
+	}
+	else
+	{
+		cout << "!!!ERROR: Detector plane has not been defined.\n";
+		assert((xy_plane == true) || (xz_plane == true) || (yz_plane == true));  // One plane must be set.
+	}
+    
     cout << " radius: " << props.radius << " (meters)\n";
     this->radius = props.radius;   
 }
@@ -56,7 +97,7 @@ bool CircularDetector::photonHitDetector(const boost::shared_ptr<Vector3d> p0)
 	boost::mutex::scoped_lock lock(m_detector_mutex);
     
     // Create a line segment from the center of the detector to the location of the photon.
-    boost::shared_ptr<Vector3d> centerToPoint = center - (*p0);
+    boost::shared_ptr<Vector3d> centerToPoint = aperture_center - (*p0);
     
     // If the dot product of the normal vector from the detector surface and the line segment
     // found above is zero (i.e. they are perpendicular) we know that the photon has hit
@@ -66,7 +107,7 @@ bool CircularDetector::photonHitDetector(const boost::shared_ptr<Vector3d> p0)
         
         // Now calculate the distance from the center of the detector plane to the intersection point, and if
         // that distance is larger than the radius the line segment missed the detector.
-        if (fabs(VectorMath::Distance(center, (*p0))) <= radius)
+        if (fabs(VectorMath::Distance(aperture_center, (*p0))) <= radius)
         {
 #ifdef DEBUG
             cout << "intersection point with detector = " << p0;
@@ -101,8 +142,8 @@ bool CircularDetector::photonHitDetector(const boost::shared_ptr<Vector3d> p0)
 //           - t is between 0 and 1 (inclusive) and gives the point along the line where the
 //             intersection with the plane occured.
 //
-// Having a point on the plane ('center', which is a Vector3d) and the normal unit vector ('normalVector')
-// it is possible to project the line segment from center - p0 onto the normal vector to calculate 't', where
+// Having a point on the plane ('aperture_center', which is a Vector3d) and the normal unit vector ('normalVector')
+// it is possible to project the line segment from aperture_center - p0 onto the normal vector to calculate 't', where
 // 't' gives the point on the line segment that intersects the plane.  With 't' calculated it's possible
 // to find the coordinates of the intersection.
 bool CircularDetector::photonPassedThroughDetector(const boost::shared_ptr<Vector3d> p0,
@@ -117,8 +158,8 @@ bool CircularDetector::photonPassedThroughDetector(const boost::shared_ptr<Vecto
     // it's current position (p1).
     boost::shared_ptr<Vector3d> lineSegment = (*p1) - (*p0);
     
-    // Create the vector that is from the previous location of the photon (p0) to the point on the plane (center);
-    boost::shared_ptr<Vector3d> pointToPlane = center - (*p0);
+    // Create the vector that is from the previous location of the photon (p0) to the point on the plane (aperture_center);
+    boost::shared_ptr<Vector3d> pointToPlane = aperture_center - (*p0);
     
     // Check if the photon has moved passed the plane.  If not there is no way it could have crossed the plane,
     // so return false.  Otherwise continue the calculation.
@@ -143,7 +184,7 @@ bool CircularDetector::photonPassedThroughDetector(const boost::shared_ptr<Vecto
         
         // Now calculate the distance from the center of the detector plane to the intersection point, and if
         // that distance is larger than the radius the line segment missed the detector.
-        if (VectorMath::Distance(center, (*intersectionPoint)) > radius)
+        if (VectorMath::Distance(aperture_center, (*intersectionPoint)) > radius)
         {
             return false;
         }

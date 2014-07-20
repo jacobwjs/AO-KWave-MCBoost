@@ -189,6 +189,7 @@ $(TARGET):	main.o 					\
 		Parameters/Parameters.o			\
         	AO-sim/AO_sim.o				\
 		MC-Boost/absorber.o                     \
+		MC-Boost/aperture.o			\
 		MC-Boost/circularDetector.o		\
 		MC-Boost/cylinderAbsorber.o		\
 		MC-Boost/detector.o			\
@@ -223,6 +224,7 @@ $(TARGET):	main.o 					\
 		Parameters/Parameters.o             	\
 		AO-sim/AO_sim.o				\
         	MC-Boost/absorber.o                     \
+		MC-Boost/aperture.o			\
                 MC-Boost/circularDetector.o             \
                 MC-Boost/cylinderAbsorber.o            	\
                 MC-Boost/detector.o                     \

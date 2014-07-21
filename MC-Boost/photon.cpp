@@ -94,9 +94,8 @@ void Photon::setIterations(const int num)
 
 void Photon::initTrajectory(void)
 {
-
-    double beam_radius = 0.0030;  /// 3mm diameter.
-    double injection_point = beam_radius * sqrt(getRandNum());
+    double injection_point;
+    injection_point = m_input_aperture->Get_radius() * sqrt(getRandNum());
 
 	// Randomly set photon trajectory to yield anisotropic source.
 	cos_theta = (2.0 * getRandNum()) - 1;
@@ -674,7 +673,8 @@ void Photon::displacePhotonFromPressure(void)
     /// FIXME:
     /// - This needs to be taken care of in the computation of the displacement values, so that
     ///   this check never need take place.
-    const float DISPLACEMENT_THRESHOLD = 0.0f; /// (meters)
+    ///
+    ///const float DISPLACEMENT_THRESHOLD = 0.0f; /// (meters)
     ///if (abs(x_displacement) >= DISPLACEMENT_THRESHOLD) currLocation->location.x += x_displacement;
     ///if (abs(y_displacement) >= DISPLACEMENT_THRESHOLD) currLocation->location.y += y_displacement;
     ///if (abs(z_displacement) >= DISPLACEMENT_THRESHOLD) currLocation->location.z += z_displacement;
@@ -902,7 +902,7 @@ void Photon::alterOPLFromAverageRefractiveChanges(void)
 
 	// Scales the position along the line segment from previous to current location.
 	// i.e. P(t) = prevLocation + t*currLocation
-	double t_curr = 0.0f;
+	//double t_curr = 0.0f;
 
 	// NOTE:
 	// - Because the step size is much smaller than the size of a voxel, which means any given step
@@ -991,8 +991,6 @@ void Photon::alterOPLFromAverageRefractiveChanges(void)
 	refractiveIndex_optical_path_length +=  distance_traveled * n_avg;
 */
 
-	// Scale distance into meters.
-	//distance_traveled = distance_traveled * 1e-2;
 
 	// Update the time-of-flight value for this portion of propagation.
 	time_of_flight += distance_traveled / (3e8/n_avg);

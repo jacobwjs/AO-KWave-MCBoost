@@ -8,7 +8,7 @@
 #include "pressureMap.h"
 #include "refractiveMap.h"
 #include "displacementMap.h"
-#include "Aperture.h"
+#include "aperture.h"
 
 #include <cmath>
 #include <cassert>

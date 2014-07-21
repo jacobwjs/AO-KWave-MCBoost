@@ -22,6 +22,7 @@
 #include <MC-Boost/layer.h>
 #include <MC-Boost/circularDetector.h>
 #include <MC-Boost/coordinates.h>
+#include <MC-Boost/injectionAperture.h>
 
 /**
  * Includes for reading HDF5 data file
@@ -137,7 +138,12 @@ public:
     
     /// Add a detector to the medium, which serves as a way to track photons that leave
     /// the medium.  It acts as an exit aperture.
-    void    Add_circular_detector_MC_medium(Detector_Properties &props);
+    void    Add_circular_detector_MC_medium(Aperture_Properties &props);
+    
+    
+    /// Add an injection aperture to the medium, which defines where light is input into
+    /// the medium.
+    void    Add_injection_aperture_MC_medium(Aperture_Properties &props);
     
     
     /// Set the location at which light will be injected into the medium.
@@ -179,7 +185,9 @@ public:
                 da_boost->Simulate_refractive_total(false);
                 da_boost->Save_RNG_seeds(true);
                 da_boost->Use_RNG_seeds(false);
-                da_boost->Generate_MC_RNG_seeds(m_medium, m_Laser_injection_coords);
+                //da_boost->Generate_MC_RNG_seeds(m_medium, m_Laser_injection_coords);
+                da_boost->Generate_MC_RNG_seeds_single_input_aperture(m_medium, m_medium->getInjectionAperture(0));
+
             }
     
     

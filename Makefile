@@ -189,10 +189,12 @@ $(TARGET):	main.o 					\
 		Parameters/Parameters.o			\
         	AO-sim/AO_sim.o				\
 		MC-Boost/absorber.o                     \
+		MC-Boost/aperture.o			\
 		MC-Boost/circularDetector.o		\
 		MC-Boost/cylinderAbsorber.o		\
 		MC-Boost/detector.o			\
 		MC-Boost/displacementMap.o		\
+		MC-Boost/injectionAperture.o		\
 		MC-Boost/layer.o			\
 		MC-Boost/logger.o			\
 		MC-Boost/medium.o			\
@@ -223,10 +225,12 @@ $(TARGET):	main.o 					\
 		Parameters/Parameters.o             	\
 		AO-sim/AO_sim.o				\
         	MC-Boost/absorber.o                     \
+		MC-Boost/aperture.o			\
                 MC-Boost/circularDetector.o             \
                 MC-Boost/cylinderAbsorber.o            	\
                 MC-Boost/detector.o                     \
                 MC-Boost/displacementMap.o              \
+		MC-Boost/injectionAperture.o		\
                 MC-Boost/layer.o                        \
                 MC-Boost/logger.o                       \
 		MC-Boost/medium.o			\

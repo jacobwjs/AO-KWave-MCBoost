@@ -27,6 +27,7 @@ class DisplacementMap;
 class Detector;
 class Vector3d;
 class Photon;
+class Aperture;
 
 
 // Medium is a container object that holds one or many layer objects that the
@@ -78,6 +79,9 @@ public:
 
     // Add a detector to the medium.
     void    addDetector(Detector *detector);
+    
+    /// Add an injection aperture to the medium.
+    void    addInjectionAperture(Aperture *aperture);
 
     // See if photon has crossed the detector plane.
     int    photonHitDetectorPlane(const boost::shared_ptr<Vector3d> p0);
@@ -138,6 +142,9 @@ public:
 
 	// Return the layer below the current layer.
 	Layer * getLayerBelowCurrent(double depth);
+    
+    /// Return the injection aperture based on the provided index.
+    Aperture * getInjectionAperture(size_t index);
 
     // Return the max depth of the medium.
     double 	getDepth() {return depth;}
@@ -200,6 +207,9 @@ private:
 
     // Create a STL vector to hold the detectors in the medium.
     std::vector<Detector *> p_detectors;
+    
+    /// Create a STL vector to hold the injection apertures in the medium.
+    std::vector<Aperture *> p_injection_apertures;
 
 	// Mutex to serialize access to the sensor array.
 	boost::mutex m_sensor_mutex;

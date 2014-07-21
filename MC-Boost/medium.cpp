@@ -1,5 +1,5 @@
 
-#include "photon.h" // Photon class is a friend of the Medium class.
+#include "photon.h" // NOTE: 'Photon' class is a friend of the Medium class.
 #include "debug.h"
 #include "vector3D.h"
 #include "layer.h"
@@ -8,6 +8,8 @@
 #include "pressureMap.h"
 #include "refractiveMap.h"
 #include "displacementMap.h"
+#include "Aperture.h"
+
 #include <cmath>
 #include <cassert>
 #include <cstdlib>
@@ -143,7 +145,7 @@ void Medium::addPressureMap(PressureMap *p_map)
 //}
 
 
-//// Add an 3-dimensional displacement map object to the medium.
+//// Add a 3-dimensional displacement map object to the medium.
 //void Medium::addDisplacementMap(DisplacementMap *d_map)
 //{
 //	assert(d_map != NULL);
@@ -168,6 +170,28 @@ void Medium::addDetector(Detector *detector)
 {
 
 	p_detectors.push_back(detector);
+}
+
+
+void Medium::addInjectionAperture(Aperture *aperture)
+{
+    p_injection_apertures.push_back(aperture);
+    
+    cout << "-----------------------------------------------------\n"
+         << "Adding an input aperture to the medium /\n"
+         << "---------------------------------------\n";
+    cout << " Location: [x=" << aperture->Get_x_coord() << ", y=" << aperture->Get_y_coord() << ", z=" << aperture->Get_z_coord() << "] (meters)\n";
+    cout << " Radius: " << aperture->Get_radius() << " (meters)\n";
+    cout << " Aperture number: " << p_injection_apertures.size() << '\n';
+    if (aperture->Is_XY_plane()) cout << " Plane: x-y\n";
+    if (aperture->Is_YZ_plane()) cout << " Plane: y-z\n";
+    if (aperture->Is_XZ_plane()) cout << " Plane: x-z\n";
+    
+}
+
+Aperture * Medium::getInjectionAperture(size_t index)
+{
+    return p_injection_apertures[index];
 }
 
 

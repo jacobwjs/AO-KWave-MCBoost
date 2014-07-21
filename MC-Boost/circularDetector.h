@@ -11,11 +11,12 @@
 #define CIRCULARDETECTOR_H
 
 #include "detector.h"
+#include "aperture.h"
 
-class CircularDetector : public Detector
+class CircularDetector : public Detector, public Aperture
 {
 public:
-    CircularDetector(const Detector_Properties &props);
+    CircularDetector(const Aperture_Properties &props);
     CircularDetector(const double radius, const Vector3d &centerPoint);
     CircularDetector(const double radius, const boost::shared_ptr<Vector3d> centerPoint);
     ~CircularDetector();
@@ -31,8 +32,7 @@ public:
     
     
 private:
-    // Radius of the detector. (meters)
-    double radius;
+    
 };
 
-#endif
+#endif  /// CIRCULARDETECTOR_H

@@ -34,6 +34,8 @@ using namespace std;
 class Medium;
 class Vector3d;
 class Layer;
+class InjectionAperture;
+class Aperture;
 
 
 
@@ -148,13 +150,8 @@ public:
     /// photons.
     /// NOTE:
     /// - This is the function call given to the boost thread object.
-	void	Inject_photon(Medium * m, const int num_iterations, RNG_seed_vector *rng, coords &laser,
-                          MC_Parameters &Params);
-
-
-    void	TESTING(Medium * m, const int iter, RNG_seed_vector *rng_seeds, coords &laser,
-                    MC_Parameters &Params);
-
+    void    Inject_photon_through_aperture(Medium *m, const int num_iterations, RNG_seed_vector *rng, Aperture *input_aperture,
+                                   MC_Parameters &Params);
     
     // Hop, Drop, Spin, Roulette and everything in between.
     // NOTE: 'iterations' are the number of photons simulated by this 'Photon' object.
@@ -297,6 +294,9 @@ private:
 	
 	// Pointer to the medium which this photon will propagate through.
 	Medium *m_medium;
+    
+    /// Pointer to the input aperture which photons enter the medium from.
+    Aperture *m_input_aperture;
 
 	// The thread id associated with this photon object.  The value is passed
 	// in from the loop that creates the threads in main.cpp.

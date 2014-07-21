@@ -84,10 +84,14 @@ AO_Sim::Run_monte_carlo_sim(TParameters * Parameters)
     }
     else
     {
-        size_t time = 0;
-        da_boost->Run_MC_sim_timestep(m_medium,
-                                      m_Laser_injection_coords,
-                                      time);
+        size_t time_step = 0;
+//        da_boost->Run_MC_sim_timestep(m_medium,
+//                                      m_Laser_injection_coords,
+//                                      time);
+        /// Run the MC_sim with the 'unmodulated' values.
+        da_boost->Run_MC_sim_timestep_with_single_injection_aperture(m_medium,
+                                                                     m_medium->getInjectionAperture(0),
+                                                                     time_step);
     }
 }
 
@@ -427,10 +431,17 @@ AO_Sim::Run_acousto_optics_sim_sphere_tagging_volume(TParameters * Parameters)
                                           disp_z_full_medium);
     }
     
+//    /// Run the MC_sim with the 'unmodulated' values.
+//    da_boost->Run_MC_sim_timestep(m_medium,
+//                                  m_Laser_injection_coords,
+//                                  time_step);
+    
     /// Run the MC_sim with the 'unmodulated' values.
-    da_boost->Run_MC_sim_timestep(m_medium,
-                                  m_Laser_injection_coords,
-                                  time_step);
+    da_boost->Run_MC_sim_timestep_with_single_injection_aperture(m_medium,
+                                                                 m_medium->getInjectionAperture(0),
+                                                                 time_step);
+    
+    
     
     /// Run the simulation after populating the sphere with 'modulated' values.
     /// ------------------------------------------------------------------------------------------------
@@ -479,11 +490,15 @@ AO_Sim::Run_acousto_optics_sim_sphere_tagging_volume(TParameters * Parameters)
                                           disp_z_full_medium);
     }
     
-    /// Run the MC_sim with the 'modulated' values.
-    da_boost->Run_MC_sim_timestep(m_medium,
-                                  m_Laser_injection_coords,
-                                  ++time_step);
+//    /// Run the MC_sim with the 'modulated' values.
+//    da_boost->Run_MC_sim_timestep(m_medium,
+//                                  m_Laser_injection_coords,
+//                                  ++time_step);
     
+    /// Run the MC_sim with the 'modulated' values.
+    da_boost->Run_MC_sim_timestep_with_single_injection_aperture(m_medium,
+                                                                 m_medium->getInjectionAperture(0),
+                                                                 ++time_step);
 }
 
 
@@ -784,9 +799,10 @@ AO_Sim::Run_acousto_optics_sim(TParameters * Parameters)
                         PrintMatrix((*refractive_total_full_medium), Parameters);
                         PrintMatrix((*disp_x_full_medium), Parameters);
                         
-                        da_boost->Run_MC_sim_timestep(m_medium,
-                                                      m_Laser_injection_coords,
-                                                      KSpaceSolver->GetTimeIndex());
+                        
+                        da_boost->Run_MC_sim_timestep_with_single_injection_aperture(m_medium,
+                                                                                     m_medium->getInjectionAperture(0),
+                                                                                     KSpaceSolver->GetTimeIndex());
                     }
                     
                     /// If the 'phase_inversion' option is enabled, then we only save data during PI phase shifts.
@@ -810,9 +826,9 @@ AO_Sim::Run_acousto_optics_sim(TParameters * Parameters)
                      (curr_time <= Parameters->GetEndTimeIndex())) ||
                     (curr_time == 0))
                 {
-                    da_boost->Run_MC_sim_timestep(m_medium,
-                                                  m_Laser_injection_coords,
-                                                  KSpaceSolver->GetTimeIndex());
+                    da_boost->Run_MC_sim_timestep_with_single_injection_aperture(m_medium,
+                                                                                 m_medium->getInjectionAperture(0),
+                                                                                 KSpaceSolver->GetTimeIndex());
                 }
                 /// Here is where data is stored in their respective sensor data structure if enabled via the commandline.
                 /// The stored data is updated over the run of the simulation and written out to disk at the completion
@@ -1144,9 +1160,9 @@ AO_Sim::Run_acousto_optics_sim_loadData(TParameters * Parameters)
             
             
             cout << "-------------------- Running Phase Inversion (original phase) --------------------\n";
-            da_boost->Run_MC_sim_timestep(m_medium,
-                                          m_Laser_injection_coords,
-                                          time_step);
+            da_boost->Run_MC_sim_timestep_with_single_injection_aperture(m_medium,
+                                                                         m_medium->getInjectionAperture(0),
+                                                                         time_step);
             
             /// Now perform the inversion and run the simulation as if the ultrasound focus had reached the
             /// same location and same time, but with a phase that had been shifted 180 degrees.
@@ -1161,9 +1177,9 @@ AO_Sim::Run_acousto_optics_sim_loadData(TParameters * Parameters)
                 m_medium->Invert_displacement_map_phase();
             }
             cout << "-------------------- Running Phase Inversion (180 deg shifted) ------------------\n";
-            da_boost->Run_MC_sim_timestep(m_medium,
-                                          m_Laser_injection_coords,
-                                          time_step);
+            da_boost->Run_MC_sim_timestep_with_single_injection_aperture(m_medium,
+                                                                         m_medium->getInjectionAperture(0),
+                                                                         time_step);
 
         }
 
@@ -1256,9 +1272,9 @@ AO_Sim::Run_acousto_optics_sim_loadData(TParameters * Parameters)
             }
 
             int time_step = i;
-            da_boost->Run_MC_sim_timestep(m_medium,
-                                          m_Laser_injection_coords,
-                                          time_step);
+            da_boost->Run_MC_sim_timestep_with_single_injection_aperture(m_medium,
+                                                                         m_medium->getInjectionAperture(0),
+                                                                         time_step);
 
         }/// end FOR LOOP
 
@@ -1382,12 +1398,7 @@ AO_Sim::Create_MC_grid(TParameters * Parameters)
 
     /// Set the time-step used in k-Wave.
     this->m_medium->kwave.dt = Parameters->Get_dt();
-    //this->m_medium->kwave.speed_of_sound            = Parameters->Get_c0_scalar();
-
-
 }
-
-
 
 
 
@@ -1410,11 +1421,24 @@ AO_Sim::Print_MC_sim_params(TParameters * Parameters)
 }
 
 
+
 void
-AO_Sim::Add_circular_detector_MC_medium(Detector_Properties &props)
+AO_Sim::Add_injection_aperture_MC_medium(Aperture_Properties &props)
 {
+    
+    assert(m_medium != NULL);
+    
+    /// FIXME:
+    /// - Ensure the injection aperture fits into medium before adding.
+    ///
+    m_medium->addInjectionAperture(new InjectionAperture(props));
+}
 
 
+
+void
+AO_Sim::Add_circular_detector_MC_medium(Aperture_Properties &props)
+{
     
     assert(m_medium != NULL);
 
@@ -1542,53 +1566,6 @@ AO_Sim::Test_Read_HDF5_File(TParameters * Parameters)
     cout << "Simulation time steps (total): " << Parameters->Get_Nt() << '\n';
 
 
-
-
-//    if (Parameters->IsSim_refractive_index() || Parameters->IsSim_displacement())
-//    {
-//        precomputed_InputStream = new TInputHDF5Stream();
-//        if (!precomputed_InputStream) throw bad_alloc();
-//
-//        cout << "Loading precomputed data\n";
-//        precomputed_InputStream.SetHDF5File(Parameters->HDF5_OutputFile);
-//    }
-
-//    if (Parameters->IsSim_refractive_index() || Parameters->IsSim_displacement())
-//    {
-//        refractive_x_InputStream = new TInputHDF5Stream();
-//        if (!refractive_x_InputStream)  throw bad_alloc();
-//
-//        refractive_y_InputStream = new TInputHDF5Stream();
-//        if (!refractive_y_InputStream)  throw bad_alloc();
-//
-//        refractive_z_InputStream = new TInputHDF5Stream();
-//        if (!refractive_z_InputStream)  throw bad_alloc();
-//
-//        refractive_x_InputStream->SetHDF5File(Parameters->HDF5_OutputFile);
-//        refractive_y_InputStream->SetHDF5File(Parameters->HDF5_OutputFile);
-//        refractive_z_InputStream->SetHDF5File(Parameters->HDF5_OutputFile);
-//
-//
-//        cout << "Loading refractive index data\n";
-//    }
-//    if (Parameters->IsSim_displacement())
-//    {
-//        displacement_x_InputStream = new TInputHDF5Stream();
-//        if (!displacement_x_InputStream)  throw bad_alloc();
-//
-//        displacement_y_InputStream = new TInputHDF5Stream();
-//        if (!displacement_y_InputStream)  throw bad_alloc();
-//
-//        displacement_z_InputStream = new TInputHDF5Stream();
-//        if (!displacement_z_InputStream)  throw bad_alloc();
-//
-//        displacement_x_InputStream->SetHDF5File(Parameters->HDF5_OutputFile);
-//        displacement_y_InputStream->SetHDF5File(Parameters->HDF5_OutputFile);
-//        displacement_z_InputStream->SetHDF5File(Parameters->HDF5_OutputFile);
-//
-//
-//        cout << "Loading displacement data\n";
-//    }
 
     if (Parameters->IsSim_refractive_total())
     {

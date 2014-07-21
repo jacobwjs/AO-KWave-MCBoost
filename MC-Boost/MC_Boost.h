@@ -52,10 +52,6 @@ public:
     
     // Set the total number of photon packets to simulate.
     void    Set_num_photons(size_t num_photons_to_simulate);
-
-    
-    // Generates RNG seeds for photon paths that were detected.
-    void    Generate_MC_RNG_seeds(Medium *m, coords LaserInjectionCoords);
     
     /// Generates RNG seeds for photon paths that were detected.
     void    Generate_MC_RNG_seeds_single_input_aperture(Medium * medium, Aperture *input_aperture);
@@ -72,15 +68,10 @@ public:
         rng_seed_file = rng_file;
     }
 
-    
-    /// Run the monte-carlo simulation using the produced seeds.
-    void    Run_MC_sim_timestep(Medium *m, coords LaserInjectionCoords, int timestep);
-    
     /// Run the MC simulation using the produced seeds.
     void    Run_MC_sim_timestep_with_single_injection_aperture(Medium *medium,
                                                                Aperture *input_aperture,
                                                                int time);
-    
     
     /// Set which mechanisms (if any at all) of acousto-optics to simulate.
     void    Simulate_displacement(bool flag)        {Params.DISPLACE            = flag;};
@@ -95,7 +86,6 @@ public:
     void    Use_RNG_seeds(bool flag)                {Params.USE_SEEDS = flag;};
 
 
-    
 private:
     // Number of threads that are running the simulation (max = boost::thread::hardware_concurrency()).
     // NOTE: NUM_THREADS == NUM_PHOTON_OBJS

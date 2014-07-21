@@ -95,29 +95,18 @@ void Photon::setIterations(const int num)
 void Photon::initTrajectory(void)
 {
     double injection_point;
-    if (m_input_aperture != NULL)
-        injection_point = m_input_aperture->Get_radius() * sqrt(getRandNum());
-    else
-        injection_point = 0.003 * sqrt(getRandNum());
+    injection_point = m_input_aperture->Get_radius() * sqrt(getRandNum());
 
 	// Randomly set photon trajectory to yield anisotropic source.
 	cos_theta = (2.0 * getRandNum()) - 1;
 	sin_theta = sqrt(1.0 - cos_theta*cos_theta);
 	psi = 2.0 * PI * getRandNum();
 
-    /// Set the injection points to spread across the beam diameter (randomly).
-    if (m_input_aperture != NULL)
-    {
-        currLocation->location.x = m_input_aperture->Get_x_coord() + injection_point*cos(psi);
-        currLocation->location.y = m_input_aperture->Get_y_coord() + injection_point*sin(psi);
-        currLocation->location.z = m_input_aperture->Get_z_coord();
-    }
-    else
-    {
-        currLocation->location.x = illuminationCoords.x + injection_point*cos(psi);
-        currLocation->location.y = illuminationCoords.y + injection_point*sin(psi);
-        currLocation->location.z = illuminationCoords.z;
-    }
+    /// Set the injection points to spread across the beam diameter (Guassian beam profile).
+    currLocation->location.x = m_input_aperture->Get_x_coord() + injection_point*cos(psi);
+    currLocation->location.y = m_input_aperture->Get_y_coord() + injection_point*sin(psi);
+    currLocation->location.z = m_input_aperture->Get_z_coord();
+    
 
 	// Set the initial direction cosines for this photon.
     /// Initial direction is ballistic light as it enters the medium.  This means
@@ -132,49 +121,6 @@ void Photon::initTrajectory(void)
 
 
 
-
-
-// BOOST thread library starts execution here.
-// 1) Hop - move the photon
-// 2) Drop - drop weight due to absorption
-// 3) Spin - update trajectory accordingly
-// 4) Roulette - test to see if photon should live or die.
-void Photon::Inject_photon(Medium * medium, const int num_iterations, RNG_seed_vector *rng_seeds, coords &laser,
-                           MC_Parameters &Params)
-{
-
-	// Before propagation we set the medium which will be used by the photon.
-	this->m_medium = medium;
-
-
-	// Set the GLOBAL values that dictate what mechanisms of AO are simulated and/or if the seeds
-	// for the RNG should be saved.
-    SIM_MODULATION_DEPTH        = Params.MODULATION_DEPTH;
-	SIM_DISPLACEMENT 			= Params.DISPLACE;
-	SIM_REFRACTIVE_TOTAL        = Params.REFRACTIVE_TOTAL;
-    SIM_REFRACTIVE_GRADIENT     = Params.REFRACTIVE_GRADIENT;
-	SAVE_RNG_SEEDS				= Params.SAVE_SEEDS;
-
-
-    // Assign this photon object a random number generator, which is passed in from main().
-    RNG_generator = new RNG();
-    iteration_seeds = rng_seeds;
-
-
-	// Set the location of illumination source.
-    this->illuminationCoords.x = laser.x;
-	this->illuminationCoords.y = laser.y;
-	this->illuminationCoords.z = laser.z;
-
-	// Set the current layer the photon starts propagating through.  This will
-	// be updated as the photon moves through layers by checking 'hitLayerBoundary'.
-	currLayer = m_medium->getLayerFromDepth(currLocation->location.z);
-
-	// Move the photon through the medium. 'iterations' represents the number of photons this
-	// object (which is a thread) will execute.
-	propagatePhoton(num_iterations);
-
-}
 
 // BOOST thread library starts execution here.
 // 1) Hop - move the photon
@@ -214,38 +160,6 @@ void Photon::Inject_photon_through_aperture(Medium *medium, const int num_iterat
 	// object (which is a thread) will execute.
 	propagatePhoton(num_iterations);
     
-}
-
-
-//void Photon::TESTING(Medium * medium, const int num_iterations, RNG_seed_vector *rng_seeds, coords &laser,
-//		bool DISPLACE, bool REFRACTIVE_TOTAL, bool SAVE_SEEDS)
-void Photon::TESTING(Medium * medium, const int num_iterations, RNG_seed_vector *rng_seeds, coords &laser,
-                     MC_Parameters &Params)
-
-{
-
-	// Before propagation we set the medium which will be used by the photon.
-	this->m_medium = medium;
-
-
-    // Assign this photon object a random number generator, which is passed in from main().
-	RNG_generator = new RNG();
-	iteration_seeds = rng_seeds;
-
-
-	// Set the location of illumination source and the initial cartesian coordinates of the photon
-	// when it is first incident on the medium.
-	this->illuminationCoords.x = laser.x;
-	this->illuminationCoords.y = laser.y;
-	this->illuminationCoords.z = laser.z;
-
-	// Set the current layer the photon starts propagating through.  This will
-	// be updated as the photon moves through layers by checking 'hitLayerBoundary'.
-	currLayer = m_medium->getLayerFromDepth(currLocation->location.z);
-
-	// Move the photon through the medium. 'iterations' represents the number of photons this
-	// object (which is a thread) will execute.
-	propagatePhoton(num_iterations);
 }
 
 
@@ -387,13 +301,13 @@ void Photon::reset()
 	// Set back to initial weight values.
 	weight = 1;
 
+    /// Zero out the location of the photon for peace of mind. This will
+    /// be updated in 'initTrajectory' before propagation begins again.
+	currLocation->location.x = 0.0f;
+	currLocation->location.y = 0.0f;
+	currLocation->location.z = 0.0f;
 
-	// Set the vector that contains the current location of the photon.
-	currLocation->location.x = illuminationCoords.x;
-	currLocation->location.y = illuminationCoords.y;
-	currLocation->location.z = illuminationCoords.z;
-
-
+    /// Zero out the step size.
 	step = 0;
 	step_remainder = 0;
 
@@ -419,15 +333,8 @@ void Photon::reset()
 	initTrajectory();
 
 	// Reset the current layer from the injection coordinates of the photon.
-	currLayer = m_medium->getLayerFromDepth(currLocation->location.z);
+	currLayer = m_medium->getLayerFromDepth(m_input_aperture->Get_z_coord());
 
-	// Since the photon is being restarted we save the current state of the RNG
-	// as these are our 'seeds' for this run.
-	//
-	//seeds.s1 = z1;
-	//seeds.s2 = z2;
-	//seeds.s3 = z3;
-	//seeds.s4 = z4;
 }
 
 

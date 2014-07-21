@@ -91,7 +91,7 @@ void Photon::setIterations(const int num)
 void Photon::initTrajectory(void)
 {
 
-    double beam_radius = 0.0015;  /// 3mm diameter.
+    double beam_radius = 0.0030;  /// 3mm diameter.
     double injection_point = beam_radius * sqrt(getRandNum());
 
 	// Randomly set photon trajectory to yield anisotropic source.

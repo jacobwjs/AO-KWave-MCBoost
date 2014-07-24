@@ -18,6 +18,8 @@ using std::endl;
 
 #include <MatrixClasses/RealMatrix.h>
 #include <MatrixClasses/LongMatrix.h>
+#include <Parameters/Parameters.h>
+
 
 
 // Forward declaration of PressureMap and DisplacementMap objects.
@@ -31,7 +33,7 @@ class Aperture;
 
 
 // Medium is a container object that holds one or many layer objects that the
-// photon is propagated through.  This allows easy simulation of heterogeneous
+// photons are propagated through.  This allows easy simulation of heterogeneous
 // media with Monte Carlo simulations.
 class Medium
 {
@@ -45,16 +47,11 @@ public:
 	kWaveSim kwave;
 
 	Medium(void);
-    Medium(const double x, const double y, const double z);
+    Medium(TParameters * params);
 	~Medium();
 
     // Common initializations for the Medium object.  Called from constructors.
     void    initCommon(void);
-
-    // Set acoustic properties of medium.
-    // NOTE: 'eta' is the pezio-optical coefficient
-    void	setDensitySOSPezio(const double density, const double SOS, const double eta);
-
 
     // Set the background refractive index.
     void	setBackgroundRefractiveIndex(const double n_background) {this->background_refractive_index = n_background;}
@@ -116,12 +113,6 @@ public:
     /// Invert the phase of the displacement data by multiplying everything by -1 (180 degree phase shift).
     void    Invert_displacement_map_phase()     {kwave.dmap->Invert_phase();};
 
-    /// Add a refractive map object that holds refractive index values generated from k-Wave pressure and density changes.
-    //void	addRefractiveMap(RefractiveMap *n_map);
-
-    /// Add a displacement map object that holds acoustic particle displacements generated from k-Wave velocity fields.
-    //void    addDisplacementMap(DisplacementMap *d_map);
-
 	// Returns the absorption coefficient (mu_a) for a given depth (i.e. a layer).
 	double	getLayerAbsorptionCoeff(double depth);
 
@@ -154,6 +145,10 @@ public:
     double Get_X_bound(void) {return x_bound;}
     double Get_Y_bound(void) {return y_bound;}
     double Get_Z_bound(void) {return z_bound;}
+    
+    
+    /// Return a pointer to the fluence map.
+    TRealMatrix * Get_fluence_map(void) const {return total_fluence_map;};
 
 
     // Set Number of voxels in the medium.
@@ -189,13 +184,10 @@ public:
     double Get_dy() {return dy;}
     double Get_dz() {return dz;}
 
+    
+    
+    
 private:
-
-	// The arrays that hold the weights dropped during interaction points.
-	//double	Cplanar[MAX_BINS];		// Planar photon concentration.
-	double *Cplanar;
-
-
     // The total depth of the medium (meters).
     double depth;
     double x_bound,
@@ -230,7 +222,7 @@ private:
 	// to file for post processing in matlab.
     std::ofstream photon_data_file;
 
-    // The refrective index outside of the medium.  We assume air.
+    // The refractive index outside of the medium.  We assume air.
     double refractive_index;
 
     // The unmodulated (i.e. background) refractive index of the medium.
@@ -251,6 +243,11 @@ private:
     size_t X_PML_OFFSET;
     size_t Y_PML_OFFSET;
     size_t Z_PML_OFFSET;
+    
+    /// Fluence map for absorbed energy.
+    /// NOTE:
+    /// - Innacuracies arise when the step size (i.e. Photon::Hop()) is larger than the voxel size.
+    TRealMatrix *total_fluence_map; 
 
 };
 

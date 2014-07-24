@@ -60,6 +60,7 @@ TCommandLineParameters::TCommandLineParameters() :
         Store_u_raw(false), Store_u_rms(false), Store_u_max(false), Store_u_final(false),
         Store_I_avg(false), Store_I_max(false),
         /// ------------------- JWJS ----------------------
+        Store_fluence_map(false),
         Run_AO_sim(false), Run_AO_sim_loadData(false), Run_MC_sim(false), Run_kWave_sim(false), Run_AO_sim_sphere(false),
         Plane_wave(false),
         US_freq_known(false), US_freq(0.0f),
@@ -129,6 +130,7 @@ void TCommandLineParameters::PrintUsageAndExit(){
  printf("  --I_avg                         : Store avg of intensity\n");
  printf("  --I_max                         : Store max of intensity\n");
  printf("\n");
+    
  /// --------------------- JWJS ---------------------------------------------------------------------
  printf(" --Plane_wave <axis>              : Create a 'perfect' plane wave that propagates along a specfied axis\n");
  printf("\n");
@@ -142,7 +144,7 @@ void TCommandLineParameters::PrintUsageAndExit(){
  printf("\n");
  printf("  --n                             : Store index of refraction\n");
  printf("                                       (all axial components nx, ny, nz)\n");
- printf("  --refractive_total              : Store the norm of the index of refraction\n");
+ printf("  --n_total                       : Store the norm of the index of refraction\n");
  printf("  --refractive_x                  : Store the x-component of the index of refraction\n");
  printf("  --refractive_y                  : Store the y-component of the index of refraction\n");
  printf("  --refractive_z                  : Store the z-component of the index of refraction\n");
@@ -152,6 +154,8 @@ void TCommandLineParameters::PrintUsageAndExit(){
  printf("  --disp_x                        : Store displacement along x-axis\n");
  printf("  --disp_y                        : Store displacement along y-axis\n");
  printf("  --disp_z                        : Store displacement along z-axis\n");
+ printf("\n");
+ printf(" --fluence_map                    : Store the fluence in the medium\n");
  printf("\n");
  printf("  -e <timestep>                   : Time step when data collection ends\n");
  /// ----------------------------/
@@ -206,8 +210,11 @@ void TCommandLineParameters::PrintSetup(){
     printf("\n");
     /// ---------------- JWJS ----------------------------------------------------
     printf("  Plane wave                      %d\n", Plane_wave);
+    printf("\n");
     printf("  US freq                         %d\n", US_freq_known);
+    printf("\n");
     printf("  Phase inversion                 %d\n", Phase_inversion);
+    printf("\n");
     printf("  Save seeds                      %d\n", Store_seeds);
     printf("  Load seeds                      %d\n", Load_seeds);
     printf("\n");
@@ -222,6 +229,8 @@ void TCommandLineParameters::PrintSetup(){
     printf("  Store disp_x          %d\n", Store_disp_x);
     printf("  Store disp_y          %d\n", Store_disp_y);
     printf("  Store disp_z          %d\n", Store_disp_z);
+    printf("\n");
+    printf("  Store fluence         %d\n", Store_fluence_map);
     printf("\n");
     printf("  Collection begins at  %d\n", StartTimeStep+1);
     printf("\n");
@@ -271,7 +280,7 @@ void TCommandLineParameters::ParseCommandLine(int argc, char** argv){
         { "modulation_depth", no_argument, NULL, 0},
 
         { "n", no_argument, NULL, 'n'},
-        { "refractive_total", no_argument, NULL, 0},
+        { "n_total", no_argument, NULL, 0},
         { "refractive_x", no_argument, NULL, 0},
         { "refractive_y", no_argument, NULL, 0},
         { "refractive_z", no_argument, NULL, 0},
@@ -280,6 +289,8 @@ void TCommandLineParameters::ParseCommandLine(int argc, char** argv){
         { "disp_x", no_argument, NULL, 0},
         { "disp_y", no_argument, NULL, 0},
         { "disp_z", no_argument, NULL, 0},
+       
+        { "fluence_map", no_argument, NULL, 0},
 
         { "s", required_argument, NULL, 's'},
         { "e", required_argument, NULL, 'e'},
@@ -462,7 +473,7 @@ void TCommandLineParameters::ParseCommandLine(int argc, char** argv){
                 if( strcmp( "modulation_depth", longOpts[longIndex].name ) == 0) {
                     Store_modulation_depth = true;
                 } else
-                if( strcmp( "refractive_total", longOpts[longIndex].name ) == 0) {
+                if( strcmp( "n_total", longOpts[longIndex].name ) == 0) {
                     Store_refractive_total = true;
                 } else
                 if( strcmp( "refractive_x", longOpts[longIndex].name ) == 0) {
@@ -482,6 +493,9 @@ void TCommandLineParameters::ParseCommandLine(int argc, char** argv){
                 } else
                 if( strcmp( "disp_z", longOpts[longIndex].name ) == 0) {
                     Store_disp_z = true;
+                } else
+                if( strcmp( "fluence_map", longOpts[longIndex].name ) == 0) {
+                    Store_fluence_map = true;
                 } else
                 if(strcmp( "AO_sim", longOpts[longIndex].name ) == 0) {
                     Run_AO_sim = true;

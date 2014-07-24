@@ -87,16 +87,14 @@ enum TMatrixID     {kappa, c2, p,
                       Ix_sensor_avg, Iy_sensor_avg, Iz_sensor_avg,
                       Ix_sensor_max, Iy_sensor_max, Iz_sensor_max,
     
-                      /// ---------------------- JWJS -------------------------------------------------------
+                      /// ---------------------------------- JWJS -------------------------------------------------------
                       ///refractive_total_sensor,
                       refractive_total_full_medium,
-    
                       refractive_x_full_medium, refractive_y_full_medium, refractive_z_full_medium,
-    
                       ///disp_x_sensor, disp_y_sensor, disp_z_sensor,
                       disp_x_full_medium, disp_y_full_medium, disp_z_full_medium,
     
-                      /// --------------------------------------
+                      /// ---------------------------------------/
     
                        //--------------Temporary matrices -------------//    
                       Temp_1_RS3D, Temp_2_RS3D, Temp_3_RS3D,
@@ -187,7 +185,7 @@ public:
     void FreeAllMatrices();            
     
     
-    /// Set all matrices recored - populate the container 
+    /// Set all matrices recorded - populate the container 
     void AddMatricesIntoContainer();
          
     /**

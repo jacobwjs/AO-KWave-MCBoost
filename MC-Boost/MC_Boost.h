@@ -79,6 +79,9 @@ public:
     void    Simulate_refractive_total(bool flag)    {Params.REFRACTIVE_TOTAL    = flag;};
     void    Simulate_modulation_depth(bool flag)    {Params.MODULATION_DEPTH    = flag;};
     
+    /// Set whether or not to store the fluence.
+    void    Store_fluence(bool flag)                {Params.STORE_FLUENCE       = flag;};
+    
     /// Set whether or not to save seeds for this run.
     void    Save_RNG_seeds(bool flag)               {Params.SAVE_SEEDS = flag;};
     
@@ -113,6 +116,7 @@ private:
     bool    REFRACTIVE_GRADIENT;
     bool    REFRACTIVE_TOTAL;
     bool    SAVE_SEEDS;
+    
     
     MC_Parameters Params;
     

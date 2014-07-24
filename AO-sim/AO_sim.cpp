@@ -26,26 +26,90 @@ void PrintMatrixSensor(TRealMatrix &matrix, TParameters *params);
 void PrintMatrix(Medium * m_medium, TParameters *params);
 
 
-AO_Sim::AO_Sim()
+AO_Sim::AO_Sim(TParameters *Parameters)
 {
-    // Responsible for running the monte-carlo simulation.
-    da_boost = new MC_Boost();
+    /// For use with storing a fluence map in the medium.
+    fluence_map_OutputStream = NULL;
+    
+    /// For use when data is loaded from a previous simulation of ultrasound.
+    refractive_total_InputStream = NULL;
+    displacement_x_InputStream = displacement_y_InputStream = displacement_z_InputStream = NULL;
+    // refractive_x_InputStream = refractive_y_InputStream = refractive_z_InputStream = NULL;
+    
+    
+    /// What should be allocated - Ultrasound, Monte-Carlo, Both (Acousto-Optics)?
+	bool sim_monte_carlo             = Parameters->IsRun_MC_sim();
+	bool sim_kWave                   = Parameters->IsRun_kWave_sim();
+	bool sim_acousto_optics          = Parameters->IsRun_AO_sim();
+    bool sim_acousto_optics_loadData = Parameters->IsRun_AO_sim_loadData();
+    bool sim_modulation_depth        = Parameters->IsStore_modulation_depth();
+    bool sim_acousto_optics_sphere   = Parameters->IsRun_AO_sim_sphere();
+    
+    
+    if (sim_monte_carlo)
+    {
+        // Responsible for running the monte-carlo simulation.
+        da_boost = new MC_Boost();
+        
+        /// Notify the MC_sim that it should store the fluence.
+        da_boost->Store_fluence(true);
+        
+        /// For use with mapping the fluence in the medium.
+        /// XXX:
+        /// - Should this only be allocated when only running the MC_sim? That is, placed in the above if(sim_monte_carlo)?
+        ///   It seems if this is to be used when running an AO_sim_XXX it should be handled in KSpaceSolver and written to
+        ///   the generated HDF5 file there.
+        if (Parameters->IsStore_fluence_map())
+        {
+            //fluence_map_OutputStream = new TOutputHDF5Stream();
+            //if (!fluence_map_OutputStream)  throw bad_alloc();
+            
+            THDF5_File& HDF5_OutputFile = Parameters->HDF5_OutputFile;
+            HDF5_OutputFile.Create(Parameters->GetOutputFileName().c_str());
+            
+            /// Only store data over the time range specified on the commandline.
+            int total_time_steps_to_save_data = 1;
+            int Nx = Parameters->GetFullDimensionSizes().X;
+            int Ny = Parameters->GetFullDimensionSizes().Y;
+            int Nz = Parameters->GetFullDimensionSizes().Z;
+            
+            TDimensionSizes TotalSizes(Nx*Ny*Nz, total_time_steps_to_save_data, 1);
+            TDimensionSizes ChunkSizes(Nx*Ny*Nz,1, 1);
+            
+            //fluence_map_OutputStream->CreateStream(HDF5_OutputFile, absorb_fluence_map_Name, TotalSizes,
+            //                           ChunkSizes, Parameters->GetCompressionLevel());
 
-    // Responsible for running the k-Wave simulation.
-    KSpaceSolver = new TKSpaceFirstOrder3DSolver();
-
-    /// Set default values for private members.
-    m_Laser_injection_coords.x = -1;
-    m_Laser_injection_coords.y = -1;
-    m_Laser_injection_coords.z = -1;
+//            HDF5_OutputFile.CreateFloatDataset(absorb_fluence_map_Name,TotalSizes,ChunkSizes, Parameters->GetCompressionLevel());
+//            HDF5_OutputFile.WriteMatrixDomainType(absorb_fluence_map_Name,THDF5_File::hdf5_mdt_real);
+//            HDF5_OutputFile.WriteMatrixDataType(absorb_fluence_map_Name,THDF5_File::hdf5_mdt_float);
+            
+        }
+    }
+    else if (sim_acousto_optics || sim_acousto_optics_loadData || sim_acousto_optics_sphere)
+    {
+        // Responsible for running the monte-carlo simulation.
+        da_boost = new MC_Boost();
+        
+        // Responsible for running the k-Wave simulation.
+        KSpaceSolver = new TKSpaceFirstOrder3DSolver();
+    }
+    else if (sim_kWave)
+    {
+        // Responsible for running the k-Wave simulation.
+        KSpaceSolver = new TKSpaceFirstOrder3DSolver();
+    }
+    else
+    {
+        cout << " !!!ERROR!!!\n AO_Sim::AO_Sim() nothing specified to simulate (e.g. --kWave_sim)\n";
+        exit(EXIT_FAILURE);
+    }
 
 	/// Set default value.
 	MC_time_step = 0.0f;
+    
+    
 
-    /// For use when data is loaded from a previous simulation of ultrasound.
-    refractive_total_InputStream = NULL;
-//    refractive_x_InputStream = refractive_y_InputStream = refractive_z_InputStream = NULL;
-    displacement_x_InputStream = displacement_y_InputStream = displacement_z_InputStream = NULL;
+    
 }
 
 
@@ -53,7 +117,7 @@ AO_Sim::AO_Sim()
 AO_Sim::~AO_Sim()
 {
     cout << "\n\nAO_Sim:: destructor\n";
-
+    
 
 
     if (da_boost)
@@ -64,6 +128,57 @@ AO_Sim::~AO_Sim()
 
 //    if (m_medium)
 //        delete m_medium;
+}
+
+
+void
+AO_Sim::Write_fluence_HDF5_file(TParameters * Parameters)
+{
+    if (! (Parameters->IsRun_MC_sim() && Parameters->IsStore_fluence_map()))
+    {
+        cout << "!!! ERROR !!!\n AO_sim::Write_fluence_HDF5_file()\n";
+        cout << " Trying to write fluence data without flag to simulate storage\n";
+
+        exit(EXIT_FAILURE);
+    }
+    
+    // Write scalars
+    THDF5_File& HDF5_OutputFile = Parameters->HDF5_OutputFile;
+    Parameters->SaveScalarsToHDF5File(HDF5_OutputFile);
+    THDF5_FileHeader & HDF5_FileHeader = Parameters->HDF5_FileHeader;
+    
+    // Write File header
+    // -------------------------------
+//    HDF5_FileHeader.SetCodeName(GetCodeName());
+    HDF5_FileHeader.SetMajorFileVersion();
+    HDF5_FileHeader.SetMinorFileVersion();
+    HDF5_FileHeader.SetActualCreationTime();
+    HDF5_FileHeader.SetFileType(THDF5_FileHeader::hdf5_ft_output);
+    HDF5_FileHeader.SetHostName();
+    
+//    HDF5_FileHeader.SetMemoryConsumption(ShowMemoryUsageInMB());
+    
+    // Stop total timer here
+    //TotalTime.Stop();
+//    HDF5_FileHeader.SetExecutionTimes(GetTotalTime(),
+//                                      GetDataLoadTime(),
+//                                      GetPreProcessingTime(),
+//                                      GetSimulationTime(),
+//                                      GetPostProcessingTime());
+    
+    
+    HDF5_FileHeader.SetNumberOfCores();
+    HDF5_FileHeader.WriteHeaderToOutputFile(HDF5_OutputFile);
+    
+    m_medium->Get_fluence_map()->WriteDataToHDF5File(HDF5_OutputFile,
+                                                     absorb_fluence_map_Name,
+                                                     Parameters->GetCompressionLevel());
+    
+    HDF5_OutputFile.Close();
+    
+    
+    
+    
 }
 
 
@@ -84,11 +199,8 @@ AO_Sim::Run_monte_carlo_sim(TParameters * Parameters)
     }
     else
     {
+        /// Run the MC_sim.
         size_t time_step = 0;
-//        da_boost->Run_MC_sim_timestep(m_medium,
-//                                      m_Laser_injection_coords,
-//                                      time);
-        /// Run the MC_sim with the 'unmodulated' values.
         da_boost->Run_MC_sim_timestep_with_single_injection_aperture(m_medium,
                                                                      m_medium->getInjectionAperture(0),
                                                                      time_step);
@@ -407,6 +519,8 @@ AO_Sim::Run_acousto_optics_sim_sphere_tagging_volume(TParameters * Parameters)
             nmap[index[i]] = 1.33f;  /// Fill the entire sphere (i.e. the sensor mask) with a constant value.
         }
         
+        //PrintMatrix((*refractive_total_full_medium), Parameters);
+        
         /// Update the refractive map
         m_medium->Create_refractive_map_from_full_medium(refractive_total_full_medium);
     }
@@ -431,17 +545,10 @@ AO_Sim::Run_acousto_optics_sim_sphere_tagging_volume(TParameters * Parameters)
                                           disp_z_full_medium);
     }
     
-//    /// Run the MC_sim with the 'unmodulated' values.
-//    da_boost->Run_MC_sim_timestep(m_medium,
-//                                  m_Laser_injection_coords,
-//                                  time_step);
-    
     /// Run the MC_sim with the 'unmodulated' values.
     da_boost->Run_MC_sim_timestep_with_single_injection_aperture(m_medium,
                                                                  m_medium->getInjectionAperture(0),
                                                                  time_step);
-    
-    
     
     /// Run the simulation after populating the sphere with 'modulated' values.
     /// ------------------------------------------------------------------------------------------------
@@ -490,11 +597,7 @@ AO_Sim::Run_acousto_optics_sim_sphere_tagging_volume(TParameters * Parameters)
                                           disp_z_full_medium);
     }
     
-//    /// Run the MC_sim with the 'modulated' values.
-//    da_boost->Run_MC_sim_timestep(m_medium,
-//                                  m_Laser_injection_coords,
-//                                  ++time_step);
-    
+
     /// Run the MC_sim with the 'modulated' values.
     da_boost->Run_MC_sim_timestep_with_single_injection_aperture(m_medium,
                                                                  m_medium->getInjectionAperture(0),
@@ -1346,58 +1449,13 @@ AO_Sim::Create_MC_grid(TParameters * Parameters)
     //   means the monte-carlo medium should reflect these changes because US data in the PML
     //   is heavily distorted, as it should be, and we don't want photons moving through those
     //   regions.
-    size_t x_pml_offset = Parameters->Get_pml_x_size();
-    size_t y_pml_offset = Parameters->Get_pml_y_size();
-    size_t z_pml_offset = Parameters->Get_pml_z_size();
-    
-    
-    size_t Nx, Ny, Nz;
-    /// Dimension size of the MC_sim grid.
-    Nx = Parameters->GetFullDimensionSizes().X;
-    Ny = Parameters->GetFullDimensionSizes().Y;
-    Nz = Parameters->GetFullDimensionSizes().Z;
-    
-        
-
-    // Size of each voxel along its respective axis.
-    double dx = Parameters->Get_dx();
-    double dy = Parameters->Get_dy();
-    double dz = Parameters->Get_dz();
 
 
     // Create the medium object that represents the grid for the
     // monte-carlo simulation based upon the dimensions for simulating
     // ultrasound.
     //
-    m_medium = new Medium(Nx*dx,
-                          Ny*dy,
-                          Nz*dz);
-
-
-
-    // Set the voxel sizes of the 'Medium'.
-    this->m_medium->Set_dx(dx);
-    this->m_medium->Set_dy(dy);
-    this->m_medium->Set_dz(dz);
-
-    // Set the number of voxels of the 'Medium'.
-    this->m_medium->Set_Nx(Nx);
-    this->m_medium->Set_Ny(Ny);
-    this->m_medium->Set_Nz(Nz);
-
-    /// Set the size of the PML's used in the k-Wave simulation.
-    this->m_medium->Set_X_PML(x_pml_offset);
-    this->m_medium->Set_Y_PML(y_pml_offset);
-    this->m_medium->Set_Z_PML(z_pml_offset);
-
-
-    /// Set the size of the sensor mask used in the kWave simulation.  This is the number
-    /// of elements in the TRealMatrix that recorded data.
-    // const size_t  sensor_size = Get_sensor_mask_ind().GetTotalElementCount();
-    this->m_medium->kwave.sensor_mask_index_size    = Parameters->Get_sensor_mask_index_size();
-
-    /// Set the time-step used in k-Wave.
-    this->m_medium->kwave.dt = Parameters->Get_dt();
+    m_medium = new Medium(Parameters);
 }
 
 
@@ -1744,7 +1802,7 @@ void PrintMatrix(TRealMatrix &data, TParameters *Parameters)
 
 
     size_t x, y, z;
-    z = 55;
+    z = Dims.Z/2;
     for (x = 0; x < Dims.X; x++)
     {
         for (y = 0; y < Dims.Y; y++)

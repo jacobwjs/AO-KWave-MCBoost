@@ -129,6 +129,8 @@ Output flags:
  --disp_x                         : Store displacement along x-axis
  --disp_y                         : Store displacement along y-axis
  --disp_z                         : Store displacement along z-axis
+ 
+ --fluence_map                    : Store the fluence in the medium
 
  -e <timestep>                    : Time step when data collection ends
  
@@ -274,6 +276,9 @@ public:
     /// Is --disp_z set
     bool IsStore_disp_z()               const {return Store_disp_z;};
     
+    /// Is --fluence_map set
+    bool IsStore_fluence_map()          const {return Store_fluence_map;};
+    
     /// Is --AO_sim set
     bool IsRun_AO_sim()                 const {return Run_AO_sim;};
     /// Is --AO_sim_loadData set
@@ -344,6 +349,9 @@ private:
     
     /// -------------------------------------------- JWJS --------------------------------------------
     ///
+    ///
+    ///             ---- Options to decide what is run, via the commandline ----         ///
+    ///
     /// Used to signify that a 'perfect' plane wave is propagated. That is,
     /// the wave equation is only propagated along 1-dimension.
     bool        Plane_wave;
@@ -390,7 +398,10 @@ private:
     /// Store displacement along z-axis
     bool        Store_disp_z;
     
-                        /// Options to decide what is run, via the commandline ///
+    /// Store the fluence map
+    bool        Store_fluence_map;
+    
+    
     /// Run AO_sim that uses data as it's produced from kWave (i.e. US simulation runs)
     bool        Run_AO_sim;
     /// Run AO_sim that loads precomputed displacement and refractive index data
@@ -401,6 +412,8 @@ private:
     bool        Run_kWave_sim;
     /// Run AO_sim that approximates the tagging volume by a sphere filled with given values.
     bool        Run_AO_sim_sphere;
+    
+    
     
     /// -------------------------------------------------/
     

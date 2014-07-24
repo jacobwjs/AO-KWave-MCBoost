@@ -596,7 +596,7 @@ using namespace std;
  * ------------------------------------------------------- Various functions for Monte-Carlo -----------------
  */
 // Number of photons to simulate.
-const int MAX_PHOTONS = 100e3;
+const int MAX_PHOTONS = 10e3;
 
 // Testing routines.
 void testVectorMath(void);
@@ -626,31 +626,28 @@ static const char * FMT_SmallSeparator = "--------------------------------------
 int main(int argc, char** argv)
 {
 
-
-    /// The Acouto-Optic simulation object.
-    AO_Sim AO_simulation;
-
-    /// print headers
-    cout << FMT_SmallSeparator;
-    cout << AO_simulation.Print_kWave_header() << endl;
-    cout << AO_simulation.Print_MCBoost_header() << endl;
-    cout << FMT_SmallSeparator;
-    cout << "\n\n";
-
-
-
     /// ----------------------------------------------------------------------------------------------------
     /// Parameters for both k-Wave and Monte-Carlo simulations
     /// ----------------------------------------------------------------------------------------------------
-
+    
     /// Create parameters and parse command line
     TParameters* Parameters = TParameters::GetInstance();
 
     Parameters->ParseCommandLine(argc,argv);
+    
+    
+    /// The Acouto-Optic simulation object.
+    AO_Sim AO_simulation(Parameters);
+    
+    
     if (Parameters->IsVersion()){
         AO_simulation.Print_kWave_code_and_license();
         return 0;
     }
+    
+
+    
+    
 
 
 	/// What should be simulated - Ultrasound, Monte-Carlo, Both (Acousto-Optics)?
@@ -660,7 +657,37 @@ int main(int argc, char** argv)
     bool sim_acousto_optics_loadData = Parameters->IsRun_AO_sim_loadData();
     bool sim_modulation_depth        = Parameters->IsStore_modulation_depth();
     bool sim_acousto_optics_sphere   = Parameters->IsRun_AO_sim_sphere();
+    bool store_fluence_map           = Parameters->IsStore_fluence_map();
 
+    
+    /// print headers
+    if (sim_monte_carlo)
+    {
+        cout << FMT_SmallSeparator;
+        cout << AO_simulation.Print_MCBoost_header() << endl;
+        cout << FMT_SmallSeparator;
+    }
+    else if (sim_acousto_optics || sim_acousto_optics_loadData || sim_acousto_optics_sphere)
+    {
+        cout << FMT_SmallSeparator;
+        cout << AO_simulation.Print_kWave_header() << endl;
+        cout << AO_simulation.Print_MCBoost_header() << endl;
+        cout << FMT_SmallSeparator;
+        cout << "\n\n";
+        
+    }
+    else if (sim_kWave)
+    {
+        cout << FMT_SmallSeparator;
+        cout << AO_simulation.Print_kWave_header() << endl;
+        cout << FMT_SmallSeparator;
+    }
+    else
+    {
+        cout << "What are you simulating???\n";
+        exit(EXIT_FAILURE);
+    }
+    
 
     /// ----------------------------------------------------------------------------------------------------
     /// MC-Boost attributes
@@ -764,13 +791,6 @@ int main(int argc, char** argv)
         input_aperture.coordinates.z = 0.0f;
         
         AO_simulation.Add_injection_aperture_MC_medium(input_aperture);
-        
-//    	coords LaserInjectionCoords;
-//		/// Align the injection with the detection aperture.
-//		LaserInjectionCoords.x = detection_aperture.coordinates.x;	//AO_simulation.Get_MC_Xaxis_depth()/2; // Centered
-//		LaserInjectionCoords.y = detection_aperture.coordinates.y; 	//AO_simulation.Get_MC_Yaxis_depth()/2; // Centered
-//		LaserInjectionCoords.z = 0.0f;                    // Just below the surface of the 'air' layer.
-//    	AO_simulation.Set_laser_injection_coords(LaserInjectionCoords);
 
 
 		/// Set how often the monte-carlo simulation runs.
@@ -782,8 +802,11 @@ int main(int argc, char** argv)
         /// - We only want to run the MC_sim at every PI phase shift of the US propagation to use Steffen's theory.
         //float mc_step = 100e-9; /// For 5MHz with medium.sound_speed of 1,500 m/s
         float mc_step = 500e-9; /// For 1MHz with medium.sound_speed of 1,500 m/s
-		assert(mc_step >= Parameters->Get_dt());
-		AO_simulation.Set_MC_time_step(mc_step);
+        if (sim_acousto_optics)
+        {
+            assert(mc_step >= Parameters->Get_dt());
+            AO_simulation.Set_MC_time_step(mc_step);
+        }
 
 
     	/// Display the monte-carlo simulation parameters
@@ -933,6 +956,11 @@ int main(int argc, char** argv)
 
 #endif
 
+    if (store_fluence_map)
+    {
+        AO_simulation.Write_fluence_HDF5_file(Parameters);
+    }
+    
     Logger::getInstance()->Destroy();
 
 

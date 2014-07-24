@@ -22,11 +22,39 @@ Medium::Medium()
 	this->initCommon();
 }
 
-Medium::Medium(const double x, const double y, const double z)
+Medium::Medium(TParameters *Parameters)
 {
-	this->z_bound = z;
-	this->y_bound = y;
-	this->x_bound = x;
+    /// 'total_fluence_map' contains the final medium fluence after reduction from the 'Photon' threads.
+    total_fluence_map = NULL;
+    
+    dx = Parameters->Get_dx();
+    dy = Parameters->Get_dy();
+    dz = Parameters->Get_dz();
+    
+    Nx = Parameters->GetFullDimensionSizes().X;
+    Ny = Parameters->GetFullDimensionSizes().Y;
+    Nz = Parameters->GetFullDimensionSizes().Z;
+    
+    x_bound = Nx*dx;
+    y_bound = Ny*dy;
+    z_bound = Nz*dz;
+    
+    X_PML_OFFSET = Parameters->Get_pml_x_size();
+    Y_PML_OFFSET = Parameters->Get_pml_y_size();
+    Z_PML_OFFSET = Parameters->Get_pml_z_size();
+    
+    
+    kwave.sensor_mask_index_size    = Parameters->Get_sensor_mask_index_size();
+    kwave.dt = Parameters->Get_dt();
+    
+    /// Allocate memory for a 'fluence_map' if specified via the command line (i.e. --fluence_map).
+    if (Parameters->IsStore_fluence_map())
+    {
+        TDimensionSizes FullDim = Parameters->GetFullDimensionSizes();
+        total_fluence_map = new TRealMatrix(FullDim);
+    }
+    
+
 	this->initCommon();
 }
 
@@ -126,45 +154,6 @@ void Medium::addPressureMap(PressureMap *p_map)
 
 }
 
-//// Add a 3D refractive map object to the medium.
-//void Medium::addRefractiveMap(RefractiveMap *n_map)
-//{
-//	assert(n_map != NULL);
-//
-//    /// Since we are adding a new refractive map, there is a chance one is already assigned.
-//    /// If one already exists, we free the memory and assign the new one.
-//    if (kwave.nmap != NULL)
-//    {
-//        delete kwave.nmap;
-//        kwave.nmap = NULL;
-//    }
-//
-//    /// Assign new refractive map.
-//	kwave.nmap = n_map;
-//
-//}
-
-
-//// Add a 3-dimensional displacement map object to the medium.
-//void Medium::addDisplacementMap(DisplacementMap *d_map)
-//{
-//	assert(d_map != NULL);
-//
-//    /// Since we are adding a new displacement map, there is a chance one is already assigned.
-//    /// If one already exists, we free the memory and assign the new one.
-//    if (kwave.dmap != NULL)
-//    {
-//        delete kwave.dmap;
-//        kwave.dmap = NULL;
-//    }
-//
-//    /// Assign the new displacement map.
-//	kwave.dmap = d_map;
-//}
-
-
-
-
 
 void Medium::addDetector(Detector *detector)
 {
@@ -189,6 +178,7 @@ void Medium::addInjectionAperture(Aperture *aperture)
     
 }
 
+
 Aperture * Medium::getInjectionAperture(size_t index)
 {
     return p_injection_apertures[index];
@@ -209,6 +199,7 @@ int Medium::photonHitDetectorPlane(const boost::shared_ptr<Vector3d> p0)
 
 	return hitDetectorNumTimes;
 }
+
 
 Layer * Medium::getLayerAboveCurrent(Layer *currentLayer)
 {

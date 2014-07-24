@@ -28,6 +28,7 @@
  * Includes for reading HDF5 data file
  */
 #include <MatrixClasses/InputHDF5Stream.h>
+#include <MatrixClasses/OutputHDF5Stream.h>
 
 
 
@@ -41,7 +42,7 @@ using namespace std;
 class AO_Sim
 {
 public:
-    AO_Sim();
+    AO_Sim(TParameters * params);
     ~AO_Sim();
     
     
@@ -146,21 +147,6 @@ public:
     void    Add_injection_aperture_MC_medium(Aperture_Properties &props);
     
     
-    /// Set the location at which light will be injected into the medium.
-    void    Set_laser_injection_coords(coords laser_coords)
-            {
-                m_Laser_injection_coords.x = laser_coords.x;
-                m_Laser_injection_coords.y = laser_coords.y;
-                m_Laser_injection_coords.z = laser_coords.z;
-
-                cout << "-----------------------------------------------------\n"
-                     << "Laser injection coordinates set /\n"
-                     << "--------------------------------\n"
-                     << " Location: [x=" << m_Laser_injection_coords.x
-                     << ", y=" << m_Laser_injection_coords.y
-                     << ", z=" << m_Laser_injection_coords.z << "] (meters)\n";
-            }
-    
     
     /// Set the number of threads that will be run for the monte-carlo simulation.
     void    Set_num_MC_threads(size_t num_threads)
@@ -208,16 +194,13 @@ public:
     /// that exited through the exit aperture.
     void    Save_RNG_seeds(const bool flag) {da_boost->Save_RNG_seeds(flag);};
     
+    /// If '--fluence_map' is specified, then we need to write the data out upon completion.
+    void    Write_fluence_HDF5_file(TParameters * Parameters);
+    
     /// Return the z-axis depth.
     double  Get_MC_Zaxis_depth() {return m_medium->Get_Z_bound();}
     double  Get_MC_Yaxis_depth() {return m_medium->Get_Y_bound();}
     double  Get_MC_Xaxis_depth() {return m_medium->Get_X_bound();}
-    
-    
-    void    Set_pezio_optical_coeff(const float val)
-            {
-                pezio_optical_coeff = val;
-            }    
 
 
 
@@ -253,7 +236,8 @@ public:
 
     
 protected:
-    
+    /// fluence_map data output stream (timeseries)
+    TOutputHDF5Stream*  fluence_map_OutputStream;
     
     TInputHDF5Stream* refractive_total_InputStream;
 //    TInputHDF5Stream* refractive_x_InputStream;
@@ -276,16 +260,8 @@ private:
 	/// How often the MC simulation is run.  Based on the timesteps of k-Wave simulation.
 	float 		MC_time_step;
     
-    /// Holds the coordinates where light is injected into the medium.
-    coords      m_Laser_injection_coords;
-    
     /// Instance of the k-Wave simulation.
     TKSpaceFirstOrder3DSolver * KSpaceSolver;
-    
-    
-    /// Pezio-optical coefficient.
-    float       pezio_optical_coeff;
-
     
 };
 

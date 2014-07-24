@@ -70,9 +70,9 @@ public:
     void OpenOutputFile(THDF5_File & HDF5_OutputFile);
     /// ------------------------------------
     
-    /// Full dimension sizes of the simulation (real clases)
+    /// Full dimension sizes of the simulation (real classes)
     TDimensionSizes GetFullDimensionSizes   () const {return FullDimensionSizes; };
-    /// Reduced dimension sizes of the simulation (complex clases)
+    /// Reduced dimension sizes of the simulation (complex classes)
     TDimensionSizes GetReducedDimensionSizes() const {return ReducedDimensionSizes; };
 
     /// Get Nt value
@@ -277,6 +277,8 @@ public:
     /// Is --disp_x specified at the command line
     bool IsStore_disp_z()               const {return CommandLinesParameters.IsStore_disp_z();};
     
+    /// Is --fluence_map specified at the command line
+    bool IsStore_fluence_map()          const {return CommandLinesParameters.IsStore_fluence_map();};
     
     /// Is --AO_sim specified at the command line
     bool IsRun_AO_sim()                 const {return CommandLinesParameters.IsRun_AO_sim();};

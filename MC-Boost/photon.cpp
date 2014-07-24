@@ -19,13 +19,13 @@
 
 
 Photon::Photon(void)
+:partial_fluence_map(NULL),
+m_medium(NULL),
+m_input_aperture(NULL)
 {
 #ifdef DEBUG
 	cout << "Creating Photon...\n";
 #endif
-
-    m_medium = NULL;
-    m_input_aperture = NULL;
     
 	// The current location of the photon.
 	currLocation = boost::shared_ptr<Vector3d> (new Vector3d);
@@ -145,7 +145,12 @@ void Photon::Inject_photon_through_aperture(Medium *medium, const int num_iterat
 	SIM_REFRACTIVE_TOTAL        = Params.REFRACTIVE_TOTAL;
     SIM_REFRACTIVE_GRADIENT     = Params.REFRACTIVE_GRADIENT;
 	SAVE_RNG_SEEDS				= Params.SAVE_SEEDS;
+    STORE_FLUENCE               = Params.STORE_FLUENCE;
     
+    if (STORE_FLUENCE)
+    {
+        partial_fluence_map = new TRealMatrix(m_medium->total_fluence_map->GetDimensionSizes());
+    }
     
     // Assign this photon object a random number generator, which is passed in from main().
     RNG_generator = new RNG();
@@ -479,8 +484,6 @@ void Photon::drop()
 
 		// Update the absorbed weight in this absorber.
 		absorber->updateAbsorbedWeight(absorbed);
-
-
 	}
 	else
 	{
@@ -504,10 +507,21 @@ void Photon::drop()
 	// Remove the portion of energy lost due to absorption at this location.
 	weight -= absorbed;
 
-	// Deposit lost energy in the grid of the medium.
-	//m_medium->absorbEnergy(z, absorbed);
+    /// Update the fluence map if we are storing fluence data.
+    if (STORE_FLUENCE)
+    {
+        
+        // Transform the location of the photon in the medium to discrete locations in the grid.
+        /// Get the appropriate voxel number for the 3-D grid.
+        size_t _x = currLocation->location.x/m_medium->dx - (currLocation->location.x/m_medium->dx)/m_medium->Nx;
+        size_t _y = currLocation->location.y/m_medium->dy - (currLocation->location.y/m_medium->dy)/m_medium->Ny;
+        size_t _z = currLocation->location.z/m_medium->dz - (currLocation->location.z/m_medium->dz)/m_medium->Nz;
 
-
+        /// Deposit absorbed energy in the fluence map.
+        //partial_fluence_map->SetElementFrom3D(_x, _y, _z, weight);
+        m_medium->total_fluence_map->SetElementFrom3D(_x, _y, _z, weight);
+    }
+	
 }
 
 

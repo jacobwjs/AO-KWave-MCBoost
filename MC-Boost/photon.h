@@ -2,6 +2,8 @@
 #ifndef PHOTON_H
 #define PHOTON_H
 
+#include <MatrixClasses/RealMatrix.h>
+
 #include <boost/math/constants/constants.hpp>
 #include <boost/thread/mutex.hpp>
 #include <boost/shared_ptr.hpp>
@@ -46,6 +48,7 @@ typedef struct {
     bool MODULATION_DEPTH;
     bool SAVE_SEEDS;
     bool USE_SEEDS;
+    bool STORE_FLUENCE;
 } MC_Parameters;
 
 
@@ -326,10 +329,6 @@ private:
     
     // Pointer to the current layer the photon is in.
     Layer *currLayer;
-    
-    // Structure that contains the cartesian coordinates of the injection point of each
-    // photon into the medium.
-    coords illuminationCoords;
 
 
     // Count through the layer.
@@ -344,6 +343,13 @@ private:
     bool SIM_REFRACTIVE_TOTAL;
     bool SIM_REFRACTIVE_GRADIENT;
     bool SAVE_RNG_SEEDS;
+    bool STORE_FLUENCE;
+    
+    /// Fluence map for absorbed energy for this 'Photon' object. This gets put into a 'total_fluence_map' in 'Medium'
+    /// after execution that this 'Photon' thread simulates all of it's photons.
+    /// NOTE:
+    /// - Innacuracies arise when the step size (i.e. Photon::Hop()) is larger than the voxel size.
+    TRealMatrix *partial_fluence_map;
 
 }; 		
 

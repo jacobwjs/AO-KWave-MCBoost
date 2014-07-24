@@ -187,6 +187,10 @@ MC_Boost::Run_MC_sim_timestep_with_single_injection_aperture(Medium *medium, Ape
     {
         cout << "Modulation depth enabled\n";
     }
+    if (Params.STORE_FLUENCE)
+    {
+        cout << "Storing fluence map\n";
+    }
     if (Params.SAVE_SEEDS)
     {
         cout << "Should not be here: ERROR !!!!!!!!!!! \n MC_Boost::Run_MC_sim_timestep() SAVE_SEEDS enabled\n\n";

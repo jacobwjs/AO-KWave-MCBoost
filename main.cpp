@@ -575,7 +575,9 @@ Name                            Size           Data type        Domain Type     
 #include <AO-sim/AO_sim.h>
 #include <MC-Boost/sphereAbsorber.h>
 #include <MC-Boost/layer.h>
+#include <MC-Boost/loggerBase.h>
 #include <MC-Boost/logger.h>
+#include <MC-Boost/loggerSingleton.h>
 #include <MC-Boost/injectionAperture.h>
 
 #include <cmath>
@@ -766,29 +768,40 @@ int main(int argc, char** argv)
     	/// Add a detector to the medium (i.e. an exit aperture) for collecting photons that will make their way
     	/// to the CCD camera.
     	/// NOTE: Centering the detector on the x-y plane.
-    	Aperture_Properties detection_aperture;
-        detection_aperture.xy_plane = true;
-        detection_aperture.radius = 0.0030;
-    	//detector_props.x_coord = 0.0225;    //  Upon inspection, the US focus is located here.
-        detection_aperture.coordinates.x = AO_simulation.Get_MC_Xaxis_depth()/2;  // Perfectly centered in the medium.
-        detection_aperture.coordinates.y = AO_simulation.Get_MC_Yaxis_depth()/2;
+        ///
         /// Transmission mode
         /// -----------------
-         detection_aperture.coordinates.z = AO_simulation.Get_MC_Zaxis_depth();
+    	Aperture_Properties trans_detection_aperture;
+        trans_detection_aperture.xy_plane = true;
+        trans_detection_aperture.radius = 0.0030;
+    	//detector_props.x_coord = 0.0225;    //  Upon inspection, the US focus is located here.
+        trans_detection_aperture.center_coords.location.x = AO_simulation.Get_MC_Xaxis_depth()/2;  // Perfectly centered in the medium.
+        trans_detection_aperture.center_coords.location.y = AO_simulation.Get_MC_Yaxis_depth()/2;
+        trans_detection_aperture.center_coords.location.z = AO_simulation.Get_MC_Zaxis_depth();
+        trans_detection_aperture.name = "trans";
+        AO_simulation.Add_circular_detector_MC_medium(trans_detection_aperture);
+
         /// Reflection mode
         /// ---------------
-        //detector_props.coordinates.z= 0.0f;
-        
-    	AO_simulation.Add_circular_detector_MC_medium(detection_aperture);
+        Aperture_Properties refl_detection_aperture;
+        refl_detection_aperture.xy_plane = true;
+        refl_detection_aperture.radius = 0.0030;
+    	//detector_props.x_coord = 0.0225;    //  Upon inspection, the US focus is located here.
+        refl_detection_aperture.center_coords.location.x = AO_simulation.Get_MC_Xaxis_depth()/2;  // Perfectly centered in the medium.
+        refl_detection_aperture.center_coords.location.y = AO_simulation.Get_MC_Yaxis_depth()/2;
+        refl_detection_aperture.center_coords.location.z = 0.0f;
+        refl_detection_aperture.name = "refl";
+        AO_simulation.Add_circular_detector_MC_medium(refl_detection_aperture);
+
 
 
     	/// Define the injection point of light in the medium.
         Aperture_Properties input_aperture;
         input_aperture.xy_plane = true;
-        input_aperture.radius = detection_aperture.radius;              /// Ensure that the input and detection apertures match.
-        input_aperture.coordinates.x = detection_aperture.coordinates.x;
-        input_aperture.coordinates.y = detection_aperture.coordinates.y;
-        input_aperture.coordinates.z = 0.0f;
+        input_aperture.radius = trans_detection_aperture.radius;              /// Ensure that the input and detection apertures match.
+        input_aperture.center_coords.location.x = trans_detection_aperture.center_coords.location.x;
+        input_aperture.center_coords.location.y = trans_detection_aperture.center_coords.location.y;
+        input_aperture.center_coords.location.z = 0.0f;
         
         AO_simulation.Add_injection_aperture_MC_medium(input_aperture);
 
@@ -841,7 +854,7 @@ int main(int argc, char** argv)
 //#define DEBUG
 #ifdef DEBUG
 
-    //Logger::getInstance()->Open_vel_disp_file("Data/velocity_displacement.dat");
+    //LoggerSingleton::getInstance()->Open_vel_disp_file("Data/velocity_displacement.dat");
     //AO_simulation.Test_Seeded_MC_sim();
     //AO_simulation.Test_Seeded_MC_sim();
 
@@ -875,11 +888,11 @@ int main(int argc, char** argv)
         cout << FMT_SmallSeparator;
 
         /// Has modulation depth commandline argument been set.
-        /// If so we notify the logger to save the OPL's to file.
+        /// If so we notify the LoggerSingleton to save the OPL's to file.
         if (sim_modulation_depth)
         {
 
-            Logger::getInstance()->Open_modulation_depth_file("Data/optical_path_lengths_" + Logger::getInstance()->getCurrTime() + ".dat");
+            //LoggerSingleton::getInstance()->Open_modulation_depth_file("Data/OPLs_" + LoggerSingleton::getInstance()->getCurrTime() + ".dat");
 
         }
 
@@ -888,10 +901,10 @@ int main(int argc, char** argv)
 
         /// FIXME:
         /// - Data is not being written out unless explicitly called to, thus the need
-        ///   for this if() statement.  Should happen automagically from the logger's destructor.
+        ///   for this if() statement.  Should happen automagically from the LoggerSingleton's destructor.
         if (sim_modulation_depth)
         {
-            Logger::getInstance()->Write_OPL_data();
+            //LoggerSingleton::getInstance()->Write_OPL_data();
         }
 	}
     else if (sim_acousto_optics_loadData)
@@ -901,10 +914,10 @@ int main(int argc, char** argv)
         cout << FMT_SmallSeparator;
 
         /// Has modulation depth commandline argument been set.
-        /// If so we notify the logger to save the OPL's to file.
+        /// If so we notify the LoggerSingleton to save the OPL's to file.
         if (sim_modulation_depth)
         {
-            Logger::getInstance()->Open_modulation_depth_file("Data/optical_path_lengths_" + Logger::getInstance()->getCurrTime() + ".dat");
+            //LoggerSingleton::getInstance()->Open_modulation_depth_file("Data/OPLs_" + LoggerSingleton::getInstance()->getCurrTime() + ".dat");
         }
 
         /// Run the AO simulation.
@@ -913,13 +926,14 @@ int main(int argc, char** argv)
 
         /// FIXME:
         /// - Data is not being written out unless explicitly called to, thus the need
-        ///   for this if() statement.  Should happen automagically from the logger's destructor.
+        ///   for this if() statement.  Should happen automagically from the LoggerSingleton's destructor.
         if (sim_modulation_depth)
         {
-            Logger::getInstance()->Write_OPL_data();
+            LoggerSingleton::getInstance()->Write_OPL_data();
         }
 
         /// Test case.
+        ///
         //AO_simulation.Test_Read_HDF5_File(Parameters);
     }
     else if (sim_acousto_optics_sphere)
@@ -929,11 +943,11 @@ int main(int argc, char** argv)
         cout << FMT_SmallSeparator;
         
         /// Has modulation depth commandline argument been set.
-        /// If so we notify the logger to save the OPL's to file.
+        /// If so we notify the LoggerSingleton to save the OPL's to file.
         if (sim_modulation_depth)
         {
             
-            Logger::getInstance()->Open_modulation_depth_file("Data/optical_path_lengths_" + Logger::getInstance()->getCurrTime() + ".dat");
+            //LoggerSingleton::getInstance()->Open_modulation_depth_file("Data/OPLs_" + LoggerSingleton::getInstance()->getCurrTime() + ".dat");
             
         }
         
@@ -942,10 +956,10 @@ int main(int argc, char** argv)
         
         /// FIXME:
         /// - Data is not being written out unless explicitly called to, thus the need
-        ///   for this if() statement.  Should happen automagically from the logger's destructor.
+        ///   for this if() statement.  Should happen automagically from the LoggerSingleton's destructor.
         if (sim_modulation_depth)
         {
-            Logger::getInstance()->Write_OPL_data();
+            //LoggerSingleton::getInstance()->Write_OPL_data();
         }
     }
 	else
@@ -961,7 +975,7 @@ int main(int argc, char** argv)
         AO_simulation.Write_fluence_HDF5_file(Parameters);
     }
     
-    Logger::getInstance()->Destroy();
+    //LoggerSingleton::getInstance()->Destroy();
 
 
     return  EXIT_SUCCESS;

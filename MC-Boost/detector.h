@@ -17,6 +17,8 @@ using namespace VectorMath;
 //#include <boost/math/complex/fabs.hpp>
 
 
+class Photon;
+
 class Detector
 {
 public:
@@ -33,6 +35,12 @@ public:
     virtual void savePhotonExitWeight(void) = 0;
     
     
+    /// Retrieve a pointer to the 'Logger' instance.
+    virtual Logger * getLogger()    const {return m_logger;};
+    
+    
+    
+    
     
 protected:
     // Center coordinates of the detector in the medium. [cm]
@@ -40,6 +48,9 @@ protected:
     
 	// Mutex to serialize access to the detector.
 	boost::mutex m_detector_mutex;
+    
+    /// Logger for collecting about this detector.
+    Logger *m_logger;
 };
 
 

@@ -65,6 +65,8 @@ protected:
     // Create a mutex to serialize access when updating the absorbed weight.
     // in this absorber.
     boost::mutex m_mutex;
+    
+    Logger *m_logger;
 };
 
 #endif

@@ -196,6 +196,8 @@ $(TARGET):	main.o 					\
 		MC-Boost/displacementMap.o		\
 		MC-Boost/injectionAperture.o		\
 		MC-Boost/layer.o			\
+		MC-Boost/loggerBase.o			\
+		MC-Boost/loggerSingleton.o		\
 		MC-Boost/logger.o			\
 		MC-Boost/medium.o			\
 		MC-Boost/photon.o			\
@@ -232,6 +234,8 @@ $(TARGET):	main.o 					\
                 MC-Boost/displacementMap.o              \
 		MC-Boost/injectionAperture.o		\
                 MC-Boost/layer.o                        \
+		MC-Boost/loggerBase.o			\
+		MC-Boost/loggerSingleton.o		\
                 MC-Boost/logger.o                       \
 		MC-Boost/medium.o			\
                 MC-Boost/photon.o                       \

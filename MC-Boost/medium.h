@@ -12,8 +12,8 @@ using std::endl;
 #include <boost/thread/mutex.hpp>
 #include <boost/shared_ptr.hpp>
 
-#include <MC-Boost/kwave_struct.h>
 #include <MC-Boost/layer.h>
+#include <MC-Boost/detector.h>
 #include <MC-Boost/voxel_struct.h>
 
 #include <MatrixClasses/RealMatrix.h>
@@ -26,10 +26,46 @@ using std::endl;
 class PressureMap;
 class RefractiveMap;
 class DisplacementMap;
-class Detector;
 class Vector3d;
 class Photon;
 class Aperture;
+
+typedef struct {
+    // Create a pointer to a PressureMap object.  For use with
+	// modeling acousto-optics.
+	PressureMap * pmap;
+    
+	// Create a pointer to a RefractiveMap object.  For use with
+	// modeling acousto-optics.
+	RefractiveMap * nmap;
+    
+    // Create a pointer to a Displacement object.  For use with
+    // modeling acousto-optics.
+    DisplacementMap * dmap;
+    
+    // Frequency of the ultrasound used.
+    float  US_freq;
+    
+    // The wavenumber of the ultrasound.
+    double  waveNumber;
+    
+    /// The density of the medium.
+    ///double  density;
+    
+    /// The speed-of-sound of the medium
+    //double  speed_of_sound;
+    
+    /// The total number of elements in the sensor mask.
+    long    sensor_mask_index_size;
+    
+    // Number of time steps in the simulation.
+    int totalTimeSteps;
+    
+    /// Time step (i.e. dt used in k-Wave for updating calculations).
+    float dt;
+    
+    
+} kWaveSim; 
 
 
 // Medium is a container object that holds one or many layer objects that the
@@ -81,8 +117,9 @@ public:
     void    addInjectionAperture(Aperture *aperture);
 
     // See if photon has crossed the detector plane.
-    int    photonHitDetectorPlane(const boost::shared_ptr<Vector3d> p0);
-
+    //int    photonHitDetectorPlane(const boost::shared_ptr<Vector3d> p0);
+    Detector * photonHitDetectorPlane(const boost::shared_ptr<Vector3d> p0);
+    
 	// Add a pressure map object that holds pressure generated from K-Wave
     void 	addPressureMap(PressureMap *p_map);
 
@@ -136,6 +173,9 @@ public:
     
     /// Return the injection aperture based on the provided index.
     Aperture * getInjectionAperture(size_t index);
+    
+    /// Write out the detected photon information.
+    void    Write_detector_data();
 
     // Return the max depth of the medium.
     double 	getDepth() {return depth;}

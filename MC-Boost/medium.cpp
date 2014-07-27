@@ -26,7 +26,7 @@ Medium::Medium(TParameters *Parameters)
 {
     /// 'total_fluence_map' contains the final medium fluence after reduction from the 'Photon' threads.
     total_fluence_map = NULL;
-    
+     
     dx = Parameters->Get_dx();
     dy = Parameters->Get_dy();
     dz = Parameters->Get_dz();
@@ -78,12 +78,13 @@ Medium::~Medium()
 		kwave.dmap = NULL;
 	}
 
-	// If there were any absorbers in the medium, write out their data.
-    //for (vector<Layer *>::iterator it = p_layers.begin(); it != p_layers.end(); it++)
-    //{
-    //	(*it)->writeAbsorberData();
-    //	delete *it;
-    //}
+
+	// Iterate through the detectors and free memory.
+	for (vector<Detector *>::iterator it = p_detectors.begin(); it != p_detectors.end(); it++)
+	{
+			delete *it;
+	}
+    
 }
 
 
@@ -161,6 +162,18 @@ void Medium::addDetector(Detector *detector)
 	p_detectors.push_back(detector);
 }
 
+void Medium::Write_detector_data()
+{
+    Detector * detector = NULL;
+    std::string detector_name;
+    // Iterate through the detectors and free memory.
+	for (vector<Detector *>::iterator it = p_detectors.begin(); it != p_detectors.end(); it++)
+	{
+        detector = *it;
+        detector->getLogger()->Write_weight_OPLs_coordinates_from_MAP();
+	}
+}
+
 
 void Medium::addInjectionAperture(Aperture *aperture)
 {
@@ -187,17 +200,32 @@ Aperture * Medium::getInjectionAperture(size_t index)
 
 
 // See if photon has crossed the detector plane.
-int Medium::photonHitDetectorPlane(const boost::shared_ptr<Vector3d> p0)
+//int Medium::photonHitDetectorPlane(const boost::shared_ptr<Vector3d> p0)
+//{
+//	int hitDetectorNumTimes = 0;
+//	// Iterate through the detectors and return the detector that had it's plane crossed by the photon.
+//	for (vector<Detector *>::iterator it = p_detectors.begin(); it != p_detectors.end(); it++)
+//	{
+//		if ((*it)->photonHitDetector(p0))
+//			hitDetectorNumTimes++;
+//	}
+//
+//	return hitDetectorNumTimes;
+//}
+
+
+Detector * Medium::photonHitDetectorPlane(const boost::shared_ptr<Vector3d> p0)
 {
-	bool hitDetectorNumTimes = 0;
-	// Free the memory for layers that were added to the medium.
+    Detector * detector = NULL;
+	// Iterate through the detectors and return the detector that had it's plane crossed by the photon.
 	for (vector<Detector *>::iterator it = p_detectors.begin(); it != p_detectors.end(); it++)
 	{
 		if ((*it)->photonHitDetector(p0))
-			hitDetectorNumTimes++;
+			detector = *it;
 	}
-
-	return hitDetectorNumTimes;
+    
+    /// Return the detector if found, otherwise return null.
+	return detector;
 }
 
 
@@ -226,7 +254,7 @@ Layer * Medium::getLayerAboveCurrent(Layer *currentLayer)
 
 
 	///boost::mutex::scoped_lock lock(m_layer_above_mutex);
-	while(it != p_layers.end()) {
+	while (it != p_layers.end()) {
 		trailer = it;  // Assign the trailer to the current layer.
 		it++;         // Advance the iterator to the next layer.
 

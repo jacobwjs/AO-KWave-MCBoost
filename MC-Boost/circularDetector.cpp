@@ -19,28 +19,26 @@ static const double THRESHOLD = 1e-10;
 
 
 CircularDetector::CircularDetector(const Aperture_Properties &props)
-:Detector(),
- Aperture()
+:Detector(props.center_coords),
+ Aperture(props)
 {
-    detector_center.location.x = aperture_center.location.x = props.coordinates.x;
-    detector_center.location.y = aperture_center.location.y = props.coordinates.y;
-    detector_center.location.z = aperture_center.location.z = props.coordinates.z;
-    
-    radius = props.radius;
+    assert (m_logger != NULL);
+    m_logger->Set_name(props.name);
     
 	/// Notify where the detector is added to the medium.
     cout << "-----------------------------------------------------\n"
          << "Adding a circular detector to the medium /\n"
          << "-----------------------------------------\n"
-         << " Location: [x=" << aperture_center.location.x
-         << ", y=" << aperture_center.location.y
-         << ", z=" << aperture_center.location.z << "] (meters)\n";
-    cout << " Radius: " << props.radius << " (meters)\n";
+         << " Location: [x=" << m_aperture_properties.center_coords.location.x
+         << ", y=" << m_aperture_properties.center_coords.location.y
+         << ", z=" << m_aperture_properties.center_coords.location.z << "] (meters)\n";
+    cout << " Radius: " << m_aperture_properties.radius << " (meters)\n";
+    cout << " Name: " << m_aperture_properties.name << "\n";
     
     // initialize the vector normal to the plane to have
     // direction since it is only used to know the direction
     // and not location that the plane faces.
-    normalVector.withDirection();
+    m_aperture_properties.normalVector.withDirection();
     
 	/// Set the plane on which the detector lays.
 	if (props.xy_plane)
@@ -61,7 +59,9 @@ CircularDetector::CircularDetector(const Aperture_Properties &props)
 	else
 	{
 		cout << "!!!ERROR: Detector plane has not been defined.\n";
-		assert((xy_plane == true) || (xz_plane == true) || (yz_plane == true));  // One plane must be set.
+		assert((m_aperture_properties.xy_plane == true) ||
+               (m_aperture_properties.xz_plane == true) ||
+               (m_aperture_properties.yz_plane == true));  // One plane must be set.
 	}
     
     
@@ -72,8 +72,9 @@ CircularDetector::CircularDetector(const Aperture_Properties &props)
 CircularDetector::CircularDetector(const double radius, const Vector3d &centerPoint)
 :Detector(centerPoint)
 {
-    cout << " radius: " << radius << " (meters)\n";
-    this->radius = radius;
+    m_aperture_properties.radius = radius;
+    cout << " radius: " << m_aperture_properties.radius << " (meters)\n";
+
 }
 
 
@@ -81,15 +82,18 @@ CircularDetector::CircularDetector(const double radius, const Vector3d &centerPo
 CircularDetector::CircularDetector(const double radius, const boost::shared_ptr<Vector3d> centerPoint)
 :Detector(centerPoint)
 {
-    cout << " radius: " << radius << " (meters)\n";
-    this->radius = radius;
+    m_aperture_properties.radius = radius;
+    cout << " radius: " << m_aperture_properties.radius << " (meters)\n";
 }
 
 
 
 CircularDetector::~CircularDetector()
 {
-    
+//    if (m_logger != NULL)
+//    {
+//        m_logger->Write_weight_OPLs_coordinates(m_aperture_properties.name);
+//    }
 }
 
 
@@ -99,17 +103,17 @@ bool CircularDetector::photonHitDetector(const boost::shared_ptr<Vector3d> p0)
 	boost::mutex::scoped_lock lock(m_detector_mutex);
     
     // Create a line segment from the center of the detector to the location of the photon.
-    boost::shared_ptr<Vector3d> centerToPoint = aperture_center - (*p0);
+    boost::shared_ptr<Vector3d> centerToPoint = m_aperture_properties.center_coords - (*p0);
     
     // If the dot product of the normal vector from the detector surface and the line segment
     // found above is zero (i.e. they are perpendicular) we know that the photon has hit
     // the detector and lies on the plane formed by the detector.
-    if (fabs((VectorMath::dotProduct((*centerToPoint), normalVector)) - 0.0) <= THRESHOLD)
+    if (fabs((VectorMath::dotProduct((*centerToPoint), m_aperture_properties.normalVector)) - 0.0) <= THRESHOLD)
     {
         
         // Now calculate the distance from the center of the detector plane to the intersection point, and if
         // that distance is larger than the radius the line segment missed the detector.
-        if (fabs(VectorMath::Distance(aperture_center, (*p0))) <= radius)
+        if (fabs(VectorMath::Distance(m_aperture_properties.center_coords, (*p0))) <= m_aperture_properties.radius)
         {
 #ifdef DEBUG
             cout << "intersection point with detector = " << p0;
@@ -161,7 +165,7 @@ bool CircularDetector::photonPassedThroughDetector(const boost::shared_ptr<Vecto
     boost::shared_ptr<Vector3d> lineSegment = (*p1) - (*p0);
     
     // Create the vector that is from the previous location of the photon (p0) to the point on the plane (aperture_center);
-    boost::shared_ptr<Vector3d> pointToPlane = aperture_center - (*p0);
+    boost::shared_ptr<Vector3d> pointToPlane = m_aperture_properties.center_coords - (*p0);
     
     // Check if the photon has moved passed the plane.  If not there is no way it could have crossed the plane,
     // so return false.  Otherwise continue the calculation.
@@ -170,7 +174,7 @@ bool CircularDetector::photonPassedThroughDetector(const boost::shared_ptr<Vecto
     // segment lies completely on one half of the space seperated by the plane (i.e. it has already moved beyond the
     // plane and not able to intersect it.  If t > 0 then it lies completely on the other half of the plane and has 
     // not intersected it.  If 0 <= t <= 1 then the line segment has crossed the plane.
-    double t = VectorMath::dotProduct(normalVector, *pointToPlane) / VectorMath::dotProduct(normalVector, *lineSegment);
+    double t = VectorMath::dotProduct(m_aperture_properties.normalVector, *pointToPlane) / VectorMath::dotProduct(m_aperture_properties.normalVector, *lineSegment);
     
     
     
@@ -186,7 +190,7 @@ bool CircularDetector::photonPassedThroughDetector(const boost::shared_ptr<Vecto
         
         // Now calculate the distance from the center of the detector plane to the intersection point, and if
         // that distance is larger than the radius the line segment missed the detector.
-        if (VectorMath::Distance(aperture_center, (*intersectionPoint)) > radius)
+        if (VectorMath::Distance(m_aperture_properties.center_coords, (*intersectionPoint)) > m_aperture_properties.radius)
         {
             return false;
         }

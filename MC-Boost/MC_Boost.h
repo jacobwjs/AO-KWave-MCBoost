@@ -10,7 +10,8 @@
 #define __K_Wave_C__MC_Boost__
 
 #include <MC-Boost/RNG.h>
-#include <MC-Boost/coordinates.h>
+#include "common_structs.h"
+
 #include <cmath>
 #include <ctime>
 #include <vector>
@@ -29,6 +30,7 @@ using std::string;
 // Forward class declarations.
 class Medium;
 class Aperture;
+
 
 
 

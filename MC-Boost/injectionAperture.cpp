@@ -14,42 +14,42 @@ using std::cout;
 
 InjectionAperture::InjectionAperture(void)
 {
-    aperture_center.location.x = 0.0f;
-    aperture_center.location.y = 0.0f;
-    aperture_center.location.z = 0.0f;
+    m_aperture_properties.center_coords.location.x = 0.0f;
+    m_aperture_properties.center_coords.location.y = 0.0f;
+    m_aperture_properties.center_coords.location.z = 0.0f;
 }
 
 
 InjectionAperture::InjectionAperture(const Aperture_Properties &props)
+: Aperture(props)
 {
-    aperture_center.location.x = props.coordinates.x;
-    aperture_center.location.y = props.coordinates.y;
-    aperture_center.location.z = props.coordinates.z;
-    
-    radius = props.radius;
-    
     // initialize the vector normal to the plane to have
     // direction since it is only used to know the direction
     // and not location that the plane faces.
-    normalVector.withDirection();
+    m_aperture_properties.normalVector.withDirection();
     
-    /// Set the plane on which the detector lays.
+	/// Set the plane on which the detector lays.
 	if (props.xy_plane)
 	{
 		setAperturePlaneXY();
+        cout << " plane: x-y\n";
 	}
 	else if (props.xz_plane)
 	{
 		setAperturePlaneXZ();
+        cout << " plane: x-z\n";
 	}
 	else if (props.yz_plane)
 	{
 		setAperturePlaneYZ();
+        cout << " plane: y-z\n";
 	}
 	else
 	{
 		cout << "!!!ERROR: Detector plane has not been defined.\n";
-		assert((xy_plane == true) || (xz_plane == true) || (yz_plane == true));  // One plane must be set.
+		assert((m_aperture_properties.xy_plane == true) ||
+               (m_aperture_properties.xz_plane == true) ||
+               (m_aperture_properties.yz_plane == true));  // One plane must be set.
 	}
 }
 

@@ -74,7 +74,6 @@ void Photon::initCommon(void)
 	time_of_flight = 0.0f;
 
 	// Set the path lengths during initialization.
-	unmodulated_optical_path_length 	= 0.0f;
 	displaced_optical_path_length 		= 0.0f;
 	refractiveIndex_optical_path_length = 0.0f;
 	combined_OPL 		= 0.0f;
@@ -320,7 +319,6 @@ void Photon::reset()
 	num_steps = 0;
 
 	// Reset the path lengths of the photon.
-	unmodulated_optical_path_length 	= 0.0f;
 	displaced_optical_path_length 		= 0.0f;
 	refractiveIndex_optical_path_length = 0.0f;
 	combined_OPL				 		= 0.0f;
@@ -411,14 +409,51 @@ bool Photon::checkMediumBoundary(void)
 // hop in the case of multiple detectors present.
 bool Photon::checkDetector(void)
 {
-	int cnt =  m_medium->photonHitDetectorPlane(currLocation);
-	// If cnt > 0 the photon exited through the bounds of the detector.
-	if (cnt > 0)
+    /// Check the medium to see if this photon has exited through the detector(s).
+	Detector * detector =  m_medium->photonHitDetectorPlane(currLocation);
+	
+    
+    // If detector != NULL the photon exited through the bounds of the detector.
+	if (detector != NULL)
 	{
+        // Update the direction cosines upon leaving the medium so calculations can be mode
+        // to see if this photon makes it's way to the detector (i.e. CCD camera).
+        // NOTE:
+        // - We assume outside of the medium is nothing but air with an index of refraction 1.0
+        //   so no division for x & y direction cosines because nt = 1.0
+        // - It is also assumed that the photon is transmitted through the x-y plane.
+        
+        if (SIM_DISPLACEMENT || SIM_REFRACTIVE_TOTAL || SIM_REFRACTIVE_GRADIENT || SIM_MODULATION_DEPTH)
+        {
+            
+            /// FIXME:
+            /// - This will produce an error in the exit angles if insonification occurs
+            ///   near the exit aperture. This is because the background medium (i.e. unmodulated)
+            ///   is being probed for the refractive index value.
+            double ni = currLayer->getRefractiveIndex();
+            currLocation->setDirZ(cos(this->transmission_angle));
+            currLocation->setDirY(currLocation->getDirY()*ni);
+            currLocation->setDirX(currLocation->getDirX()*ni);
+            
+            // Write exit data via the logger.
+            detector->getLogger()->Store_weight_OPLs_coordinates(exit_seeds, *this);
+        }
+        
+        // Write out the seeds that caused this photon to hop, drop and spin its way out the
+        // exit-aperture.
+        //
+        if (SAVE_RNG_SEEDS)
+        {
+            detector->getLogger()->writeRNGSeeds(exit_seeds.s1, exit_seeds.s2, exit_seeds.s3, exit_seeds.s4);
+        }
+        
+        
 		return true;
 	}
 	else
+    {
 		return false;
+    }
 }
 
 
@@ -1132,48 +1167,7 @@ void Photon::transmit(const char *type)
 		// If we transmit through the medium, meaning the photon exits the medium,
 		// we see if the exit location passed through the detector.  If so, the exit
 		// data is written out to file.
-		if (checkDetector())
-		{
-
-            // Update the direction cosines upon leaving the medium so calculations can be mode
-			// to see if this photon makes it's way to the detector (i.e. CCD camera).
-			// NOTE:
-			// - We assume outside of the medium is nothing but air with an index of refraction 1.0
-			//   so no division for x & y direction cosines because nt = 1.0
-			// - It is also assumed that the photon is transmitted through the x-y plane.
-
-            if (SIM_DISPLACEMENT || SIM_REFRACTIVE_TOTAL || SIM_REFRACTIVE_GRADIENT)
-         	{
-
-                /// FIXME:
-                /// - This will produce an error in the exit angles if insonification occurs
-                ///   near the exit aperture. This is because the background medium (i.e. unmodulated)
-                ///   is being probed for the refractive index value.
-                double ni = currLayer->getRefractiveIndex();
-                currLocation->setDirZ(cos(this->transmission_angle));
-                currLocation->setDirY(currLocation->getDirY()*ni);
-                currLocation->setDirX(currLocation->getDirX()*ni);
-
-                // Write exit data via the logger.
-                Logger::getInstance()->Write_weight_OPLs_coords(*this);
-
-                /// Is simulation of modulation depth enabled? And if so store the values for later use for
-                /// calculating modulation depth.
-                if (SIM_MODULATION_DEPTH)
-                {
-                    Logger::getInstance()->Store_OPL(exit_seeds, displaced_optical_path_length, refractiveIndex_optical_path_length);
-                }
-         	}
-
-			// Write out the seeds that caused this photon to hop, drop and spin its way out the
-			// exit-aperture.
-			//
-			if (SAVE_RNG_SEEDS)
-			{
-				Logger::getInstance()->writeRNGSeeds(exit_seeds.s1, exit_seeds.s2, exit_seeds.s3, exit_seeds.s4);
-			}
-
-		}
+		bool hitDetector = checkDetector();
 
 		// The photon has left the medium, so kill it.
 		this->status = DEAD;

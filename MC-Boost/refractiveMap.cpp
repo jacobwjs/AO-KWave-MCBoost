@@ -8,6 +8,8 @@
 
 #include "refractiveMap.h"
 #include "vector3D.h"
+
+
 #include <boost/lexical_cast.hpp>
 
 
@@ -55,58 +57,6 @@ RefractiveMap::~RefractiveMap()
         refractive_z = NULL;
     }
 }
-
-
-
-//void RefractiveMap::loadRefractiveMap(const std::string &filename, const int timeStep)
-//{
-//
-//	// Ensure memory has been allocated for the pressure values that
-//	// will be read in from file.  That is, initCommon() has already
-//	// been called.
-//	assert(refractive_grid != NULL);
-//	// Verify that the calculations needed for the refractive index use values
-//	// that have been set in the medium's call to this method.
-//	assert(density > 0.0 &&
-//			speed_of_sound > 0 &&
-//			pezio_optical_coeff > 0);
-//
-//
-//	// Concatonate the values passed in to form a filename to read in.
-//	std::string file_to_open = filename + boost::lexical_cast<std::string>(timeStep);
-//	pressure_file_stream.open(file_to_open.c_str());
-//
-//
-//	// Check for successful opening of the file.
-//	if (!pressure_file_stream)
-//	{
-//		cout << "!!! Error opening pressure map file " << file_to_open.c_str() << "!!!\n";
-//		exit(1);
-//	}
-//	else
-//	{
-//		cout << "Pressure map " << file_to_open.c_str() << " opened successfully. ";
-//		cout << "Loading pressure values...\n";
-//	}
-//
-//
-//	double pressure_val = 0.0;
-//	double M = 0.0;  // Coefficient of modulation.
-//
-//	for (array_index a = 0; a < Nx && pressure_file_stream.good(); a++)
-//		for (array_index b = 0; b < Nz; b++)
-//			for (array_index c = 0; c < Ny; c++)
-//			{
-//				pressure_file_stream >> pressure_val;
-//				M = 2.0 * pezio_optical_coeff * pressure_val / (density * speed_of_sound * speed_of_sound);
-//				(*refractive_grid)[a][b][c] = n_background * (1 + 0.5 * M);
-//#ifdef DEBUG
-//				cout << (*refractive_grid)[a][b][c] << endl;
-//#endif
-//			}
-//
-//	pressure_file_stream.close();
-//}
 
 
 

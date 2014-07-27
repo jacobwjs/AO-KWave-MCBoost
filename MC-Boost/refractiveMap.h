@@ -13,8 +13,8 @@
 #include <MatrixClasses/RealMatrix.h>
 #include <Utils/DimensionSizes.h>
 
-
 #include <MC-Boost/voxel_struct.h>
+
 
 #include <boost/thread/mutex.hpp>
 #include <boost/multi_array.hpp>
@@ -27,13 +27,11 @@ using std::ofstream;
 #include <string>
 
 
-// Boost array that holds the displacement values after being
-// loaded in from file.
-typedef boost::multi_array<double, 3> three_dim_array;
-typedef three_dim_array::index array_index;
 
 // Forward declaration of Vector3d class.
 class Vector3d;
+
+
 
 
 class RefractiveMap

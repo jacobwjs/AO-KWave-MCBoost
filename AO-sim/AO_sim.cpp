@@ -28,6 +28,8 @@ void PrintMatrix(Medium * m_medium, TParameters *params);
 
 AO_Sim::AO_Sim(TParameters *Parameters)
 {
+    m_medium = NULL;
+    
     /// For use with storing a fluence map in the medium.
     fluence_map_OutputStream = NULL;
     
@@ -126,8 +128,8 @@ AO_Sim::~AO_Sim()
     if (KSpaceSolver)
         delete KSpaceSolver;
 
-//    if (m_medium)
-//        delete m_medium;
+    if (m_medium)
+        delete m_medium;
 }
 
 

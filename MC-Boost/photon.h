@@ -11,6 +11,7 @@
 #include <MC-Boost/RNG.h>
 #include <MC-Boost/coordinates.h>
 #include <MC-Boost/vectorMath.h>
+#include "common_structs.h"
 
 #include <cmath>
 #include <ctime>
@@ -41,25 +42,13 @@ class Aperture;
 
 
 
-typedef struct {
-    bool DISPLACE;
-    bool REFRACTIVE_TOTAL;
-    bool REFRACTIVE_GRADIENT;
-    bool MODULATION_DEPTH;
-    bool SAVE_SEEDS;
-    bool USE_SEEDS;
-    bool STORE_FLUENCE;
-} MC_Parameters;
-
-
-
 //typedef struct coords InjectionCoords;
 
 class Photon
 {
 public:
 
-	friend class Logger;
+	friend class LoggerBase;
 
 	// Constructors
 	Photon(void);
@@ -242,6 +231,8 @@ public:
 	// Write the x-y coordinates of the exit location when the photon left the medium, path length
 	// and also the weight of the photon when it exited the medium.
 	void	writeExitLocationsLengthWeight(void);
+    
+    
 
 	
 private:
@@ -318,10 +309,10 @@ private:
     RNGSeeds exit_seeds;
 
 	// Tracks the path length of the photon through the medium.
-	double unmodulated_optical_path_length;			/// OPL without any AO mechanisms.
+    ///
 	double displaced_optical_path_length;			/// OPL from only the displacement of scattering events.
     double refractiveIndex_optical_path_length;		/// OPL from only the refractive index changes.
-	double combined_OPL;			/// OPL from displacement and refractive index changes.
+	double combined_OPL;                            /// OPL from displacement and refractive index changes.
 
 	// Tracks whether or not a photon has hit a medium boundary.
 	bool hit_x_bound, hit_y_bound, hit_z_bound;

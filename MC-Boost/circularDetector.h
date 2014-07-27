@@ -13,6 +13,7 @@
 #include "detector.h"
 #include "aperture.h"
 
+
 class CircularDetector : public Detector, public Aperture
 {
 public:
@@ -29,6 +30,8 @@ public:
                        const double weight,
                        const bool tagged);
     virtual void savePhotonExitWeight(void);
+    
+    //virtual std::string Get_detector_name(void)     const {return m_aperture_properties.name;};
     
     
 private:

@@ -82,12 +82,12 @@ MC_Boost::Generate_MC_RNG_seeds_single_input_aperture(Medium * medium, Aperture 
     cout.flush();
     
     /// The file that the seeds are written to after calling 'Generate_RNG_seeds'.
-    rng_seed_file = "Data/seeds_for_exit_" + Logger::getInstance()->getCurrTime() + ".dat";
+    //rng_seed_file = "Data/seeds_for_exit_" + Logger::getInstance()->getCurrTime() + ".dat";
     
     // The logger is a singleton.  To bypass any problems with using singletons in a multi-threaded application
 	// initialization occurs in main before any threads are spawned.
 	//
-    Logger::getInstance()->createRNGSeedFile(rng_seed_file);
+    //Logger::getInstance()->createRNGSeedFile(rng_seed_file);
     
     
     // Initialize the C++ RNG.
@@ -159,8 +159,8 @@ MC_Boost::Generate_MC_RNG_seeds_single_input_aperture(Medium * medium, Aperture 
     
     
     cout << ".... Generating seeds done\n"
-    << " Simulated: " << MAX_NUM_PHOTONS << '\n'
-    << " Detected: " << Logger::getInstance()->Get_num_detected_seed_photons() << " photons\n";
+         << " Simulated: " << MAX_NUM_PHOTONS << '\n';
+    //cout << " Detected: " << Logger::getInstance()->Get_num_detected_seed_photons() << " photons\n";
     
 }
 
@@ -215,7 +215,7 @@ MC_Boost::Run_MC_sim_timestep_with_single_injection_aperture(Medium *medium, Ape
         "_" +
         boost::lexical_cast<std::string>(time) +
         ".dat";
-        Logger::getInstance()->openExitFile(exit_data_per_timestep);
+        //Logger::getInstance()->openExitFile(exit_data_per_timestep);
     }
     
     
@@ -364,7 +364,8 @@ MC_Boost::Run_MC_sim_timestep_with_single_injection_aperture(Medium *medium, Ape
     cout << ".... MC-Boost done\n";
     if (Params.DISPLACE || Params.REFRACTIVE_TOTAL || Params.REFRACTIVE_GRADIENT || Params.MODULATION_DEPTH)
     {
-        cout << " Detected: " << Logger::getInstance()->Get_num_exited_photons() << " photons\n\n";
+        medium->Write_detector_data();
+        //cout << " Detected: " << Logger::getInstance()->Get_num_exited_photons() << " photons\n\n";
     }
     
     

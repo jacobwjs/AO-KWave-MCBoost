@@ -12,15 +12,21 @@
 #include "vector3D.h"
 #include "coordinates.h"
 
+#include <string>
+using std::string;
+
 
 typedef struct {
     double radius;
 
-    coords coordinates;
+    Vector3d center_coords;
+    Vector3d normalVector;
     
 	bool xy_plane;
 	bool xz_plane;
 	bool yz_plane;
+    
+    std::string name;
     
 } Aperture_Properties;
 
@@ -31,45 +37,48 @@ class Aperture
 {
 public:
     
-    Aperture(void);
-    ~Aperture(void);
+    Aperture();
+    Aperture(const Aperture_Properties &props);
+    virtual ~Aperture();
     
     
     /// Return the radius of the aperture. [meters]
-    double Get_radius()     const {return radius;};
+    double Get_radius()     const {return m_aperture_properties.radius;};
     
     /// Return the x-coordinate for the center of the aperture.
-    double Get_x_coord()    const {return aperture_center.location.x;};
+    double Get_x_coord()    const {return m_aperture_properties.center_coords.location.x;};
     
     /// Return the x-coordinate for the center of the aperture.
-    double Get_y_coord()    const {return aperture_center.location.y;};
+    double Get_y_coord()    const {return m_aperture_properties.center_coords.location.y;};
     
     /// Return the x-coordinate for the center of the aperture.
-    double Get_z_coord()    const {return aperture_center.location.z;};
+    double Get_z_coord()    const {return m_aperture_properties.center_coords.location.z;};
     
     
     /// Is the aperture on the x-y plane
-    bool    Is_XY_plane()   const {return xy_plane;};
+    bool    Is_XY_plane()   const {return m_aperture_properties.xy_plane;};
     
     /// Is the aperture on the y-z plane
-    bool    Is_YZ_plane()   const {return yz_plane;};
+    bool    Is_YZ_plane()   const {return m_aperture_properties.yz_plane;};
     
     /// Is the aperture on the x-z plane
-    bool    Is_XZ_plane()   const {return xz_plane;};
+    bool    Is_XZ_plane()   const {return m_aperture_properties.xz_plane;};
+    
+    virtual std::string Get_name() const {return m_aperture_properties.name;};
     
     
     /// Set the plan on which the aperture resides.
     virtual void setAperturePlaneXY(void)
     {
         // Set which plane the detector resides.
-        xz_plane = false;
-        yz_plane = false;
-        xy_plane = true;
+        m_aperture_properties.xz_plane = false;
+        m_aperture_properties.yz_plane = false;
+        m_aperture_properties.xy_plane = true;
         
         // Set the direction that the vector that is normal to the plane.
-        normalVector.setDirX(0.0f);
-        normalVector.setDirY(0.0f);
-        normalVector.setDirZ(1.0f); normalVector.location.z = 1.0f;
+        m_aperture_properties.normalVector.setDirX(0.0f);
+        m_aperture_properties.normalVector.setDirY(0.0f);
+        m_aperture_properties.normalVector.setDirZ(1.0f); m_aperture_properties.normalVector.location.z = 1.0f;
         
     }
     
@@ -77,28 +86,28 @@ public:
     virtual void setAperturePlaneXZ(void)
     {
         // Set which plane the detector resides.
-        yz_plane = false;
-        xy_plane = false;
-        xz_plane = true;
+        m_aperture_properties.yz_plane = false;
+        m_aperture_properties.xy_plane = false;
+        m_aperture_properties.xz_plane = true;
         
         // Set the direction that the vector that is normal to the plane.
-        normalVector.setDirX(0.0f);
-        normalVector.setDirY(1.0f); normalVector.location.y = 1.0f;
-        normalVector.setDirZ(0.0f);
+        m_aperture_properties.normalVector.setDirX(0.0f);
+        m_aperture_properties.normalVector.setDirY(1.0f); m_aperture_properties.normalVector.location.y = 1.0f;
+        m_aperture_properties.normalVector.setDirZ(0.0f);
     }
     
     /// Set the plan on which the aperture resides.    
     virtual void setAperturePlaneYZ(void)
     {
         // Set which plane the detector resides.
-        xz_plane = false;
-        xy_plane = false;
-        yz_plane = true;
+        m_aperture_properties.xz_plane = false;
+        m_aperture_properties.xy_plane = false;
+        m_aperture_properties.yz_plane = true;
         
         // Set the direction that the vector that is normal to the plane.
-        normalVector.setDirX(1.0f); normalVector.location.x = 1.0f;
-        normalVector.setDirY(0.0f);
-        normalVector.setDirZ(0.0f);
+        m_aperture_properties.normalVector.setDirX(1.0f); m_aperture_properties.normalVector.location.x = 1.0f;
+        m_aperture_properties.normalVector.setDirY(0.0f);
+        m_aperture_properties.normalVector.setDirZ(0.0f);
     }
     
     
@@ -106,18 +115,14 @@ public:
     
 protected:
     // Center coordinates of the detector in the medium. [meters]
-    Vector3d aperture_center;
-    
-    // Radius of the aperture. [meters]
-    double radius;
+    //Vector3d aperture_center;
     
     // Vector that is normal to the plane.
-    Vector3d normalVector;
+    //Vector3d normalVector;
     
-    // possible planes that the detector can be placed in 3D space.
-    bool xy_plane;
-    bool xz_plane;
-    bool yz_plane;
+
+    /// The properties of the aperture.
+    Aperture_Properties m_aperture_properties;
     
 };
 

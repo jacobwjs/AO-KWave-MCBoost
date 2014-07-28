@@ -164,6 +164,12 @@ void LoggerBase::writeRNGSeeds(const unsigned int s1, const unsigned int s2,
 {
     boost::mutex::scoped_lock lock(m_mutex);
     
+    if (!rng_seed_stream)
+    {
+        std::string output_file = "./Data/" + logger_name + "_seeds-" + getCurrTime() + ".dat";
+        createRNGSeedFile(output_file);
+    }
+
     seed_cnt++;
     rng_seed_stream << s1 << " " <<
     s2 << " " <<

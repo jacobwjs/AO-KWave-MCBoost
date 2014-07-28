@@ -208,12 +208,10 @@ void Photon::propagatePhoton(const int iterations)
 									(*iteration_seeds)[i].s4);
 		}
 
+        /// The seeds that potentially produce a path that exits through a
+        /// defined detector.
+        exit_seeds = RNG_generator->getState();
 
-
-        if (SAVE_RNG_SEEDS || SIM_MODULATION_DEPTH)
-        {
-            exit_seeds = RNG_generator->getState();
-        }
 
         // Initialize the photon's trajectory before any scattering event has taken place.
         initTrajectory();

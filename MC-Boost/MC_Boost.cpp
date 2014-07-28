@@ -355,7 +355,7 @@ MC_Boost::Run_MC_sim_timestep_with_single_injection_aperture(Medium *medium, Ape
             seeds[j]   = NULL;
         }
         
-    } /// End of if (Params.USE_SEEDS)
+    } /// End if (Params.USE_SEEDS)
     
     
     

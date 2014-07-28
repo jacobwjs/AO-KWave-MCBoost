@@ -365,7 +365,6 @@ MC_Boost::Run_MC_sim_timestep_with_single_injection_aperture(Medium *medium, Ape
     if (Params.DISPLACE || Params.REFRACTIVE_TOTAL || Params.REFRACTIVE_GRADIENT || Params.MODULATION_DEPTH)
     {
         medium->Write_detector_data();
-        //cout << " Detected: " << Logger::getInstance()->Get_num_exited_photons() << " photons\n\n";
     }
     
     

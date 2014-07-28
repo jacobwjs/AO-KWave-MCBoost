@@ -32,17 +32,14 @@ InjectionAperture::InjectionAperture(const Aperture_Properties &props)
 	if (props.xy_plane)
 	{
 		setAperturePlaneXY();
-        cout << " plane: x-y\n";
 	}
 	else if (props.xz_plane)
 	{
 		setAperturePlaneXZ();
-        cout << " plane: x-z\n";
 	}
 	else if (props.yz_plane)
 	{
 		setAperturePlaneYZ();
-        cout << " plane: y-z\n";
 	}
 	else
 	{

@@ -251,6 +251,8 @@ void LoggerBase::Write_weight_OPLs_coordinates_from_MAP()
     std::string output_file = "./Data/Detected_photons/" + logger_name + "-" + getCurrTime() + "_exit_data.dat";
     openExitFile(output_file);
     
+    cout << " Detected" << " (" << logger_name << "): " << Exit_Map.size() << " photons\n";
+    
     if (!exit_data_stream)
     {
         cout << "!!! ERROR: Output stream is not open. LoggerBase::Write_weight_OPLs_coords_from_MAP()\n";

@@ -9,7 +9,7 @@
 #include "multikey.h"
 #include "vector3D.h"
 #include "photon.h"
-#include "LoggerBase.h"
+#include "loggerBase.h"
 #include <cmath>
 using std::cos;
 

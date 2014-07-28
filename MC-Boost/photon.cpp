@@ -421,7 +421,7 @@ bool Photon::checkDetector(void)
         //   so no division for x & y direction cosines because nt = 1.0
         // - It is also assumed that the photon is transmitted through the x-y plane.
         
-        if (SIM_DISPLACEMENT || SIM_REFRACTIVE_TOTAL || SIM_REFRACTIVE_GRADIENT || SIM_MODULATION_DEPTH)
+        if (SIM_DISPLACEMENT || SIM_REFRACTIVE_TOTAL || SIM_REFRACTIVE_GRADIENT)
         {
             
             /// FIXME:
@@ -435,6 +435,14 @@ bool Photon::checkDetector(void)
             
             // Write exit data via the logger.
             detector->getLogger()->Store_weight_OPLs_coordinates(exit_seeds, *this);
+        }
+        
+        if (SIM_MODULATION_DEPTH)
+        {
+            detector->getLogger()->Store_OPLs(exit_seeds,
+                                              displaced_optical_path_length,
+                                              refractiveIndex_optical_path_length,
+                                              combined_OPL);
         }
         
         // Write out the seeds that caused this photon to hop, drop and spin its way out the

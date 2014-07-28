@@ -104,13 +104,17 @@ void LoggerBase::Open_vel_disp_file(const std::string &filename)
 void LoggerBase::Open_modulation_depth_file(const std::string &filename)
 {
     if (modulation_depth_stream.is_open())
+    {
+        cout << " WARNING: Modulation depth file was already open. Closing file\n";
         modulation_depth_stream.close();
+    }
+    
     
     modulation_depth_stream.open(filename.c_str());
     if (!modulation_depth_stream)
     {
         cout << "!!! ERROR: Could not open '" << filename << "' for writing.  Check directory structure.\n";
-        exit(1);
+        exit(EXIT_FAILURE);
     }
 }
 
@@ -256,6 +260,8 @@ void LoggerBase::Store_weight_OPLs_coordinates(RNGSeeds &seeds, Photon &p)
 
 void LoggerBase::Write_weight_OPLs_coordinates_from_MAP()
 {
+    /// We always try to write data when the medium is destroyed. However we should only do that when there is data present.
+    if (!(Exit_Map.size() > 1)) return;
 
     std::string output_file = "./Data/Detected_photons/" + logger_name + "-" + getCurrTime() + "_exit_data.dat";
     openExitFile(output_file);
@@ -300,18 +306,17 @@ void LoggerBase::Write_weight_OPLs_coordinates_from_MAP()
 
 
 /// Store the OPL based on the initial seeds of the photon.
-void LoggerBase::Store_OPL(RNGSeeds &seeds, double n_OPL, double d_OPL)
+void LoggerBase::Store_OPLs(RNGSeeds &seeds, double n_OPL, double d_OPL, double combined_OPL)
 {
     boost::mutex::scoped_lock lock(m_mutex);
     
     /// Create a new key for the map based on this detected photon's initial seeds.
     MultiKey key(seeds.s1, seeds.s2, seeds.s3, seeds.s4);
     
-    //OPL new_vals;
     opticalPathLengths new_vals;
     new_vals.refractive_index_contribution  = n_OPL;
     new_vals.displacement_contribution      = d_OPL;
-    new_vals.combined_contribution          = 0.0f;
+    new_vals.combined_contribution          = combined_OPL;
     
     /// Check if the key already exists.
     if (OPL_Map.count(key) != 0)
@@ -338,10 +343,18 @@ void LoggerBase::Store_OPL(RNGSeeds &seeds, double n_OPL, double d_OPL)
 
 void LoggerBase::Write_OPL_data()
 {
+    /// We always try to write data when the medium is destroyed. However we should only do that when there is data present.
+    if (!(OPL_Map.size() > 1)) return;
+    
+    std::string output_file = "./Data/Detected_photons/" + logger_name + "-" + getCurrTime() + "_OPL_data.dat";
+    Open_modulation_depth_file(output_file);
+    
+    cout << " Detected" << " (" << logger_name << "): " << OPL_Map.size() << " photons\n";
+    
     if (!modulation_depth_stream)
     {
         cout << "!!! ERROR: Output stream is not open. LoggerBase::Write_OPL_data()\n";
-        exit(1);
+        exit(EXIT_FAILURE);
     }
     
     

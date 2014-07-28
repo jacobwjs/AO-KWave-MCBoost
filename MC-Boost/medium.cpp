@@ -171,6 +171,7 @@ void Medium::Write_detector_data()
 	{
         detector = *it;
         detector->getLogger()->Write_weight_OPLs_coordinates_from_MAP();
+        detector->getLogger()->Write_OPL_data();
 	}
 }
 

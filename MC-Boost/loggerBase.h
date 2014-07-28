@@ -65,7 +65,7 @@ public:
                                         float disp_x, float disp_y, float disp_z);
     
     /// Stores the OPL of a photon as it exits through the detector.
-    virtual void    Store_OPL(RNGSeeds &seeds, double refractive_OPL, double displacment_OPL);
+    virtual void    Store_OPLs(RNGSeeds &seeds, double refractive_OPL, double displacment_OPL, double combined_OPL);
     
     /// Writes all the stored OPL data to disk.
     virtual void    Write_OPL_data(void);

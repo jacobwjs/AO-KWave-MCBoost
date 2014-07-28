@@ -53,8 +53,7 @@ AO_Sim::AO_Sim(TParameters *Parameters)
         // Responsible for running the monte-carlo simulation.
         da_boost = new MC_Boost();
         
-        /// Notify the MC_sim that it should store the fluence.
-        da_boost->Store_fluence(true);
+        
         
         /// For use with mapping the fluence in the medium.
         /// XXX:
@@ -63,6 +62,9 @@ AO_Sim::AO_Sim(TParameters *Parameters)
         ///   the generated HDF5 file there.
         if (Parameters->IsStore_fluence_map())
         {
+            /// Notify the MC_sim that it should store the fluence.
+            da_boost->Store_fluence(true);
+            
             //fluence_map_OutputStream = new TOutputHDF5Stream();
             //if (!fluence_map_OutputStream)  throw bad_alloc();
             

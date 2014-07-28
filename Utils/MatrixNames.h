@@ -307,7 +307,7 @@ const char * const disp_z_full_medium_Name  = "disp_z_full_medium";
 
 
 /// fluence_map variable name
-const char * const absorb_fluence_map_Name = "absorbption_fluence_map";
+const char * const absorb_fluence_map_Name = "absorption_fluence_map";
 /// ----------------------------------------------------------------
 
 

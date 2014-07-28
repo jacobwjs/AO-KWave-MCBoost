@@ -41,7 +41,10 @@ LoggerBase::~LoggerBase()
     if (absorber_data_stream.is_open())
         absorber_data_stream.close();
     if (rng_seed_stream.is_open())
+    {
         rng_seed_stream.close();
+        cout << " Detected (" << logger_name << "): " << seed_cnt << " photons\n";
+    }
     if (tof_stream.is_open())
         tof_stream.close();
     if (velocity_displacement_stream.is_open())

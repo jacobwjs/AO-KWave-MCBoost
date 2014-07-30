@@ -310,8 +310,8 @@ private:
 
 	// Tracks the path length of the photon through the medium.
     ///
-	double displaced_optical_path_length;			/// OPL from only the displacement of scattering events.
-    double refractiveIndex_optical_path_length;		/// OPL from only the refractive index changes.
+	double displaced_OPL;			/// OPL from only the displacement of scattering events.
+    double refractive_OPL;		/// OPL from only the refractive index changes.
 	double combined_OPL;                            /// OPL from displacement and refractive index changes.
 
 	// Tracks whether or not a photon has hit a medium boundary.

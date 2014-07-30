@@ -5,7 +5,7 @@
 //  Created by Jacob Staley on 7/18/14.
 //  Copyright 2014 BMPI, University of Twente. All rights reserved.
 //
-
+#include "RNG.h"
 #include "multikey.h"
 #include "vector3D.h"
 #include "photon.h"
@@ -154,8 +154,8 @@ void LoggerBase::Write_weight_OPLs_coords(Photon &p)
     
     exit_cnt++;
 	exit_data_stream << p.weight << " "
-    << p.displaced_optical_path_length << " "
-    << p.refractiveIndex_optical_path_length << " "
+    << p.displaced_OPL << " "
+    << p.refractive_OPL << " "
     << p.combined_OPL << " "
     << p.currLocation->location.x << " "
     << p.currLocation->location.y << " "
@@ -216,7 +216,7 @@ void LoggerBase::Write_velocity_displacement(float ux, float uy, float uz,
 
 
 /// Store the OPL based on the initial seeds of the photon.
-void LoggerBase::Store_weight_OPLs_coordinates(RNGSeeds &seeds, Photon &p)
+void LoggerBase::Store_weight_OPLs_seeds_coordinates(RNGSeeds &seeds, Photon &p)
 {
     boost::mutex::scoped_lock lock(m_mutex);
     exit_cnt++;
@@ -227,12 +227,17 @@ void LoggerBase::Store_weight_OPLs_coordinates(RNGSeeds &seeds, Photon &p)
     //OPL new_vals;
     exitInfo new_vals;
     new_vals.weight                         = p.weight;
-    new_vals.refractive_index_contribution  = p.displaced_optical_path_length;
-    new_vals.displacement_contribution      = p.refractiveIndex_optical_path_length;
+    new_vals.refractive_index_contribution  = p.displaced_OPL;
+    new_vals.displacement_contribution      = p.refractive_OPL;
     new_vals.combined_contribution          = p.combined_OPL;
     new_vals.exit_x_coord                   = p.currLocation->location.x;
     new_vals.exit_y_coord                   = p.currLocation->location.y;
     new_vals.exit_z_coord                   = p.currLocation->location.z;
+    new_vals.seeds.s1                       = seeds.s1;
+    new_vals.seeds.s2                       = seeds.s2;
+    new_vals.seeds.s3                       = seeds.s3;
+    new_vals.seeds.s4                       = seeds.s4;
+    
     
     
     /// Check if the key already exists.
@@ -257,8 +262,7 @@ void LoggerBase::Store_weight_OPLs_coordinates(RNGSeeds &seeds, Photon &p)
     
 }
 
-
-void LoggerBase::Write_weight_OPLs_coordinates_from_MAP()
+void LoggerBase::Write_weight_OPLs_seeds_coordinates_from_MAP()
 {
     /// We always try to write data when the medium is destroyed. However we should only do that when there is data present.
     if (!(Exit_Map.size() > 1)) return;
@@ -291,7 +295,11 @@ void LoggerBase::Write_weight_OPLs_coordinates_from_MAP()
                              << (*vec_iter).combined_contribution << " "
                              << (*vec_iter).exit_x_coord << " "
                              << (*vec_iter).exit_y_coord << " "
-                             << (*vec_iter).exit_z_coord;
+                             << (*vec_iter).exit_z_coord << " "
+                             << (*vec_iter).seeds.s1     << " "
+                             << (*vec_iter).seeds.s2     << " "
+                             << (*vec_iter).seeds.s3     << " "
+                             << (*vec_iter).seeds.s4;
         }
         exit_data_stream << endl;
     }

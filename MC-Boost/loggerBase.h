@@ -22,7 +22,7 @@ using std::string;
 #include <boost/thread/mutex.hpp>
 #include <boost/lexical_cast.hpp>
 
-#include "RNG.h"
+//#include "RNG.h"
 #include "common_structs.h"
 
 // Forward decleration of objects.
@@ -52,12 +52,12 @@ public:
 	/// STUB
     virtual void	Write_absorber_data(const double absorbed_weight) {cout << "Logger::Write_absorber_data ... STUB\n";};
     
-	/// Writes the weight, optical path lengths (displaced, refractive changes, combined) and exit coords (all axes).
-	virtual void	Write_weight_OPLs_coords(Photon &p);    /// Write straight to disk
-    virtual void    Write_weight_OPLs_coordinates_from_MAP();
+	/// Writes the weight, optical path lengths (displaced, refractive changes, combined) and exit coords.
+	virtual void	Write_weight_OPLs_coords(Photon &p);                /// Write straight to disk as they are received during execution.
+    virtual void    Write_weight_OPLs_seeds_coordinates_from_MAP();     /// Write data that has been stored in the MAP during execution.
     
-    /// Stores the weight, optical path lengths (displaced, refractive changes, combined) and exit coords (all axes).
-    virtual void    Store_weight_OPLs_coordinates(RNGSeeds &seeds, Photon &p);
+    /// Stores the weight, optical path lengths (displaced, refractive changes, combined) and exit coords.
+    virtual void    Store_weight_OPLs_seeds_coordinates(RNGSeeds &seeds, Photon &p);
     
     
 	/// Writes velocity and displacements obtained from k-Wave/MC-Boost.

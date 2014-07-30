@@ -11,14 +11,16 @@
 
 #include <vector>
 
+#include "common_structs.h"
 
 
-typedef struct {
-	unsigned int s1;
-	unsigned int s2;
-	unsigned int s3;
-	unsigned int s4;
-} RNGSeeds;
+//
+//typedef struct {
+//	unsigned int s1;
+//	unsigned int s2;
+//	unsigned int s3;
+//	unsigned int s4;
+//} RNGSeeds;
 
 
 

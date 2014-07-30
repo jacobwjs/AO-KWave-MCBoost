@@ -170,7 +170,7 @@ void Medium::Write_detector_data()
 	for (vector<Detector *>::iterator it = p_detectors.begin(); it != p_detectors.end(); it++)
 	{
         detector = *it;
-        detector->getLogger()->Write_weight_OPLs_coordinates_from_MAP();
+        detector->getLogger()->Write_weight_OPLs_seeds_coordinates_from_MAP();
         detector->getLogger()->Write_OPL_data();
 	}
 }
@@ -535,5 +535,17 @@ void Medium::Create_refractive_map(TRealMatrix * refractive_x,
 //    }
 
 }
+
+void Medium::Invert_refractive_map_phase()
+{
+    kwave.nmap->Invert_phase();
+}
+
+void Medium::Invert_displacement_map_phase()
+{
+    kwave.dmap->Invert_phase();
+}
+
+
 
 

@@ -1899,7 +1899,7 @@ void PrintMatrix(Medium * m_medium, TParameters *Parameters)
     {
         for (y = 0; y < Dims.Y; y++)
         {
-            data_file_stream << m_medium->kwave.dmap->getDisplacementFromGridX(x, y, z) << ' ';
+            //data_file_stream << m_medium->kwave.dmap->getDisplacementFromGridX(x, y, z) << ' ';
         }
         data_file_stream << '\n';
     }

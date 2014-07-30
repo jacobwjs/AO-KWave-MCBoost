@@ -2,11 +2,13 @@
 #define COMMONSTRUCTS_H
 
 
-#include <MC-Boost/pressureMap.h>
-#include <MC-Boost/refractiveMap.h>
-#include <MC-Boost/displacementMap.h>
+//#include <MC-Boost/pressureMap.h>
+//#include <MC-Boost/refractiveMap.h>
+//#include <MC-Boost/displacementMap.h>
 
 #include "multikey.h"
+#include "RNG.h"
+#include <map>
 
 
 /// ---------------------------------------------------------------------
@@ -104,6 +106,14 @@
 
 
 
+typedef struct {
+	unsigned int s1;
+	unsigned int s2;
+	unsigned int s3;
+	unsigned int s4;
+} RNGSeeds;
+
+
 /// ---------------------------------------------------------------------
 typedef struct {
     bool DISPLACE;
@@ -132,6 +142,7 @@ typedef struct {
     double exit_x_coord;
     double exit_y_coord;
     double exit_z_coord;
+    RNGSeeds seeds;
 } exitInfo;
 
 /// Multikey map for storing the optical path lengths (OPL's)

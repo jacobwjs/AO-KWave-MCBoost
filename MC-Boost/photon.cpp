@@ -74,8 +74,8 @@ void Photon::initCommon(void)
 	time_of_flight = 0.0f;
 
 	// Set the path lengths during initialization.
-	displaced_optical_path_length 		= 0.0f;
-	refractiveIndex_optical_path_length = 0.0f;
+	displaced_OPL 		= 0.0f;
+	refractive_OPL = 0.0f;
 	combined_OPL 		= 0.0f;
 
     /// Everything defaults to false.
@@ -317,8 +317,8 @@ void Photon::reset()
 	num_steps = 0;
 
 	// Reset the path lengths of the photon.
-	displaced_optical_path_length 		= 0.0f;
-	refractiveIndex_optical_path_length = 0.0f;
+	displaced_OPL 		= 0.0f;
+	refractive_OPL = 0.0f;
 	combined_OPL				 		= 0.0f;
 
 
@@ -434,14 +434,14 @@ bool Photon::checkDetector(void)
             currLocation->setDirX(currLocation->getDirX()*ni);
             
             // Write exit data via the logger.
-            detector->getLogger()->Store_weight_OPLs_coordinates(exit_seeds, *this);
+            detector->getLogger()->Store_weight_OPLs_seeds_coordinates(exit_seeds, *this);
         }
         
         if (SIM_MODULATION_DEPTH)
         {
             detector->getLogger()->Store_OPLs(exit_seeds,
-                                              displaced_optical_path_length,
-                                              refractiveIndex_optical_path_length,
+                                              displaced_OPL,
+                                              refractive_OPL,
                                               combined_OPL);
         }
         
@@ -686,17 +686,21 @@ void Photon::displacePhotonFromPressure(void)
 	static double dz = m_medium->dz;
 	static double Nz = m_medium->Nz;
 
-    /// Get the appropriate voxel number for the 3-D grid.
-	int _x = currLocation->location.x/dx - (currLocation->location.x/dx)/Nx;
-	int _y = currLocation->location.y/dy - (currLocation->location.y/dy)/Ny;
-	int _z = currLocation->location.z/dz - (currLocation->location.z/dz)/Nz;
+    /// Get the appropriate voxel numbers for the current and previous location for indexing into the 3-D grid.
+    int _x_prev = prevLocation->location.x/dx - (prevLocation->location.x/dx)/Nx;
+	int _y_prev = prevLocation->location.y/dy - (prevLocation->location.y/dy)/Ny;
+	int _z_prev = prevLocation->location.z/dz - (prevLocation->location.z/dz)/Nz;
+    
+	int _x_curr = currLocation->location.x/dx - (currLocation->location.x/dx)/Nx;
+	int _y_curr = currLocation->location.y/dy - (currLocation->location.y/dy)/Ny;
+	int _z_curr = currLocation->location.z/dz - (currLocation->location.z/dz)/Nz;
 
 
 
 
 	// Subtle case where index into grid is negative because of rounding errors above.
 #ifdef DEBUG
-	if (_z < 0 || _x < 0 || _y < 0)
+	if (_z_curr < 0 || _x_curr < 0 || _y_curr < 0)
 	{
 		// FIXME:
 		// - This should be removed when detection of line-plane intersection
@@ -716,9 +720,14 @@ void Photon::displacePhotonFromPressure(void)
 	//
     // Index into the displacement grids to retrieve the value of how much to
     // displace the photon from it's current location along each axis (x,y,z).
-    double x_displacement = m_medium->kwave.dmap->getDisplacementFromGridX(_x, _y, _z);
-    double y_displacement = m_medium->kwave.dmap->getDisplacementFromGridY(_x, _y, _z);
-    double z_displacement = m_medium->kwave.dmap->getDisplacementFromGridZ(_x, _y, _z);
+    /// Done for this scattering event and the previous.
+    double curr_x_disp = m_medium->kwave.dmap->getDisplacementFromGridX(_x_curr, _y_curr, _z_curr);
+    double curr_y_disp = m_medium->kwave.dmap->getDisplacementFromGridY(_x_curr, _y_curr, _z_curr);
+    double curr_z_disp = m_medium->kwave.dmap->getDisplacementFromGridZ(_x_curr, _y_curr, _z_curr);
+    
+    double prev_x_disp = m_medium->kwave.dmap->getDisplacementFromGridX(_x_prev, _y_prev, _z_prev);
+    double prev_y_disp = m_medium->kwave.dmap->getDisplacementFromGridY(_x_prev, _y_prev, _z_prev);
+    double prev_z_disp = m_medium->kwave.dmap->getDisplacementFromGridZ(_x_prev, _y_prev, _z_prev);
 
     /// To mitigate any numerical instability in the displacement values that is
     /// compounded over the time ultrasound propagates through the medium, we threshold
@@ -733,9 +742,13 @@ void Photon::displacePhotonFromPressure(void)
     ///if (abs(x_displacement) >= DISPLACEMENT_THRESHOLD) currLocation->location.x += x_displacement;
     ///if (abs(y_displacement) >= DISPLACEMENT_THRESHOLD) currLocation->location.y += y_displacement;
     ///if (abs(z_displacement) >= DISPLACEMENT_THRESHOLD) currLocation->location.z += z_displacement;
-    currLocation->location.x += x_displacement;
-    currLocation->location.y += y_displacement;
-    currLocation->location.z += z_displacement;
+    
+    ///NOTE:
+    /// - No longer updating position based upon displacement, produces uncorrelated photon paths.
+    ///
+    //currLocation->location.x += x_displacement;
+    //currLocation->location.y += y_displacement;
+    //currLocation->location.z += z_displacement;
 
 
 	// Get the local refractive index based on the coordinates of the displaced photon.
@@ -754,11 +767,18 @@ void Photon::displacePhotonFromPressure(void)
 	// Get the distance between the previous location and the current location.
 	double distance_traveled = VectorMath::Distance(prevLocation, currLocation);
 
+    /// Calculate the Norm based on displacements found from the grid at this scattering event, and the previous.
+    double temp_delta_x = (prevLocation->location.x + prev_x_disp) - (currLocation->location.x + curr_x_disp);
+    double temp_delta_y = (prevLocation->location.y + prev_y_disp) - (currLocation->location.y + curr_y_disp);
+    double temp_delta_z = (prevLocation->location.z + prev_z_disp) - (currLocation->location.z + curr_z_disp);
+    double modulated_distance = sqrt((temp_delta_x*temp_delta_x) +
+                                     (temp_delta_y*temp_delta_y) +
+                                     (temp_delta_z*temp_delta_z));
 
-	// Update the optical path length of the photon through the medium by
-	// calculating the distance between the two points and multiplying by the refractive index.
-	//displaced_optical_path_length += VectorMath::Distance(prevLocation, currLocation) * currLayer->getRefractiveIndex();
-	displaced_optical_path_length += distance_traveled * local_refractive_index;
+	/// Update the optical path length of the photon through the medium by
+	/// calculating the distance between the two points (including the contribution from modulation) and multiplying by the refractive index.
+	//displaced_OPL += VectorMath::Distance(prevLocation, currLocation) * currLayer->getRefractiveIndex();
+	displaced_OPL += (distance_traveled+modulated_distance) * local_refractive_index;
 }
 
 
@@ -910,7 +930,7 @@ void Photon::alterPathLengthFromRefractiveChanges(void)
 			// to 'ds' when updating the current point.
 			pointOnSegment = (*prevLocation) + (*((*lineSegment)*(t_curr)));
 
-			refractiveIndex_optical_path_length += VectorMath::Distance(pointOnSegment, previousPointOnSegment) * n_curr;
+			refractive_OPL += VectorMath::Distance(pointOnSegment, previousPointOnSegment) * n_curr;
 
 			// Update the values for the next iterations.
 			n_prev = n_curr;
@@ -925,7 +945,7 @@ void Photon::alterPathLengthFromRefractiveChanges(void)
 	// If the last portion of the line segment (pointOnSegment - previousPointOnSegment) didn't see an index of
 	// refraction change, its optical path length won't be updated.  Also, if the entire step fit into a voxel, this takes
 	// that into account as well.
-	refractiveIndex_optical_path_length += VectorMath::Distance(pointOnSegment, previousPointOnSegment) * n_curr;
+	refractive_OPL += VectorMath::Distance(pointOnSegment, previousPointOnSegment) * n_curr;
 
 }
  */
@@ -996,7 +1016,7 @@ void Photon::alterOPLFromAverageRefractiveChanges(void)
 	//cout << "n_avg = " << n_avg << "\n";
 
 	// Make the final calculation of the OPL.
-	refractiveIndex_optical_path_length += distance_traveled * n_avg;
+	refractive_OPL += distance_traveled * n_avg;
 
 /*
 
@@ -1043,7 +1063,7 @@ void Photon::alterOPLFromAverageRefractiveChanges(void)
 	// Calculate the OPL through the average index of refraction encountered.
 	double distance_traveled = VectorMath::Distance(prevLocation, pointOnSegment);  // The distance between the two scattering locations (i.e. length of line segment)
 	double n_avg = n_cumulative / num_differential_steps; // Average refractive index.
-	refractiveIndex_optical_path_length +=  distance_traveled * n_avg;
+	refractive_OPL +=  distance_traveled * n_avg;
 */
 
 
@@ -1059,18 +1079,8 @@ void Photon::displacePhotonAndAlterOPLFromAverageRefractiveChanges(void)
 	displacePhotonFromPressure();
 	alterOPLFromAverageRefractiveChanges();
 
-	/// Due to the order in which the above functions are called, the OPL of
-	/// 'refractiveIndex_optical_path_length' contains the OPL under the influence of
-	/// both AO mechanisms (displacement, pressure induced refractive index).  However,
-	/// it's possible to run the simulation with any combination (all mechanisms on, one, etc.).
-	/// If we make it here, both have been turned on, and to remove any disambiguity we assign
-	/// 'combined_OPL' the value of 'refractiveIndex_optical_path_length' to
-	/// reduce the overhead of having to redo what is essentially embedded in 'refractiveIndex_optical_path_length'.
-    /// FIXME:
-    /// - This is very confusing and should be updated someday to track non-displaced coordinates for separating
-    ///   the mechanisms clearly.
-    /// - Or another way?
-	combined_OPL = refractiveIndex_optical_path_length;
+
+	combined_OPL = displaced_OPL + refractive_OPL;
 
 }
 
@@ -1098,8 +1108,6 @@ void Photon::displacePhotonFromRefractiveGradient(const double n1, const double 
 //   the medium, and determine if it should transmit or reflect.  This bug only arises occasionally.
 void Photon::transmit(const char *type)
 {
-
-
 	// 'tempLayer' is used
 	Layer *tempLayer = NULL;
 

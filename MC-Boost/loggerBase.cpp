@@ -368,8 +368,9 @@ void LoggerBase::Write_OPL_data()
         for (std::vector<opticalPathLengths>::const_iterator vec_iter = temp.begin(); vec_iter != temp.end(); vec_iter++)
         {
             modulation_depth_stream << std::fixed << std::setprecision(15)
-            << (*vec_iter).refractive_index_contribution<< ','
-            << (*vec_iter).displacement_contribution << ' ';
+            << (*vec_iter).refractive_index_contribution << ','
+            << (*vec_iter).displacement_contribution << ','
+            << (*vec_iter).combined_contribution << ' ';
         }
         modulation_depth_stream << endl;
     }

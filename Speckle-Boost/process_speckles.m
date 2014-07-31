@@ -6,17 +6,20 @@ TIME_AVG_SPECKLE = false;
 
 
 
-NUM_FILES =  271;
+NUM_FILES =  4;
 
 
 % The speckle pattern at t=0 of the simulation 
 % (i.e. the speckle pattern without any influence of ultrasound).
-t0 = dlmread('speckle_t0.dat');
+t0 = dlmread('../Data/Speckles/speckle_t0.dat');
 
 % Data is in matrix of NxN (CCD grid dimensions).  Data is reshaped to fit in container.
 CCD_xdim = size(t0,1);
 CCD_ydim = size(t0,2);
 speckle_data   = zeros(NUM_FILES, CCD_xdim*CCD_ydim);
+
+% Update 'speckle_data' with the first speckle pattern.
+speckle_data(1,:) = reshape(t0, 1, size(t0,1)*size(t0,2));
 
 delta_contrast = [];
 delta_contrast_steffen = [];
@@ -24,7 +27,7 @@ avg = zeros(	CCD_xdim, CCD_ydim);
 
 t0_1Darray = reshape(t0, 1, CCD_xdim*CCD_ydim);
 for i=2:NUM_FILES
-	tn = dlmread(['speckle_t', num2str(i-1), '.dat']);
+	tn = dlmread(['../Data/Speckles/speckle_t', num2str(i-1), '.dat']);
 	speckle_data(i,:) = reshape(tn, 1, size(tn,1)*size(tn,2));
 	tn_1Darray = speckle_data(i,:);
 	%delta_contrast = [delta_contrast; (std(tn)/mean(tn)- std(t0)/mean(t0))];

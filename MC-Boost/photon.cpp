@@ -325,8 +325,8 @@ void Photon::reset()
 
 	// Reset the path lengths of the photon.
 	displaced_OPL 		= 0.0f;
-	refractive_OPL = 0.0f;
-	combined_OPL				 		= 0.0f;
+	refractive_OPL      = 0.0f;
+	combined_OPL		= 0.0f;
 
 
 	// Reset the flags for hitting a layer boundary.
@@ -767,7 +767,7 @@ void Photon::displacePhotonFromPressure(void)
     ///   which requires the creation of an unmodulated nmap (i.e. make the computation at t=0 and store it without
     ///   further pertubation).
 	//double local_refractive_index = m_medium->kwave.nmap->getRefractiveIndexFromGrid(_x, _y, _z);
-	double avg_local_refractive_index = (m_medium->kwave.nmap->getBackgroundRefractiveIndexFromGrid(_x_prev, _y_prev, _z_prev) +
+	double avg_background_local_refractive_index = (m_medium->kwave.nmap->getBackgroundRefractiveIndexFromGrid(_x_prev, _y_prev, _z_prev) +
                                          m_medium->kwave.nmap->getBackgroundRefractiveIndexFromGrid(_x_curr, _y_curr, _z_curr))/2;
 
 	// Get the distance between the previous location and the current location.
@@ -784,7 +784,7 @@ void Photon::displacePhotonFromPressure(void)
 	/// Update the optical path length of the photon through the medium by
 	/// calculating the distance between the two points (including the contribution from modulation) and multiplying by the refractive index.
 	//displaced_OPL += VectorMath::Distance(prevLocation, currLocation) * currLayer->getRefractiveIndex();
-	displaced_OPL += (distance_traveled+modulated_distance) * avg_local_refractive_index;
+	displaced_OPL += (distance_traveled+modulated_distance) * avg_background_local_refractive_index;
 }
 
 

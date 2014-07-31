@@ -439,9 +439,6 @@ void Medium::Create_displacement_map_from_full_medium(TRealMatrix * disp_x,
                                      TRealMatrix * disp_y,
                                      TRealMatrix * disp_z)
 {
-
-
-
     if (kwave.dmap == NULL)
     {
 
@@ -511,7 +508,6 @@ void Medium::Create_refractive_map(TRealMatrix * refractive_x,
                                    TRealMatrix * refractive_y,
                                    TRealMatrix * refractive_z)
 {
-
 
     /// FIXME:
     /// - Needs to be implemented for bending photon paths.

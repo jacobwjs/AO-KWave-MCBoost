@@ -124,11 +124,12 @@ public:
     void 	addPressureMap(PressureMap *p_map);
 
 
-    /// Assigns the current pressure from k-Wave to the medium during run-time.
-    /// NOTE: There is no offline processing, pressure matrices are passed in as they are obtained from 'AO_sim' or loaded
-    ///       in from a previous run of kWave.
+    /// Assign the current pressure from k-Wave to the medium during run-time.
     void    Create_refractive_map_from_sensor(TRealMatrix * refractive_total_sensor, const long * sensor_index);
     void    Create_refractive_map_from_full_medium(TRealMatrix * refractive_total_full_medium);
+    
+    /// Assign the unmodulated background refractive index values.
+    void    Create_background_refractive_map_from_full_medium(TRealMatrix * background_refractive_total_full_medium);
     
     /// Used with bending of photon trajectories.
     /// FIXME:
@@ -140,9 +141,9 @@ public:
     /// Assigns the current velocity from k-Wave to the medium during run-time.
     /// NOTE: There is no offline processing, velocity matrices are passed in as they are obtained from 'AO_sim', or loaded
     ///       in from a previous run of kWave.
-    void    Create_displacement_map(TRealMatrix * disp_x,
-                                    TRealMatrix * disp_y,
-                                    TRealMatrix * disp_z);
+    void    Create_displacement_map_from_full_medium(TRealMatrix * disp_x,
+                                                     TRealMatrix * disp_y,
+                                                     TRealMatrix * disp_z);
 
     /// Invert the phase of the refractive index data by multiplying everything by -1 (180 degree phase shift).
     void    Invert_refractive_map_phase();

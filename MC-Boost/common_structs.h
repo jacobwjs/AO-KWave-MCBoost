@@ -119,6 +119,7 @@ typedef struct {
     bool DISPLACE;
     bool REFRACTIVE_TOTAL;
     bool REFRACTIVE_GRADIENT;
+    bool COMBINATION;
     bool MODULATION_DEPTH;
     bool SAVE_SEEDS;
     bool USE_SEEDS;

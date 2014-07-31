@@ -280,6 +280,9 @@ public:
     /// Is --fluence_map specified at the command line
     bool IsStore_fluence_map()          const {return CommandLinesParameters.IsStore_fluence_map();};
     
+    /// Is --combination specified at the command line
+    bool IsStore_combination()          const {return CommandLinesParameters.IsStore_combination();};
+    
     /// Is --AO_sim specified at the command line
     bool IsRun_AO_sim()                 const {return CommandLinesParameters.IsRun_AO_sim();};
     /// Is --AO_sim_loadData specified at the command line
@@ -297,6 +300,9 @@ public:
     bool IsSim_refractive_grad()        const {return (IsStore_refractive_x() ||
                                                        IsStore_refractive_y() ||
                                                        IsStore_refractive_z());};
+    
+    bool IsSim_combination()           const {return IsStore_combination();};
+    
     bool IsSim_displacement()           const {return (IsStore_disp_x() ||
                                                        IsStore_disp_y() ||
                                                        IsStore_disp_z());};

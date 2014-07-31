@@ -79,6 +79,7 @@ public:
     void    Simulate_displacement(bool flag)        {Params.DISPLACE            = flag;};
     void    Simulate_refractive_gradient(bool flag) {Params.REFRACTIVE_GRADIENT = flag;};
     void    Simulate_refractive_total(bool flag)    {Params.REFRACTIVE_TOTAL    = flag;};
+    void    Simulate_combination(bool flag)         {Params.COMBINATION         = flag;};
     void    Simulate_modulation_depth(bool flag)    {Params.MODULATION_DEPTH    = flag;};
     
     /// Set whether or not to store the fluence.
@@ -109,17 +110,13 @@ private:
     /// File that holds the exit data, which depends on what is set to be collected.
     std::string     exit_data_file;
     
-    // Booleans that dictate toggles on various mechanisms during the simulation.
-    // DISPLACE             => Displace the scattering events from ultrasound pressure.
-    // REFRACTIVE_GRADIENT  => Create curved trajectories based on pressure induced refractive index gradients.
-    // REFRACTIVE_TOTAL     => Accumlate phase based on spatially varying refractive index values on straight light paths.
-    // SAVE_SEEDS           => Save seeds that produced paths that made through the exit aperture (i.e. the detector).
-    bool    DISPLACE;
-    bool    REFRACTIVE_GRADIENT;
-    bool    REFRACTIVE_TOTAL;
-    bool    SAVE_SEEDS;
-    
-    
+    /// Booleans that dictate toggles on various mechanisms during the simulation.
+    /// Params.DISPLACE             => Accumulate path length contributions due to displacement of scatterers.
+    /// Params.REFRACTIVE_GRADIENT  => Create curved trajectories based on pressure induced refractive index gradients.
+    /// Params.REFRACTIVE_TOTAL     => Accumlate path length contributions from spatially varying refractive index values on straight light paths.
+    /// Params.COMBINATION          => Params.DISPLACE + Params.REFRACTIVE_TOTAL.
+    /// Params.SAVE_SEEDS           => Save seeds that produced paths that made through the exit aperture (i.e. the detector).
+    /// Params.STORE_FLUENCE        => Store the absorption map of the medium.
     MC_Parameters Params;
     
     

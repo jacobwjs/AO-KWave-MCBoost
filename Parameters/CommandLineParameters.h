@@ -260,7 +260,7 @@ public:
     /// Is --modulation_depth set
     bool IsStore_modulation_depth()     const {return Store_modulation_depth;};
     
-    /// Is --refractive_total set
+    /// Is --n_total set
     bool IsStore_refractive_total()     const {return Store_refractive_total;};
     /// Is --refractive_x set
     bool IsStore_refractive_x()         const {return Store_refractive_x;};
@@ -278,6 +278,10 @@ public:
     
     /// Is --fluence_map set
     bool IsStore_fluence_map()          const {return Store_fluence_map;};
+    
+    
+    /// is --combination set
+    bool IsStore_combination()          const {return Store_combination;};
     
     /// Is --AO_sim set
     bool IsRun_AO_sim()                 const {return Run_AO_sim;};
@@ -400,6 +404,9 @@ private:
     
     /// Store the fluence map
     bool        Store_fluence_map;
+    
+    /// Store the combination (refrative and displacement) contribution
+    bool        Store_combination;
     
     
     /// Run AO_sim that uses data as it's produced from kWave (i.e. US simulation runs)

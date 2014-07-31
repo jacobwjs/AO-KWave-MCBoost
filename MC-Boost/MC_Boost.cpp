@@ -365,7 +365,7 @@ MC_Boost::Run_MC_sim_timestep_with_single_injection_aperture(Medium *medium, Ape
     
     /// Notify the user of what was detected if any of the acousto-optics mechanisms were turned on.
     cout << ".... MC-Boost done\n";
-    if (Params.DISPLACE || Params.REFRACTIVE_TOTAL || Params.REFRACTIVE_GRADIENT || Params.MODULATION_DEPTH)
+    if (Params.DISPLACE || Params.REFRACTIVE_TOTAL || Params.REFRACTIVE_GRADIENT || Params.MODULATION_DEPTH || Params.COMBINATION)
     {
         medium->Write_detector_data();
     }

@@ -60,6 +60,7 @@ TCommandLineParameters::TCommandLineParameters() :
         Store_u_raw(false), Store_u_rms(false), Store_u_max(false), Store_u_final(false),
         Store_I_avg(false), Store_I_max(false),
         /// ------------------- JWJS ----------------------
+        Store_combination(false),
         Store_fluence_map(false),
         Run_AO_sim(false), Run_AO_sim_loadData(false), Run_MC_sim(false), Run_kWave_sim(false), Run_AO_sim_sphere(false),
         Plane_wave(false),

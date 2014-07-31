@@ -481,6 +481,16 @@ void TMatrixContainer::AddMatricesIntoContainer(){
     
     
     /// ------------------------------------- JWJS ---------------------------------------------------------------------------
+    if (Params->IsStore_combination())
+    {
+        /// FIXME:
+        /// - Need to add something for the background refractive index map.
+        
+        MatrixContainer[refractive_total_full_medium].SetAllValues(NULL,TMatrixRecord::mdtReal, FullDim, false, refractive_total_full_medium_Name);
+        MatrixContainer[disp_x_full_medium].SetAllValues(NULL,TMatrixRecord::mdtReal, FullDim, false, disp_x_full_medium_Name);
+        MatrixContainer[disp_y_full_medium].SetAllValues(NULL,TMatrixRecord::mdtReal, FullDim, false, disp_y_full_medium_Name);
+        MatrixContainer[disp_z_full_medium].SetAllValues(NULL,TMatrixRecord::mdtReal, FullDim, false, disp_z_full_medium_Name);
+    }
     if (Params->IsStore_refractive_total())
     {
        //MatrixContainer[refractive_total_sensor].SetAllValues(NULL,TMatrixRecord::mdtReal, SensorDims, false, refractive_total_sensor_Name);

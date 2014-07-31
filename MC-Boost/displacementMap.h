@@ -42,9 +42,9 @@ public:
     
 
     /// Assign the displacements along each respective acess from data provided by KSpaceSolver
-    void    Assign_displacement_map(TRealMatrix * disp_x,
-                                    TRealMatrix * disp_y,
-                                    TRealMatrix * disp_z)
+    void    Update_displacement_map_from_full_medium(TRealMatrix * disp_x,
+                                                     TRealMatrix * disp_y,
+                                                     TRealMatrix * disp_z)
     {
         displacement_map_x = disp_x;
         displacement_map_y = disp_y;

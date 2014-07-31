@@ -27,19 +27,15 @@ MC_Boost::MC_Boost(void)
     NUM_PHOTON_OBJS = NUM_THREADS;
     MAX_NUM_PHOTONS = -1;
 
-    // Set the various mechanisms to false as default.
-    DISPLACE = REFRACTIVE_GRADIENT = REFRACTIVE_TOTAL = SAVE_SEEDS = false;
-
     /// Set mechanisms.
     Params.DISPLACE             = false;
     Params.REFRACTIVE_TOTAL     = false;
     Params.REFRACTIVE_GRADIENT  = false;
+    Params.COMBINATION          = false;
     Params.MODULATION_DEPTH     = false;
     Params.SAVE_SEEDS           = false;
     Params.USE_SEEDS            = false;
 
-    /// Holds data collected when a photon exits through the detection aperture.
-    exit_data_file = "Data/Detected_photons/photon-exit-data";
 }
 
 
@@ -160,6 +156,9 @@ MC_Boost::Generate_MC_RNG_seeds_single_input_aperture(Medium * medium, Aperture 
     
     cout << ".... Generating seeds done\n"
          << " Simulated: " << MAX_NUM_PHOTONS << '\n';
+    
+    /// FIXME:
+    /// - Need to notify what was actually detected.
     //cout << " Detected: " << Logger::getInstance()->Get_num_detected_seed_photons() << " photons\n";
     
 }
@@ -182,6 +181,10 @@ MC_Boost::Run_MC_sim_timestep_with_single_injection_aperture(Medium *medium, Ape
     if (Params.REFRACTIVE_TOTAL)
     {
         cout << "Refractive total enabled\n";
+    }
+    if (Params.COMBINATION)
+    {
+        cout << "Refractive total + displacement enabled\n";
     }
     if (Params.MODULATION_DEPTH)
     {

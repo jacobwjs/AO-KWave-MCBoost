@@ -48,13 +48,13 @@ public:
 	void initCommon(VoxelAttributes voxel_dims);
     
 	/// Returns the refractive index from the grid based on localized pressure
-	float 	getRefractiveIndexFromGrid(const int x, const int z, const int y);
+	float 	getRefractiveIndexFromGrid(const int x, const int y, const int z);
+    
+    /// Returns the background refractive index from the grid (i.e. unmodulated value at t=0);
+    float   getBackgroundRefractiveIndexFromGrid(const int x, const int y, const int z);
     
     /// Returns the refractive index from the grid based on localized pressure along a specific axis.
     float   getRefractiveIndexFromGradientGrid(const char axis, const int x_photon, const int y_photon, const int z_photon);
-
-    /// Return the refractive index from the TRealMatrix.
-    float  Get_refractive_index_TRealMatrix(const int x_photon, const int y_photon, const int z_photon);
     
     /// Is simulation of the refractive gradient enabled.
     bool    IsSim_refractive_grad(void)
@@ -75,6 +75,12 @@ public:
     void    Update_refractive_map_from_full_medium(TRealMatrix * refractive_total_full_medium)
     {
         refractive_total = refractive_total_full_medium;
+    }
+    
+    /// Set the background refractive index values for the simulation.
+    void    Update_background_refractive_map_from_full_medium(TRealMatrix * background_refractive_total_full_medium)
+    {
+        background_refractive_total = background_refractive_total_full_medium;
     }
     
     /// Assign the refractive index maps obtained from KSpaceSolver, or loaded in from an HDF5 file,
@@ -134,6 +140,9 @@ private:
     /// refractive map as it is obtained from 'KSpaceSolver' by converting pressure values
     /// to refractive index values, without any offline processing.
     TRealMatrix * refractive_total;
+    
+    /// The background (i.e. unmodulated refractive index values).
+    TRealMatrix * background_refractive_total;
     
     TRealMatrix * refractive_x;
     TRealMatrix * refractive_y;

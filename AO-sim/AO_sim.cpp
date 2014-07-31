@@ -180,9 +180,6 @@ AO_Sim::Write_fluence_HDF5_file(TParameters * Parameters)
     
     HDF5_OutputFile.Close();
     
-    
-    
-    
 }
 
 
@@ -398,11 +395,12 @@ AO_Sim::Run_acousto_optics_sim_sphere_tagging_volume(TParameters * Parameters)
     bool sim_refractive_total = Parameters->IsSim_refractive_total();
     bool sim_refractive_grad  = Parameters->IsSim_refractive_grad();
     bool sim_displacement     = Parameters->IsSim_displacement();
+    bool sim_combination      = Parameters->IsSim_combination();
     bool sim_modulation_depth = Parameters->IsStore_modulation_depth();
-    
+
     
     /// The gate keeper.
-    if (!(sim_refractive_grad || sim_displacement || sim_refractive_total))
+    if (!(sim_refractive_grad || sim_displacement || sim_refractive_total || sim_combination))
     {
         cout << "Failed!\nAO_Sim::Run_acousto_optics_sim_sphere_tagging_volume()\n"
              << "Need to set simulation type (e.g. --refractive_total)\n";
@@ -410,11 +408,18 @@ AO_Sim::Run_acousto_optics_sim_sphere_tagging_volume(TParameters * Parameters)
         exit(EXIT_FAILURE);
     }
     
+    /// Default values for unmodulated and modulated cases.
+    float unmodulated_refractive_index  = 1.33f;
+    float modulated_refractive_index    = 1.3301f;
+    float unmodulated_displacement      = 0.0f;
+    float modulated_displacement        = 15e-9f;
+    
     
     TLongMatrix *sensor_mask_ind    = NULL;
     THDF5_File& HDF5_InputFile  = Parameters->HDF5_InputFile;
     
     TRealMatrix *refractive_total_full_medium = NULL;
+    TRealMatrix *refractive_background_full_medium = NULL;   /// Unmodulated refractive index values.
     
     TRealMatrix *refractive_x = NULL;
     TRealMatrix *refractive_y = NULL;
@@ -469,6 +474,9 @@ AO_Sim::Run_acousto_optics_sim_sphere_tagging_volume(TParameters * Parameters)
     }
     if (sim_displacement)
     {
+        refractive_background_full_medium = new TRealMatrix(FullDim);
+        if (!refractive_background_full_medium) throw bad_alloc();
+        
         disp_x_full_medium = new TRealMatrix(FullDim);
         if (!disp_x_full_medium) throw bad_alloc();
         
@@ -480,6 +488,36 @@ AO_Sim::Run_acousto_optics_sim_sphere_tagging_volume(TParameters * Parameters)
         
         da_boost->Simulate_displacement(true);
         cout << "Displacement: ON\n";
+    }
+    if (sim_combination)
+    {
+        
+        /// If the simulation of refractive index changes should take place, we need
+        /// to initialize the entire medium with the background value.
+        /// XXX:
+        /// - This assumes the entire medium has a homogeneous refractive index value.
+        ///   This becomes problematic when we want a spatially varying refractive index,
+        ///   for example when multiple layers are present in the medium.
+        ///
+        refractive_total_full_medium = new TRealMatrix(FullDim);
+        if (!refractive_total_full_medium) throw bad_alloc();
+        
+        refractive_background_full_medium = new TRealMatrix(FullDim);
+        if (!refractive_background_full_medium) throw bad_alloc();
+    
+        
+        disp_x_full_medium = new TRealMatrix(FullDim);
+        if (!disp_x_full_medium) throw bad_alloc();
+        
+        disp_y_full_medium = new TRealMatrix(FullDim);
+        if (!disp_y_full_medium) throw bad_alloc();
+        
+        disp_z_full_medium = new TRealMatrix(FullDim);
+        if (!disp_z_full_medium) throw bad_alloc();
+        
+        da_boost->Simulate_combination(true);
+        cout << "Displacement + refraction: ON\n";
+        
     }
     if (sim_modulation_depth)
     {
@@ -520,7 +558,8 @@ AO_Sim::Run_acousto_optics_sim_sphere_tagging_volume(TParameters * Parameters)
         
         for (size_t i = 0; i < sensor_size; i++)
         {
-            nmap[index[i]] = 1.33f;  /// Fill the entire sphere (i.e. the sensor mask) with a constant value.
+            /// Fill the entire sphere (i.e. the sensor mask) with a constant value.
+            nmap[index[i]] = unmodulated_refractive_index;
         }
         
         //PrintMatrix((*refractive_total_full_medium), Parameters);
@@ -530,6 +569,10 @@ AO_Sim::Run_acousto_optics_sim_sphere_tagging_volume(TParameters * Parameters)
     }
     if (sim_displacement)
     {
+        /// Fill the Nmap with a constant value below, for the photon to move through in the sphere
+        /// when calculating the optical path length (OPL) from the displacement contribution.
+        float * nmap_background = refractive_background_full_medium->GetRawData();
+        
         float * disp_x = disp_x_full_medium->GetRawData();
         float * disp_y = disp_y_full_medium->GetRawData();
         float * disp_z = disp_z_full_medium->GetRawData();
@@ -538,15 +581,65 @@ AO_Sim::Run_acousto_optics_sim_sphere_tagging_volume(TParameters * Parameters)
         
         for (size_t i = 0; i < sensor_size; i++)
         {
-            disp_x[index[i]] = 0.0f;  /// Fill the entire sphere (i.e. the sensor mask) with a constant value.
-            disp_y[index[i]] = 0.0f;
-            disp_z[index[i]] = 0.0f;
+            /// Fill the entire sphere (i.e. the sensor mask) with a constant value of
+            /// refractive index (unmodulated, only simulating displacement).
+            nmap_background[index[i]] = unmodulated_refractive_index;
+            
+            /// Fill the entire sphere (i.e. the sensor mask) with a constant value of displacement (unmodulated).
+            disp_x[index[i]] = unmodulated_displacement;
+            disp_y[index[i]] = unmodulated_displacement;
+            disp_z[index[i]] = unmodulated_displacement;
         }
         
+        /// Create the background (i.e. unmodulated refractive index values) Nmap.
+        m_medium->Create_background_refractive_map_from_full_medium(refractive_background_full_medium);
+        
+        /// Create a Dmap based upon the pressure at this time step.
+        m_medium->Create_displacement_map_from_full_medium(disp_x_full_medium,
+                                                           disp_y_full_medium,
+                                                           disp_z_full_medium);
+    }
+    if (sim_combination)
+    {
+        /// Fill the Nmap with a constant value below, for the photon to move through in the sphere
+        /// when calculating the optical path length (OPL) from the displacement contribution.
+        float * nmap_background = refractive_background_full_medium->GetRawData();
+        
+        /// The Nmap that will eventually contain modulated values.
+        float * nmap = refractive_total_full_medium->GetRawData();
+        
+        float * disp_x = disp_x_full_medium->GetRawData();
+        float * disp_y = disp_y_full_medium->GetRawData();
+        float * disp_z = disp_z_full_medium->GetRawData();
+        const size_t  sensor_size = sensor_mask_ind->GetTotalElementCount();
+        const long *  index = sensor_mask_ind->GetRawData();
+        
+        for (size_t i = 0; i < sensor_size; i++)
+        {
+            /// Fill the entire sphere (i.e. the sensor mask) with a constant value of
+            /// refractive index (unmodulated).
+            nmap_background[index[i]] = unmodulated_refractive_index;
+            
+            /// At this "time step", there are no changes in the Nmap.
+            nmap[index[i]] = nmap_background[index[i]];
+            
+            /// Fill the entire sphere (i.e. the sensor mask) with a constant value of displacement (unmodulated).
+            disp_x[index[i]] = unmodulated_displacement;
+            disp_y[index[i]] = unmodulated_displacement;
+            disp_z[index[i]] = unmodulated_displacement;
+        }
+        
+        /// Create the background (i.e. unmodulated refractive index values) Nmap that is used for 'displacement' only OPL calculation.
+        m_medium->Create_background_refractive_map_from_full_medium(refractive_background_full_medium);
+        
+        /// Update the refractive map.
+        m_medium->Create_refractive_map_from_full_medium(refractive_total_full_medium);
+        
         /// Create a displacment map based upon the pressure at this time step.
-        m_medium->Create_displacement_map(disp_x_full_medium,
-                                          disp_y_full_medium,
-                                          disp_z_full_medium);
+        m_medium->Create_displacement_map_from_full_medium(disp_x_full_medium,
+                                                           disp_y_full_medium,
+                                                           disp_z_full_medium);
+        
     }
     
     /// Run the MC_sim with the 'unmodulated' values.
@@ -573,7 +666,7 @@ AO_Sim::Run_acousto_optics_sim_sphere_tagging_volume(TParameters * Parameters)
         
         for (size_t i = 0; i < sensor_size; i++)
         {
-            nmap[index[i]] = 1.3301;  /// Fill the entire sphere (i.e. the sensor mask) with a constant value.
+            nmap[index[i]] = modulated_refractive_index;  /// Fill the entire sphere (i.e. the sensor mask) with a constant value (modulated).
         }
         
         /// Update the refractive map
@@ -582,6 +675,10 @@ AO_Sim::Run_acousto_optics_sim_sphere_tagging_volume(TParameters * Parameters)
     
     if (sim_displacement)
     {
+        /// Fill the Nmap with a constant value below, for the photon to move through in the sphere
+        /// when calculating the optical path length (OPL) from the displacement contribution.
+        float * nmap_background = refractive_background_full_medium->GetRawData();
+        
         float * disp_x = disp_x_full_medium->GetRawData();
         float * disp_y = disp_y_full_medium->GetRawData();
         float * disp_z = disp_z_full_medium->GetRawData();
@@ -590,16 +687,68 @@ AO_Sim::Run_acousto_optics_sim_sphere_tagging_volume(TParameters * Parameters)
         
         for (size_t i = 0; i < sensor_size; i++)
         {
-            disp_x[index[i]] = 10e-9;  /// Fill the entire sphere (i.e. the sensor mask) with a constant value.
-            disp_y[index[i]] = 0.0f;
-            disp_z[index[i]] = 0.0f;
+            /// Fill the entire sphere (i.e. the sensor mask) with a constant value of
+            /// refractive index (unmodulated, only simulating displacement).
+            nmap_background[index[i]] = unmodulated_refractive_index;
+            
+            /// Fill the entire sphere (i.e. the sensor mask) with a constant value of displacement (modulated) for the x-axis.
+            disp_x[index[i]] = modulated_displacement;
+            /// No displacement on the remaining axes.
+            disp_y[index[i]] = unmodulated_displacement;
+            disp_z[index[i]] = unmodulated_displacement;
         }
+        /// Create the background (i.e. unmodulated refractive index values) Nmap that is used for 'displacement' only OPL calculation.
+        m_medium->Create_background_refractive_map_from_full_medium(refractive_background_full_medium);
         
         /// Create a displacment map based upon the pressure at this time step.
-        m_medium->Create_displacement_map(disp_x_full_medium,
-                                          disp_y_full_medium,
-                                          disp_z_full_medium);
+        m_medium->Create_displacement_map_from_full_medium(disp_x_full_medium,
+                                                           disp_y_full_medium,
+                                                           disp_z_full_medium);
     }
+    if (sim_combination)
+    {
+        /// Fill the Nmap with a constant value below, for the photon to move through in the sphere
+        /// when calculating the optical path length (OPL) from the displacement contribution.
+        float * nmap_background = refractive_background_full_medium->GetRawData();
+        
+        /// The Nmap that will eventually contain modulated values.
+        float * nmap = refractive_total_full_medium->GetRawData();
+        
+        float * disp_x = disp_x_full_medium->GetRawData();
+        float * disp_y = disp_y_full_medium->GetRawData();
+        float * disp_z = disp_z_full_medium->GetRawData();
+        const size_t  sensor_size = sensor_mask_ind->GetTotalElementCount();
+        const long *  index = sensor_mask_ind->GetRawData();
+        
+        for (size_t i = 0; i < sensor_size; i++)
+        {
+            /// Fill the entire sphere (i.e. the sensor mask) with a constant value of
+            /// refractive index (unmodulated).
+            nmap_background[index[i]] = unmodulated_refractive_index;
+            
+            /// Assign the refractive index value (modulated).
+            nmap[index[i]] = modulated_refractive_index;
+            
+            /// Fill the entire sphere (i.e. the sensor mask) with a constant value of displacement (modulated) for the x-axis.
+            disp_x[index[i]] = modulated_displacement;
+            /// No displacement on the remaining axes.
+            disp_y[index[i]] = unmodulated_displacement;
+            disp_z[index[i]] = unmodulated_displacement;
+        }
+        
+        /// Create the background (i.e. unmodulated refractive index values) Nmap that is used for 'displacement' only OPL calculation.
+        m_medium->Create_background_refractive_map_from_full_medium(refractive_background_full_medium);
+        
+        /// Update the refractive map.
+        m_medium->Create_refractive_map_from_full_medium(refractive_total_full_medium);
+        
+        /// Create a displacment map based upon the pressure at this time step.
+        m_medium->Create_displacement_map_from_full_medium(disp_x_full_medium,
+                                                           disp_y_full_medium,
+                                                           disp_z_full_medium);
+        
+    }
+    
     
 
     /// Run the MC_sim with the 'modulated' values.
@@ -622,6 +771,7 @@ AO_Sim::Run_acousto_optics_sim(TParameters * Parameters)
     bool sim_refractive_total = Parameters->IsSim_refractive_total();
     bool sim_refractive_grad  = Parameters->IsSim_refractive_grad();
     bool sim_displacement     = Parameters->IsSim_displacement();
+    bool sim_combination      = Parameters->IsSim_combination();
     bool sim_modulation_depth = Parameters->IsStore_modulation_depth();
     bool sim_phase_inversion  = Parameters->IsPhase_inversion();
     
@@ -778,7 +928,7 @@ AO_Sim::Run_acousto_optics_sim(TParameters * Parameters)
 		/// If the flag for simulating the influence of refractive index changes or displacements is set
 		/// we need to grab the appropriate data from k-Wave and build grids for
 		/// photon propagation.
-		if (sim_refractive_grad || sim_displacement || sim_refractive_total)
+		if (sim_refractive_grad || sim_displacement || sim_refractive_total || sim_combination)
 		{
             TRealMatrix *refractive_total_full_medium = NULL;
 
@@ -805,6 +955,10 @@ AO_Sim::Run_acousto_optics_sim(TParameters * Parameters)
             {
                 KSpaceSolver->FromAO_sim_compute_refractive_index_total();
                 refractive_total_full_medium = &(KSpaceSolver->FromAO_sim_Get_refractive_total_full_medium());
+                
+                /// Create a refractive map (total) based upon the pressure and density changes at this time step.
+                m_medium->Create_refractive_map_from_full_medium(refractive_total_full_medium);
+                
             }
 
             if (sim_displacement)
@@ -813,20 +967,47 @@ AO_Sim::Run_acousto_optics_sim(TParameters * Parameters)
                 disp_x_full_medium = &(KSpaceSolver->FromAO_sim_Get_disp_x_full_medium());
                 disp_y_full_medium = &(KSpaceSolver->FromAO_sim_Get_disp_y_full_medium());
                 disp_z_full_medium = &(KSpaceSolver->FromAO_sim_Get_disp_z_full_medium());
+                
+                /// FIXME:
+                /// ------------------------------------------------------
+                /// - Need to create a background Nmap.
+                
+                
+                
+                /// Create a displacment map based upon the pressure at this time step.
+        		m_medium->Create_displacement_map_from_full_medium(disp_x_full_medium,
+                                                                   disp_y_full_medium,
+                                                                   disp_z_full_medium);
             }
 
 			/// NOTE:
 			/// - The refractive index and displacement values need to be updated every time step
             ///   within kWave, otherwise what is assigned here is invalid.
-            if (sim_refractive_total && sim_displacement)
+            if (sim_combination)
             {
+                KSpaceSolver->FromAO_sim_compute_refractive_index_total();
+                refractive_total_full_medium = &(KSpaceSolver->FromAO_sim_Get_refractive_total_full_medium());
+                
+                KSpaceSolver->FromAO_sim_compute_displacement();
+                disp_x_full_medium = &(KSpaceSolver->FromAO_sim_Get_disp_x_full_medium());
+                disp_y_full_medium = &(KSpaceSolver->FromAO_sim_Get_disp_y_full_medium());
+                disp_z_full_medium = &(KSpaceSolver->FromAO_sim_Get_disp_z_full_medium());
+                
+                
+                /// FIXME:
+                /// ------------------------------------------------------
+                /// - Need to create a background Nmap.
+                
+                
+                
+                
                 /// Create a refractive map (total) based upon the pressure and density changes at this time step.
                 m_medium->Create_refractive_map_from_full_medium(refractive_total_full_medium);
 
                 /// Create a displacment map based upon the pressure at this time step.
-        		m_medium->Create_displacement_map(disp_x_full_medium,
-                                                  disp_y_full_medium,
-                                                  disp_z_full_medium);
+        		m_medium->Create_displacement_map_from_full_medium(disp_x_full_medium,
+                                                                   disp_y_full_medium,
+                                                                   disp_z_full_medium);
             }
 			else if (sim_refractive_grad && sim_displacement)
 			{
@@ -836,34 +1017,17 @@ AO_Sim::Run_acousto_optics_sim(TParameters * Parameters)
 //        		m_medium->Create_refractive_map(refractive_x,
 //                                                refractive_y,
 //                                                refractive_z);
-
-				/// Create a displacment map based upon the pressure at this time step.
-        		m_medium->Create_displacement_map(disp_x_full_medium,
-                                                  disp_y_full_medium,
-                                                  disp_z_full_medium);
+//
+//				/// Create a displacment map based upon the pressure at this time step.
+//        		m_medium->Create_displacement_map_from_full_medium(disp_x_full_medium,
+//                                                                   disp_y_full_medium,
+//                                                                   disp_z_full_medium);
 			}
-            else if (sim_refractive_total)
+            else
             {
-                /// Create a refractive map (total) based upon the pressure and density changes at this time step.
-                m_medium->Create_refractive_map_from_full_medium(refractive_total_full_medium);
+                cout << "!!! ERROR: Nothing specified to simulate\n";
+                exit(EXIT_FAILURE);
             }
-			else if (sim_refractive_grad)
-			{
-                /// Create a refractive map (gradient) based upon the pressure and density changes at this time step.
-                /// FIXME:
-                /// - Not currently functional.
-//        		m_medium->Create_refractive_map(refractive_x,
-//                                                refractive_y,
-//                                                refractive_z);
-			}
-			else if (sim_displacement)
-			{
-                /// Create a displacment map based upon the pressure at this time step.
-        		m_medium->Create_displacement_map(disp_x_full_medium,
-                                                  disp_y_full_medium,
-                                                  disp_z_full_medium);
-
-        	}
 
 
 
@@ -1261,7 +1425,7 @@ AO_Sim::Run_acousto_optics_sim_loadData(TParameters * Parameters)
                 }
                 
                 /// Update the displacement map
-                m_medium->Create_displacement_map(disp_x_full_medium, disp_y_full_medium, disp_z_full_medium);
+                m_medium->Create_displacement_map_from_full_medium(disp_x_full_medium, disp_y_full_medium, disp_z_full_medium);
             }
             
             
@@ -1357,7 +1521,7 @@ AO_Sim::Run_acousto_optics_sim_loadData(TParameters * Parameters)
                 
                 
                 /// Assign a displacement map based on the values read in from the HDF5 file.
-                m_medium->Create_displacement_map(disp_x_full_medium, disp_y_full_medium, disp_z_full_medium);
+                m_medium->Create_displacement_map_from_full_medium(disp_x_full_medium, disp_y_full_medium, disp_z_full_medium);
                 
                 /// Read displacment data in from the HDF5 file that holds the precomputed values for
                 /// a previously run kWave simulation.
@@ -1367,7 +1531,7 @@ AO_Sim::Run_acousto_optics_sim_loadData(TParameters * Parameters)
 
 
                 /// Create a displacement map based on the values read in from the HDF5 file.
-                //m_medium->Create_displacement_map(disp_x, disp_y, disp_z);
+                //m_medium->Create_displacement_map_from_full_medium(disp_x, disp_y, disp_z);
 
                 //PrintMatrixSensor((*disp_x_sensor), Parameters);
                 ///PrintMatrix(m_medium, Parameters);

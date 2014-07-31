@@ -329,6 +329,7 @@ private:
     double time_of_flight;
     
     // flags that define what (and what not) should take place during the simulation.
+    bool SIM_COMBINATION;
     bool SIM_MODULATION_DEPTH;
     bool SIM_DISPLACEMENT;
     bool SIM_REFRACTIVE_TOTAL;

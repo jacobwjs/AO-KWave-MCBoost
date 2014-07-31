@@ -290,6 +290,8 @@ void TCommandLineParameters::ParseCommandLine(int argc, char** argv){
         { "disp_y", no_argument, NULL, 0},
         { "disp_z", no_argument, NULL, 0},
        
+        { "combination", no_argument, NULL, 0},
+       
         { "fluence_map", no_argument, NULL, 0},
 
         { "s", required_argument, NULL, 's'},
@@ -494,6 +496,9 @@ void TCommandLineParameters::ParseCommandLine(int argc, char** argv){
                 if( strcmp( "disp_z", longOpts[longIndex].name ) == 0) {
                     Store_disp_z = true;
                 } else
+                if( strcmp( "combination", longOpts[longIndex].name ) == 0) {
+                    Store_combination = true;
+                } else
                 if( strcmp( "fluence_map", longOpts[longIndex].name ) == 0) {
                     Store_fluence_map = true;
                 } else
@@ -551,7 +556,7 @@ void TCommandLineParameters::ParseCommandLine(int argc, char** argv){
          Store_I_avg || Store_I_max ||
        /// ------------------------- JWJS ------------------------------------
          Store_refractive_total || Store_refractive_x || Store_refractive_y || Store_refractive_z ||
-         Store_disp_x || Store_disp_y || Store_disp_z) && (!Run_MC_sim))
+         Store_disp_x || Store_disp_y || Store_disp_z || Store_combination) && (!Run_MC_sim))
        /// -------------------------------
    {
        fprintf(stderr, "%s", "!!! ERROR: Nothing has been specified to store or simulate. Exiting!\n");

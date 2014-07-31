@@ -75,11 +75,17 @@ void Photon::initCommon(void)
 
 	// Set the path lengths during initialization.
 	displaced_OPL 		= 0.0f;
-	refractive_OPL = 0.0f;
+	refractive_OPL      = 0.0f;
 	combined_OPL 		= 0.0f;
 
     /// Everything defaults to false.
-    SIM_MODULATION_DEPTH = SIM_DISPLACEMENT = SIM_REFRACTIVE_TOTAL = SIM_REFRACTIVE_GRADIENT = SAVE_RNG_SEEDS = false;
+    SIM_MODULATION_DEPTH    = false;
+    SIM_DISPLACEMENT        = false;
+    SIM_REFRACTIVE_TOTAL    = false;
+    SIM_REFRACTIVE_GRADIENT = false;
+    SIM_COMBINATION         = false;
+    SAVE_RNG_SEEDS          = false;
+    STORE_FLUENCE           = false;
 
 }
 
@@ -143,6 +149,7 @@ void Photon::Inject_photon_through_aperture(Medium *medium, const int num_iterat
 	SIM_DISPLACEMENT 			= Params.DISPLACE;
 	SIM_REFRACTIVE_TOTAL        = Params.REFRACTIVE_TOTAL;
     SIM_REFRACTIVE_GRADIENT     = Params.REFRACTIVE_GRADIENT;
+    SIM_COMBINATION             = Params.COMBINATION;
 	SAVE_RNG_SEEDS				= Params.SAVE_SEEDS;
     STORE_FLUENCE               = Params.STORE_FLUENCE;
     
@@ -248,17 +255,17 @@ void Photon::propagatePhoton(const int iterations)
 				// Now displace the photon at its new location some distance depending on
 				// how the pressure has moved scattering particles and/or due to the change
 				// in the path of the photon due to refractive index gradient.
-				if (SIM_REFRACTIVE_TOTAL && !SIM_DISPLACEMENT)
+				if (SIM_REFRACTIVE_TOTAL)
 				{
 					alterOPLFromAverageRefractiveChanges();
 				}
 
-				if (SIM_DISPLACEMENT && !SIM_REFRACTIVE_TOTAL)
+				if (SIM_DISPLACEMENT)
 				{
 					displacePhotonFromPressure();
 				}
 
-				if (SIM_DISPLACEMENT && SIM_REFRACTIVE_TOTAL)
+				if (SIM_COMBINATION)
 				{
 					displacePhotonAndAlterOPLFromAverageRefractiveChanges();
 				}
@@ -318,8 +325,8 @@ void Photon::reset()
 
 	// Reset the path lengths of the photon.
 	displaced_OPL 		= 0.0f;
-	refractive_OPL = 0.0f;
-	combined_OPL				 		= 0.0f;
+	refractive_OPL      = 0.0f;
+	combined_OPL		= 0.0f;
 
 
 	// Reset the flags for hitting a layer boundary.
@@ -421,7 +428,7 @@ bool Photon::checkDetector(void)
         //   so no division for x & y direction cosines because nt = 1.0
         // - It is also assumed that the photon is transmitted through the x-y plane.
         
-        if (SIM_DISPLACEMENT || SIM_REFRACTIVE_TOTAL || SIM_REFRACTIVE_GRADIENT)
+        if (SIM_DISPLACEMENT || SIM_REFRACTIVE_TOTAL || SIM_REFRACTIVE_GRADIENT || SIM_COMBINATION)
         {
             
             /// FIXME:
@@ -506,7 +513,7 @@ void Photon::drop()
 	double mu_a = 0.0f;
 	double mu_s = 0.0f;
 	double albedo = 0.0f;
-	double absorbed = 0.0f;
+	double absorbed_energy = 0.0f;
 
 
 	Absorber * absorber = currLayer->getAbsorber(currLocation);
@@ -521,10 +528,10 @@ void Photon::drop()
 		// Calculate the albedo and remove a portion of the photon's weight for this
 		// interaction.
 		albedo = mu_s / (mu_a + mu_s);
-		absorbed = weight * (1 - albedo);
+		absorbed_energy = weight * (1 - albedo);
 
 		// Update the absorbed weight in this absorber.
-		absorber->updateAbsorbedWeight(absorbed);
+		absorber->updateAbsorbedWeight(absorbed_energy);
 	}
 	else
 	{
@@ -540,13 +547,13 @@ void Photon::drop()
 		// Calculate the albedo and remove a portion of the photon's weight for this
 		// interaction.
 		albedo = mu_s / (mu_a + mu_s);
-		absorbed = weight * (1 - albedo);
+		absorbed_energy = weight * (1 - albedo);
 	}
 
 
 
 	// Remove the portion of energy lost due to absorption at this location.
-	weight -= absorbed;
+	weight -= absorbed_energy;
 
     /// Update the fluence map if we are storing fluence data.
     if (STORE_FLUENCE)
@@ -559,8 +566,8 @@ void Photon::drop()
         size_t _z = currLocation->location.z/m_medium->dz - (currLocation->location.z/m_medium->dz)/m_medium->Nz;
 
         /// Deposit absorbed energy in the fluence map.
-        //partial_fluence_map->SetElementFrom3D(_x, _y, _z, weight);
-        m_medium->total_fluence_map->SetElementFrom3D(_x, _y, _z, weight);
+        //partial_fluence_map->SetElementFrom3D(_x, _y, _z, absorbed_energy);
+        m_medium->total_fluence_map->SetElementFrom3D(_x, _y, _z, absorbed_energy);
     }
 	
 }
@@ -714,13 +721,11 @@ void Photon::displacePhotonFromPressure(void)
 
 
 
-
-
     // Get the displacement caused by ultrasound pressure at this location of the scattering event.
 	//
     // Index into the displacement grids to retrieve the value of how much to
     // displace the photon from it's current location along each axis (x,y,z).
-    /// Done for this scattering event and the previous.
+    ///
     double curr_x_disp = m_medium->kwave.dmap->getDisplacementFromGridX(_x_curr, _y_curr, _z_curr);
     double curr_y_disp = m_medium->kwave.dmap->getDisplacementFromGridY(_x_curr, _y_curr, _z_curr);
     double curr_z_disp = m_medium->kwave.dmap->getDisplacementFromGridZ(_x_curr, _y_curr, _z_curr);
@@ -762,7 +767,8 @@ void Photon::displacePhotonFromPressure(void)
     ///   which requires the creation of an unmodulated nmap (i.e. make the computation at t=0 and store it without
     ///   further pertubation).
 	//double local_refractive_index = m_medium->kwave.nmap->getRefractiveIndexFromGrid(_x, _y, _z);
-	double local_refractive_index = 1.33;
+	double avg_background_local_refractive_index = (m_medium->kwave.nmap->getBackgroundRefractiveIndexFromGrid(_x_prev, _y_prev, _z_prev) +
+                                         m_medium->kwave.nmap->getBackgroundRefractiveIndexFromGrid(_x_curr, _y_curr, _z_curr))/2;
 
 	// Get the distance between the previous location and the current location.
 	double distance_traveled = VectorMath::Distance(prevLocation, currLocation);
@@ -778,7 +784,7 @@ void Photon::displacePhotonFromPressure(void)
 	/// Update the optical path length of the photon through the medium by
 	/// calculating the distance between the two points (including the contribution from modulation) and multiplying by the refractive index.
 	//displaced_OPL += VectorMath::Distance(prevLocation, currLocation) * currLayer->getRefractiveIndex();
-	displaced_OPL += (distance_traveled+modulated_distance) * local_refractive_index;
+	displaced_OPL += (distance_traveled+modulated_distance) * avg_background_local_refractive_index;
 }
 
 
@@ -1076,11 +1082,70 @@ void Photon::alterOPLFromAverageRefractiveChanges(void)
 // - Combine both displacement and average refractive index changes to OPL contribution.
 void Photon::displacePhotonAndAlterOPLFromAverageRefractiveChanges(void)
 {
+    // Photon does not get displaced on boundaries of medium.
+	if (hit_x_bound || hit_y_bound || hit_z_bound) return;
+    
+    /// Update the individual OPLs, which will be written out to disk later for comparison against the combined.
 	displacePhotonFromPressure();
 	alterOPLFromAverageRefractiveChanges();
 
-
-	combined_OPL = displaced_OPL + refractive_OPL;
+    
+    
+	// Transform the location of the photon in the medium to discrete locations in the grid.
+	//
+	static double dx = m_medium->dx;
+	static double Nx = m_medium->Nx;
+    
+	static double dy = m_medium->dy;
+	static double Ny = m_medium->Ny;
+    
+	static double dz = m_medium->dz;
+	static double Nz = m_medium->Nz;
+    
+    /// Get the appropriate voxel numbers for the current and previous location for indexing into the 3-D grid.
+    int _x_prev = prevLocation->location.x/dx - (prevLocation->location.x/dx)/Nx;
+	int _y_prev = prevLocation->location.y/dy - (prevLocation->location.y/dy)/Ny;
+	int _z_prev = prevLocation->location.z/dz - (prevLocation->location.z/dz)/Nz;
+    
+	int _x_curr = currLocation->location.x/dx - (currLocation->location.x/dx)/Nx;
+	int _y_curr = currLocation->location.y/dy - (currLocation->location.y/dy)/Ny;
+	int _z_curr = currLocation->location.z/dz - (currLocation->location.z/dz)/Nz;
+    
+    
+    
+    
+    // Get the displacement caused by ultrasound pressure at this location of the scattering event.
+	//
+    // Index into the displacement grids to retrieve the value of how much to
+    // displace the photon from it's current location along each axis (x,y,z).
+    ///
+    double curr_x_disp = m_medium->kwave.dmap->getDisplacementFromGridX(_x_curr, _y_curr, _z_curr);
+    double curr_y_disp = m_medium->kwave.dmap->getDisplacementFromGridY(_x_curr, _y_curr, _z_curr);
+    double curr_z_disp = m_medium->kwave.dmap->getDisplacementFromGridZ(_x_curr, _y_curr, _z_curr);
+    
+    double prev_x_disp = m_medium->kwave.dmap->getDisplacementFromGridX(_x_prev, _y_prev, _z_prev);
+    double prev_y_disp = m_medium->kwave.dmap->getDisplacementFromGridY(_x_prev, _y_prev, _z_prev);
+    double prev_z_disp = m_medium->kwave.dmap->getDisplacementFromGridZ(_x_prev, _y_prev, _z_prev);
+    
+	// Get the local refractive index based on the coordinates of the displaced photon.
+	double avg_local_refractive_index = (m_medium->kwave.nmap->getRefractiveIndexFromGrid(_x_prev, _y_prev, _z_prev) +
+                                         m_medium->kwave.nmap->getRefractiveIndexFromGrid(_x_curr, _y_curr, _z_curr))/2;
+    
+	// Get the distance between the previous location and the current location.
+	double distance_traveled = VectorMath::Distance(prevLocation, currLocation);
+    
+    /// Calculate the Norm based on displacements found from the grid at this scattering event, and the previous.
+    double temp_delta_x = (prevLocation->location.x + prev_x_disp) - (currLocation->location.x + curr_x_disp);
+    double temp_delta_y = (prevLocation->location.y + prev_y_disp) - (currLocation->location.y + curr_y_disp);
+    double temp_delta_z = (prevLocation->location.z + prev_z_disp) - (currLocation->location.z + curr_z_disp);
+    double modulated_distance = sqrt((temp_delta_x*temp_delta_x) +
+                                     (temp_delta_y*temp_delta_y) +
+                                     (temp_delta_z*temp_delta_z));
+    
+	/// Update the optical path length of the photon through the medium by
+	/// calculating the distance between the two points (including the contribution from modulation) and multiplying by the refractive index.
+	//displaced_OPL += VectorMath::Distance(prevLocation, currLocation) * currLayer->getRefractiveIndex();
+	combined_OPL += (distance_traveled+modulated_distance) * avg_local_refractive_index;
 
 }
 

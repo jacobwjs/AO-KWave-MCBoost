@@ -435,26 +435,23 @@ double Medium::getAnisotropyFromDepth(double z)
 
 /// Create the displacement map based on what is returned from the computation
 /// that happens in KSpaceSolver.
-void Medium::Create_displacement_map(TRealMatrix * disp_x,
+void Medium::Create_displacement_map_from_full_medium(TRealMatrix * disp_x,
                                      TRealMatrix * disp_y,
                                      TRealMatrix * disp_z)
 {
-
-
-
     if (kwave.dmap == NULL)
     {
 
         kwave.dmap = new DisplacementMap();
-        kwave.dmap->Assign_displacement_map(disp_x,
-                                            disp_y,
-                                            disp_z);
+        kwave.dmap->Update_displacement_map_from_full_medium(disp_x,
+                                                             disp_y,
+                                                             disp_z);
     }
     else
     {
-        kwave.dmap->Assign_displacement_map(disp_x,
-                                            disp_y,
-                                            disp_z);
+        kwave.dmap->Update_displacement_map_from_full_medium(disp_x,
+                                                             disp_y,
+                                                             disp_z);
     }
 
 
@@ -466,11 +463,6 @@ void Medium::Create_displacement_map(TRealMatrix * disp_x,
 /// that happens in KSpaceSolver or from what was loaded in from an HDF5 file from a previous run.
 void Medium::Create_refractive_map_from_sensor(TRealMatrix * refractive_total_sensor, const long * sensor_index)
 {
-    /// XXX:
-    /// - This is defined here, but would change depending on temperature changes, if that
-    ///   is ever incorporated into this simulation, which in turn would affect density and SOS.
-    background_refractive_index = 1.33;
-
     if(kwave.nmap == NULL)
     {
         /// Create a new 'RefractiveMap' based on the size of the full medium.
@@ -486,11 +478,7 @@ void Medium::Create_refractive_map_from_sensor(TRealMatrix * refractive_total_se
 
 void Medium::Create_refractive_map_from_full_medium(TRealMatrix * refractive_total_full_medium)
 {
-    /// XXX:
-    /// - This is defined here, but would change depending on temperature changes, if that
-    ///   is ever incorporated into this simulation, which in turn would affect density and SOS.
-    //background_refractive_index = 1.33;
-    
+
     if(kwave.nmap == NULL)
     {
         /// Create a new 'RefractiveMap' based on the size of the full medium.
@@ -503,16 +491,23 @@ void Medium::Create_refractive_map_from_full_medium(TRealMatrix * refractive_tot
 }
 
 
+void Medium::Create_background_refractive_map_from_full_medium(TRealMatrix * background_refractive_total_full_medium)
+{
+    if(kwave.nmap == NULL)
+    {
+        /// Create a new 'RefractiveMap' based on the size of the full medium.
+        kwave.nmap = new RefractiveMap(Nx, Ny, Nz);
+    }
+    
+    /// Updates the refractive map data.
+    kwave.nmap->Update_background_refractive_map_from_full_medium(background_refractive_total_full_medium);
+}
+
+
 void Medium::Create_refractive_map(TRealMatrix * refractive_x,
                                    TRealMatrix * refractive_y,
                                    TRealMatrix * refractive_z)
 {
-
-    /// XXX:
-    /// - This is defined here, but would change depending on temperature changes, if that
-    ///   is ever incorporated into this simulation, which in turn would affect density and SOS.
-    background_refractive_index = 1.33;
-
 
     /// FIXME:
     /// - Needs to be implemented for bending photon paths.

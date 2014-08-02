@@ -132,7 +132,7 @@ void CCDGrid::makeSpeckle(const std::string &input_filename,
     
     // The optical path length used in the calculation.
 	double displaced_OPL 		= 0.0;
-    double refraction_OPL 	= 0.0;
+    double refraction_OPL       = 0.0;
 	double combined_OPL			= 0.0;
     double OPL		 			= 0.0;
     

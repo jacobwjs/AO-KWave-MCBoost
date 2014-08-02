@@ -38,7 +38,7 @@ int main()
 	// Let boost decide how many threads to run on this architecture.
 	//
     //const int NUM_THREADS = boost::thread::hardware_concurrency();
-    const int NUM_THREADS = 4;
+    const int NUM_THREADS = 2;
 
 	/// Pixel count of the CCD.
 	const size_t PIXEL_CNT = 512;
@@ -49,8 +49,8 @@ int main()
     cout << "CPU threads supported: = " << NUM_THREADS << endl;
 	cout << separator;
     
-    path p_exit_data = "../AO-KWave-MCBoost/Data/Detected_photons";
-	path p_speckle_data = "../AO-KWave-MCBoost/Data/Speckles";
+    path p_exit_data = "../Data/Detected_photons";
+	path p_speckle_data = "../Data/Speckles";
     if (is_directory(p_exit_data))
 	{
 		cout << "Data directory found: " << p_exit_data << '\n';

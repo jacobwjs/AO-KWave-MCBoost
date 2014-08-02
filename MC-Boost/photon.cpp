@@ -768,7 +768,7 @@ void Photon::displacePhotonFromPressure(void)
     ///   further pertubation).
 	//double local_refractive_index = m_medium->kwave.nmap->getRefractiveIndexFromGrid(_x, _y, _z);
 	double avg_background_local_refractive_index = (m_medium->kwave.nmap->getBackgroundRefractiveIndexFromGrid(_x_prev, _y_prev, _z_prev) +
-                                         m_medium->kwave.nmap->getBackgroundRefractiveIndexFromGrid(_x_curr, _y_curr, _z_curr))/2;
+                                                    m_medium->kwave.nmap->getBackgroundRefractiveIndexFromGrid(_x_curr, _y_curr, _z_curr))/2;
 
 	// Get the distance between the previous location and the current location.
 	double distance_traveled = VectorMath::Distance(prevLocation, currLocation);

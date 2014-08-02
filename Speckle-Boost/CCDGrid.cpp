@@ -145,9 +145,9 @@ void CCDGrid::makeSpeckle(const std::string &input_filename,
     double exit_location_z = 0.0;   
 
 
-    bool DISPLACEMENT_ENABLED   = true; // Displacement AO mechanism
+    bool DISPLACEMENT_ENABLED   = false; // Displacement AO mechanism
     bool REFRACTION_ENABLED     = false;  // Refraction AO mechanism
-    bool COMBINED_ENABLED       = false; // Displacement and Refraction
+    bool COMBINED_ENABLED       = true; // Displacement and Refraction
 
     if (DISPLACEMENT_ENABLED)
 	{

@@ -69,6 +69,9 @@ void TCommandLineParametersSpeckleBoost::PrintUsageAndExit()
  printf("  --y_pixels <pixels>              : Number of pixels along the y-dimension\n");
  printf("  --pixel_size <size>              : Pixel size (meters)\n");
  printf("\n");
+ printf("  --x_center <x-coord>             : Center location of the CCD in the x-axis (in meters).\n");
+ printf("  --y_center <y-coord>             : Center location of the CCD in the y-axis (in meters).\n");
+ printf("\n");
  printf("  --d_OPL                          : Compute speckle pattern based on displacements\n");
  printf("  --n_OPL                          : Compute speckle pattern based on refractive index changes\n");
  printf("  --combined_OPL                   : Compute speckle pattern based on displacements and refractive index changes\n");

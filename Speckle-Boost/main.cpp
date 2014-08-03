@@ -109,7 +109,6 @@ int main(int argc, char** argv)
                  << "Creating directory\n";
             
             create_directories(p_speckle_data);
-			exit(1);
 		}
 		
 	}

@@ -26,10 +26,12 @@ class ExitData;
 
 class CCDGrid {
 public:
-    CCDGrid(void);
+    
 	CCDGrid(int x_pixels, 
 			int y_pixels,
 			double pixel_size,
+            double center_x,
+            double center_y,
 			int num_detected_photons);
 	~CCDGrid();
 
@@ -69,7 +71,11 @@ private:
     int num_y_pixels;
     
     // Distance from exit aperture of medium to CCD.
-    double distance_to_CCD;
+    double m_distance_to_CCD;
+    
+    /// Center location of the CCD.
+    double m_center_x;
+    double m_center_y;
     
     
     // The output file stream.

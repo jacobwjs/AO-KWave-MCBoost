@@ -22,18 +22,18 @@ struct less_than_key
 
 
 
-CCDGrid::CCDGrid(void)
-{
-    // Stub.
-    //initCommon();
-}
 
 CCDGrid::CCDGrid(int x_pixels, 
 				 int y_pixels, 
 				 double pixel_size,
+                 double center_x,
+                 double center_y,
 				 int num_detected_photons)
 {
     //initCommon();
+    m_center_x = center_x;
+    m_center_y = center_y;
+    
 	exit_data = new ExitData(num_detected_photons);
 	setGrid(x_pixels, y_pixels, pixel_size);
 }
@@ -120,8 +120,8 @@ void CCDGrid::makeSpeckle(const std::string &input_filename,
     
     // Starting leftmost location of the CCD.
     //
-    double start_x = CENTER_X - (num_x_pixels/2 * dx);
-    double start_y = CENTER_Y - (num_y_pixels/2 * dy);
+    double start_x = m_center_x - (num_x_pixels/2 * dx);
+    double start_y = m_center_y - (num_y_pixels/2 * dy);
 
     
 

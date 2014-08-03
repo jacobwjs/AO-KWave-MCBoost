@@ -104,7 +104,9 @@ const char * const CommandlineParameters_ERR_FMT_NoStartTimestep          = "Com
 
 /// ------------------------------------------------- JWJS ---------------------------------------------------------
 /// Command line parameters error message
-const char * const CommandlineParameters_ERR_FMT_NoEndTimestep          = "Command line parsing error: No or invalid collection end time step!\n";
+const char * const CommandlineParameters_ERR_FMT_NoEndTimestep              = "Command line parsing error: No or invalid collection end time step!\n";
+const char * const CommandlineParameters_ERR_FMT_NoSpeckleInputDirectory    = "Command line error: No speckle input directory was specified!\n";
+const char * const CommandlineParameters_ERR_FMT_NoSpeckleOutputDirectory   = "Command line error: No speckle output directory was specified!\n";
 /// -----------------------------------------------------------------------------
 
 /// Command line parameters error message

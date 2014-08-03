@@ -1,6 +1,8 @@
 /// Simulates a CCD camera and forms speckle patterns by transforming photons into waves and interfering them on the virtual CCD.
 #include <cstdlib>
 #include <sys/stat.h> 
+//#include <boost/filesystem/operations.hpp>
+//#include <boost/filesystem/path.hpp>
 #include <boost/filesystem.hpp>
 using namespace boost::filesystem;
 #include <boost/thread/thread.hpp>
@@ -10,9 +12,12 @@ using namespace boost::filesystem;
 #include <complex>
 #include <algorithm>    
 #include <vector>
+#include <glob.h>
 
 using namespace std;
 #include "CCDGrid.h"
+
+#include "CommandLineParametersSpeckleBoost.h"
 
 /// Holds the filename and timestamp of the file.
 /// Used for sorting and loading data.
@@ -26,22 +31,52 @@ struct filename_tstamp
 bool SortFunction (struct filename_tstamp a, struct filename_tstamp b) { return (a.tstamp < b.tstamp); };
 void printFiles(std::vector<filename_tstamp> files);
 int  Get_num_detected_photons(std::string &filename);
+void Print_CCD_attributes(const int pix_cnt_x,
+                          const int pix_cnt_y,
+                          const double pix_size,
+                          const double center_x,
+                          const double center_y);
+
+
+/// Work around for compiler errors with boost
+vector<string> globVector(const string& pattern){
+    glob_t glob_result;
+    glob(pattern.c_str(),GLOB_TILDE,NULL,&glob_result);
+    vector<string> files;
+    for(unsigned int i=0;i<glob_result.gl_pathc;++i){
+        files.push_back(string(glob_result.gl_pathv[i]));
+    }
+    globfree(&glob_result);
+    return files;
+}
+
 
 const std::string separator = "---------------------------------------------------\n";
 
-int main()
+int main(int argc, char** argv)
 {
 
-
-	
+    TCommandLineParametersSpeckleBoost CommandLineParams;
+	CommandLineParams.ParseCommandLine(argc, argv);
+    
 
 	// Let boost decide how many threads to run on this architecture.
 	//
     //const int NUM_THREADS = boost::thread::hardware_concurrency();
-    const int NUM_THREADS = 2;
+    const size_t NUM_THREADS = CommandLineParams.GetNumberOfThreads();
 
-	/// Pixel count of the CCD.
-	const size_t PIXEL_CNT = 512;
+	/// Pixel attributes of the CCD.
+    double center_ccd_x_coord = CommandLineParams.GetCCDxcoord();
+    double center_ccd_y_coord = CommandLineParams.GetCCDycoord();
+	size_t tmp_CNT_X = CommandLineParams.GetNumberOfPixelsXdim();
+    size_t tmp_CNT_Y = CommandLineParams.GetNumberOfPixelsYdim();
+    float tmp_SIZE   = CommandLineParams.GetPixelSize();
+
+    /// If nothing has been specified via the commandline, supply defaults for CCD attributes.
+    const size_t PIXEL_CNT_X = (tmp_CNT_X == 0) ? 512:tmp_CNT_X;
+    const size_t PIXEL_CNT_Y = (tmp_CNT_Y == 0) ? 512:tmp_CNT_Y;
+    const double PIXEL_SIZE  = (tmp_SIZE  == 0.0f) ? 6e-6:tmp_SIZE;
+    
 
 
     // Display the possible number of "concurrent" processes possible on this architecture.
@@ -49,8 +84,9 @@ int main()
     cout << "CPU threads supported: = " << NUM_THREADS << endl;
 	cout << separator;
     
-    path p_exit_data = "../Data/Detected_photons";
-	path p_speckle_data = "../Data/Speckles";
+    std::string exit_data_dir = CommandLineParams.GetInputDirectoryName(); //"../Data/Detected_photons";
+    path p_exit_data = exit_data_dir;
+	path p_speckle_data = CommandLineParams.GetOutputDirectoryName(); //"../Data/Speckles";
     if (is_directory(p_exit_data))
 	{
 		cout << "Data directory found: " << p_exit_data << '\n';
@@ -62,7 +98,10 @@ int main()
 		}
 		else
 		{
-			cout << "!!!ERROR: Directory for storing speckle data to location [" << p_speckle_data << "] does not exist.\n";
+			cout << "Directory for storing speckle data to location [" << p_speckle_data << "] does not exist.\n"
+                 << "Creating directory\n";
+            
+            create_directories(p_speckle_data);
 			exit(1);
 		}
 		
@@ -77,26 +116,45 @@ int main()
 
 	/// Get the timestamps of all the files and add them to the vector for sorting later.
 	struct stat st;
-	std::vector<filename_tstamp> files;
-	for (directory_iterator itr(p_exit_data); itr!=directory_iterator(); ++itr)
+    std::vector<filename_tstamp> files;
+    exit_data_dir+= "*";
+    std::vector<std::string> filenames = globVector(exit_data_dir);
+    for (std::vector<std::string>::iterator it = filenames.begin(); it != filenames.end(); it++)
     {
-		std::string f = itr->path().string(); // + itr->path().filename().string();
-		if (stat(f.c_str(), &st) != 0)
+		if (stat(it->c_str(), &st) != 0)
 		{
-			cout << "!!!ERROR: Unable to read time stamp of " << f << '\n';
+			cout << "!!!ERROR: Unable to read time stamp of " << *it << '\n';
 			cout << "st.st_mtime = " << st.st_mtime << '\n';
-			exit(1);
+			exit(EXIT_FAILURE);
 		}
-
-		/// Ignore the seeds file used for generating exit photons (i.e. through exit aperture) and directories.
-		if ((itr->path().filename().string() != "seeds_for_exit.dat") && is_regular_file(itr->path()))
-		{
-			filename_tstamp temp;
-			temp.filename = f;
-			temp.tstamp = st.st_mtime;
-			files.push_back(temp);
-		}
+        filename_tstamp temp;
+        temp.filename = *it;
+        temp.tstamp = st.st_mtime;
+        files.push_back(temp);
+       
     }
+    
+    
+    /// THIS IS CAUSING AN ERROR DUE TO COMPILER VERSIONS BEING DIFFERENT FOR BUILDING BOOST LIBRARIES AND BUILDING THIS EXECUTABLE
+//	for (directory_iterator itr(p_exit_data); itr!=directory_iterator(); ++itr)
+//    {
+//		std::string f = itr->path().string(); // + itr->path().filename().string();
+//		if (stat(f.c_str(), &st) != 0)
+//		{
+//			cout << "!!!ERROR: Unable to read time stamp of " << f << '\n';
+//			cout << "st.st_mtime = " << st.st_mtime << '\n';
+//			exit(1);
+//		}
+//
+//		/// Ignore the seeds file used for generating exit photons (i.e. through exit aperture) and directories.
+//		if ((itr->path().filename().string() != "seeds_for_exit.dat") && is_regular_file(itr->path()))
+//		{
+//			filename_tstamp temp;
+//			temp.filename = f;
+//			temp.tstamp = st.st_mtime;
+//			files.push_back(temp);
+//		}
+//    }
 
 	//printFiles(files);
 	/// Sort the files based on their timestamp.
@@ -109,7 +167,7 @@ int main()
     
 	// The number of exit-data files to read in and operate on.
 	//
-    const int NUM_FILES = files.size();
+    const size_t NUM_FILES = files.size();
 	int num_detected_photons = Get_num_detected_photons((files.at(0)).filename);
 	cout << separator;
 	cout << "Processing " << NUM_FILES << " exit data files.\n";
@@ -130,11 +188,18 @@ int main()
 	///
 	for (size_t i = 0; i < NUM_THREADS; i++)
 	{
-		//CCDGrid *grid = new CCDGrid(128, 128, 10e-6);
-        ccd[i] = new CCDGrid(PIXEL_CNT,
-							   PIXEL_CNT,
-							   6e-6,
-							   num_detected_photons);
+		Print_CCD_attributes(PIXEL_CNT_X,
+                             PIXEL_CNT_Y,
+                             PIXEL_SIZE,
+                             center_ccd_x_coord,
+                             center_ccd_y_coord);
+        
+        ccd[i] = new CCDGrid(PIXEL_CNT_X,
+                             PIXEL_CNT_Y,
+                             PIXEL_SIZE,
+                             center_ccd_x_coord,
+                             center_ccd_y_coord,
+                             num_detected_photons);
 	}
 
     /// Track how many times the threads have run, which allows displaying of which
@@ -176,7 +241,7 @@ int main()
 		threads.join_all();
         
         // Clean up memory.
-        for (int k = 0; k < NUM_THREADS; k++)
+        for (size_t k = 0; k < NUM_THREADS; k++)
         {
             //delete ccd[k];
             (ccd[k])->Zero_grid();
@@ -206,6 +271,22 @@ int main()
 	return 0;
 }
 
+
+
+void Print_CCD_attributes(const int pix_cnt_x,
+                          const int pix_cnt_y,
+                          const double pix_size,
+                          const double center_x,
+                          const double center_y)
+{
+    cout << separator
+         << "CCD attributes /" << endl
+         << "---------------\n"
+         << " - pixels: " << pix_cnt_x << "x" << pix_cnt_y << endl
+         << " - size: " << pix_size << endl
+         << " - coordinates (x,y): " << "(" << center_x << "," << center_y << ") [meters]" << endl
+         << separator << endl;
+}
 
 
 void printFiles(std::vector<filename_tstamp> f)

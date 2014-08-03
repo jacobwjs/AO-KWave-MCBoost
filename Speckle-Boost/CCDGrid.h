@@ -1,6 +1,7 @@
 #ifndef CCD_GRID_H
 #define CCD_GRID_H
 
+#include <string>
 #include <vector>
 #include <complex>
 #include <fstream>
@@ -12,12 +13,6 @@ class ExitData;
 // Distance of exit-aperture of medium to CCD grid. [meters]
 #define DISTANCE 0.50
 
-// The center location of the CCD.  That
-// is, if the medium exit aperture is 
-// centered at (1.0,1.0), then so should
-// the CCD.
-#define CENTER_X 0.02250
-#define CENTER_Y 0.01145
 
 #define PI 3.14159265358979
 #define LAMBDA 532e-9
@@ -32,6 +27,7 @@ public:
 			double pixel_size,
             double center_x,
             double center_y,
+            std::string OPL_mechanism,
 			int num_detected_photons);
 	~CCDGrid();
 
@@ -77,6 +73,10 @@ private:
     double m_center_x;
     double m_center_y;
     
+    
+    /// String representing which OPL from the exit data file should be used
+    /// to compute the speckle pattern.
+    std::string m_OPL_mechanism;
     
     // The output file stream.
     std::ofstream speckle_data_stream;

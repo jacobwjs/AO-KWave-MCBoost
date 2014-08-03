@@ -28,11 +28,14 @@ CCDGrid::CCDGrid(int x_pixels,
 				 double pixel_size,
                  double center_x,
                  double center_y,
+                 std::string mechanism,
 				 int num_detected_photons)
 {
     //initCommon();
     m_center_x = center_x;
     m_center_y = center_y;
+    
+    m_OPL_mechanism = mechanism;
     
 	exit_data = new ExitData(num_detected_photons);
 	setGrid(x_pixels, y_pixels, pixel_size);
@@ -145,9 +148,12 @@ void CCDGrid::makeSpeckle(const std::string &input_filename,
     double exit_location_z = 0.0;   
 
 
-    bool DISPLACEMENT_ENABLED   = false; // Displacement AO mechanism
-    bool REFRACTION_ENABLED     = false;  // Refraction AO mechanism
-    bool COMBINED_ENABLED       = true; // Displacement and Refraction
+    bool DISPLACEMENT_ENABLED = false;
+    bool REFRACTION_ENABLED   = false;
+    bool COMBINED_ENABLED     = false;
+    if (m_OPL_mechanism == "d_OPL") DISPLACEMENT_ENABLED      = true;   // Displacement AO mechanism
+    if (m_OPL_mechanism == "n_OPL") REFRACTION_ENABLED        = true;  // Refraction AO mechanism
+    if (m_OPL_mechanism == "combined_OPL") COMBINED_ENABLED   = true; // Displacement and Refraction
 
     if (DISPLACEMENT_ENABLED)
 	{

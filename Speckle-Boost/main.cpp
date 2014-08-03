@@ -35,7 +35,8 @@ void Print_CCD_attributes(const int pix_cnt_x,
                           const int pix_cnt_y,
                           const double pix_size,
                           const double center_x,
-                          const double center_y);
+                          const double center_y,
+                          const std::string mechanism);
 
 
 /// Work around for compiler errors with boost
@@ -65,6 +66,12 @@ int main(int argc, char** argv)
     //const int NUM_THREADS = boost::thread::hardware_concurrency();
     const size_t NUM_THREADS = CommandLineParams.GetNumberOfThreads();
 
+    /// What AO mechanism we are using to form the speckle pattern.
+    std::string mechanism;
+    if (CommandLineParams.IsCompute_displacement_OPL()) mechanism = "d_OPL";
+    if (CommandLineParams.IsCompute_refractive_OPL())   mechanism = "n_OPL";
+    if (CommandLineParams.IsCompute_combined_OPL())     mechanism = "combined_OPL";
+    
 	/// Pixel attributes of the CCD.
     double center_ccd_x_coord = CommandLineParams.GetCCDxcoord();
     double center_ccd_y_coord = CommandLineParams.GetCCDycoord();
@@ -102,7 +109,6 @@ int main(int argc, char** argv)
                  << "Creating directory\n";
             
             create_directories(p_speckle_data);
-			exit(1);
 		}
 		
 	}
@@ -192,13 +198,15 @@ int main(int argc, char** argv)
                              PIXEL_CNT_Y,
                              PIXEL_SIZE,
                              center_ccd_x_coord,
-                             center_ccd_y_coord);
+                             center_ccd_y_coord,
+                             mechanism);
         
         ccd[i] = new CCDGrid(PIXEL_CNT_X,
                              PIXEL_CNT_Y,
                              PIXEL_SIZE,
                              center_ccd_x_coord,
                              center_ccd_y_coord,
+                             mechanism,
                              num_detected_photons);
 	}
 
@@ -227,7 +235,7 @@ int main(int argc, char** argv)
             ///
             ccd[j]->Load_exit_data(exit_data_filename);
 
-        	cout << "Launching thread (" << thread_cnt++ << " of " << NUM_FILES << ").  Processing " << exit_data_filename << endl;
+        	cout << "Launching thread (" << ++thread_cnt << " of " << NUM_FILES << ").  Processing " << exit_data_filename << endl;
             boost::thread *t = new boost::thread(&CCDGrid::makeSpeckle,
                                                  ccd[j],
                                                  exit_data_filename,
@@ -277,14 +285,17 @@ void Print_CCD_attributes(const int pix_cnt_x,
                           const int pix_cnt_y,
                           const double pix_size,
                           const double center_x,
-                          const double center_y)
+                          const double center_y,
+                          const std::string mechanism)
 {
     cout << separator
          << "CCD attributes /" << endl
          << "---------------\n"
          << " - pixels: " << pix_cnt_x << "x" << pix_cnt_y << endl
-         << " - size: " << pix_size << endl
+         << " - pixel size: " << pix_size << " [meters]" << endl
+         << " - dimensions: " << pix_size*pix_cnt_x << "x" << pix_size*pix_cnt_y << " [meters]" << endl
          << " - coordinates (x,y): " << "(" << center_x << "," << center_y << ") [meters]" << endl
+         << " - detecting AO mechanism: " << mechanism << endl
          << separator << endl;
 }
 

@@ -1135,9 +1135,10 @@ void Photon::displacePhotonAndAlterOPLFromAverageRefractiveChanges(void)
 	double distance_traveled = VectorMath::Distance(prevLocation, currLocation);
     
     /// Calculate the Norm based on displacements found from the grid at this scattering event, and the previous.
-    double temp_delta_x = (prevLocation->location.x + prev_x_disp) - (currLocation->location.x + curr_x_disp);
-    double temp_delta_y = (prevLocation->location.y + prev_y_disp) - (currLocation->location.y + curr_y_disp);
-    double temp_delta_z = (prevLocation->location.z + prev_z_disp) - (currLocation->location.z + curr_z_disp);
+    /// This ends up being the path length change from modulation.
+    double temp_delta_x = (prev_x_disp - curr_x_disp);
+    double temp_delta_y = (prev_y_disp - curr_y_disp);
+    double temp_delta_z = (prev_z_disp - curr_z_disp);
     double modulated_distance = sqrt((temp_delta_x*temp_delta_x) +
                                      (temp_delta_y*temp_delta_y) +
                                      (temp_delta_z*temp_delta_z));
@@ -1145,7 +1146,7 @@ void Photon::displacePhotonAndAlterOPLFromAverageRefractiveChanges(void)
 	/// Update the optical path length of the photon through the medium by
 	/// calculating the distance between the two points (including the contribution from modulation) and multiplying by the refractive index.
 	//displaced_OPL += VectorMath::Distance(prevLocation, currLocation) * currLayer->getRefractiveIndex();
-	combined_OPL += (distance_traveled+modulated_distance) * avg_local_refractive_index;
+	combined_OPL += (distance_traveled + modulated_distance) * avg_local_refractive_index;
 
 }
 

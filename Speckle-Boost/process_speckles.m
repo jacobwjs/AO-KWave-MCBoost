@@ -6,7 +6,7 @@ TIME_AVG_SPECKLE = false;
 
 
 
-NUM_FILES =  4;
+NUM_FILES =  2;
 
 
 % The speckle pattern at t=0 of the simulation 

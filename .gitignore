@@ -31,3 +31,9 @@ kspaceFirstOrder3D-OMP_MC-Boost
 
 # ignore the data directory
 Data/
+
+# QT editor files
+QT_editor*
+
+# OS X files
+.DS_Store

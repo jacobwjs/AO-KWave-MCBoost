@@ -119,13 +119,12 @@ if (SPHERE_TAGGING_VOL)
     sensor_Nx = Nx/2;
     sensor_Ny = Ny/2;
     sensor_Nz = Nz/2;
-    sensor_radius = round(0.00010/dx) % 1.6 mm diameter
-    %sensor_radius = round(0.0010/dx)   % 1.9 mm diameter
-    %sensor_radius = round(0.0011/dx)   % 2.2 mm diameter
-    %sensor_radius = round(0.0012/dx)   % 2.5 mm diameter
+    %sensor_radius = round(0.0006/dx);   % 1.25 mm diameter
+    %sensor_radius = round(0.0012/dx);   % 2.50 mm diameter
+    sensor_radius = round(0.0018/dx);   % 3.75 mm diameter
     display('Sphere diameter: '); 
     2*sensor_radius*dx
-    
+    pause(2);
     num_cycles = 1;
     source_strength = 10;
 elseif (BOX_TAGGING_VOL)

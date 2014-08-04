@@ -14,8 +14,8 @@ PML_Z_SIZE = 20;            % [grid points]
 % set total number of grid points not including the PML
 
 Nx = 1296; % dx*Nx = 39.7 [mm]
-Ny = 768;  % dy*Ny = 23.5 [mm]
-Nz = 512;  % dz*Nz = 15.7 [mm]
+Ny = 768;  % dy*Ny = 23.5 [mm]  (azimuthal plane)
+Nz = 512;  % dz*Nz = 15.7 [mm]  (elevation plane)
 
 %Nx = 1296; % dx*Nx = 39.7 [mm]
 %Ny = 864;  % dy*Ny = 26.5 [mm]

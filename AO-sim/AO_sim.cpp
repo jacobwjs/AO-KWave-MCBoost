@@ -409,7 +409,7 @@ AO_Sim::Run_acousto_optics_sim_sphere_tagging_volume(TParameters * Parameters)
     }
     
     /// Default values for unmodulated and modulated cases.
-    float unmodulated_refractive_index  = 1.33f;
+    float unmodulated_refractive_index  = 1.3300f;
     float modulated_refractive_index    = 1.3301f;
     float unmodulated_displacement      = 0.0f;
     float modulated_displacement        = 15e-9f;
@@ -539,7 +539,7 @@ AO_Sim::Run_acousto_optics_sim_sphere_tagging_volume(TParameters * Parameters)
     
     
     
-    /// First run the unpopulated medium for the "unmodulated" case.
+    /// First run the medium for the "unmodulated" case.
     /// ----------------------------------------------------------------------------------
     if (sim_refractive_grad)
     {
@@ -552,15 +552,17 @@ AO_Sim::Run_acousto_optics_sim_sphere_tagging_volume(TParameters * Parameters)
     }
     if (sim_refractive_total)
     {
-        float * nmap = refractive_total_full_medium->GetRawData();
-        const size_t  sensor_size = sensor_mask_ind->GetTotalElementCount();
-        const long *  index = sensor_mask_ind->GetRawData();
+//        float * nmap = refractive_total_full_medium->GetRawData();
+//        const size_t  sensor_size = sensor_mask_ind->GetTotalElementCount();
+//        const long *  index = sensor_mask_ind->GetRawData();
         
-        for (size_t i = 0; i < sensor_size; i++)
-        {
-            /// Fill the entire sphere (i.e. the sensor mask) with a constant value.
-            nmap[index[i]] = unmodulated_refractive_index;
-        }
+        refractive_total_full_medium->InitMatrix(unmodulated_refractive_index);
+        
+//        for (size_t i = 0; i < sensor_size; i++)
+//        {
+//            /// Fill the entire sphere (i.e. the sensor mask) with a constant value.
+//            nmap[index[i]] = unmodulated_refractive_index;
+//        }
         
         //PrintMatrix((*refractive_total_full_medium), Parameters);
         
@@ -571,7 +573,10 @@ AO_Sim::Run_acousto_optics_sim_sphere_tagging_volume(TParameters * Parameters)
     {
         /// Fill the Nmap with a constant value below, for the photon to move through in the sphere
         /// when calculating the optical path length (OPL) from the displacement contribution.
-        float * nmap_background = refractive_background_full_medium->GetRawData();
+        //float * nmap_background = refractive_background_full_medium->GetRawData();
+        
+        /// Fill the entire background medium with a constant refractive index value (unmodulated).
+        refractive_background_full_medium->InitMatrix(unmodulated_refractive_index);
         
         float * disp_x = disp_x_full_medium->GetRawData();
         float * disp_y = disp_y_full_medium->GetRawData();
@@ -583,7 +588,7 @@ AO_Sim::Run_acousto_optics_sim_sphere_tagging_volume(TParameters * Parameters)
         {
             /// Fill the entire sphere (i.e. the sensor mask) with a constant value of
             /// refractive index (unmodulated, only simulating displacement).
-            nmap_background[index[i]] = unmodulated_refractive_index;
+            //nmap_background[index[i]] = unmodulated_refractive_index;
             
             /// Fill the entire sphere (i.e. the sensor mask) with a constant value of displacement (unmodulated).
             disp_x[index[i]] = unmodulated_displacement;
@@ -603,10 +608,17 @@ AO_Sim::Run_acousto_optics_sim_sphere_tagging_volume(TParameters * Parameters)
     {
         /// Fill the Nmap with a constant value below, for the photon to move through in the sphere
         /// when calculating the optical path length (OPL) from the displacement contribution.
-        float * nmap_background = refractive_background_full_medium->GetRawData();
+        //float * nmap_background = refractive_background_full_medium->GetRawData();
         
         /// The Nmap that will eventually contain modulated values.
-        float * nmap = refractive_total_full_medium->GetRawData();
+        //float * nmap = refractive_total_full_medium->GetRawData();
+        
+        
+        /// Fill the entire background medium with a constant refractive index value (unmodulated).
+        refractive_background_full_medium->InitMatrix(unmodulated_refractive_index);
+        
+        /// Without modulation both medium's have unmodulated values.
+        refractive_total_full_medium->InitMatrix(unmodulated_refractive_index);
         
         float * disp_x = disp_x_full_medium->GetRawData();
         float * disp_y = disp_y_full_medium->GetRawData();
@@ -618,10 +630,10 @@ AO_Sim::Run_acousto_optics_sim_sphere_tagging_volume(TParameters * Parameters)
         {
             /// Fill the entire sphere (i.e. the sensor mask) with a constant value of
             /// refractive index (unmodulated).
-            nmap_background[index[i]] = unmodulated_refractive_index;
+            //nmap_background[index[i]] = unmodulated_refractive_index;
             
-            /// At this "time step", there are no changes in the Nmap.
-            nmap[index[i]] = nmap_background[index[i]];
+            /// At this "time step", there are no changes in the tagging volume.
+            //nmap[index[i]] = unmodulated_refractive_index;
             
             /// Fill the entire sphere (i.e. the sensor mask) with a constant value of displacement (unmodulated).
             disp_x[index[i]] = unmodulated_displacement;
@@ -664,9 +676,14 @@ AO_Sim::Run_acousto_optics_sim_sphere_tagging_volume(TParameters * Parameters)
         const size_t  sensor_size = sensor_mask_ind->GetTotalElementCount();
         const long *  index = sensor_mask_ind->GetRawData();
         
+        /// Ensure that the entire medium is filled with unmodulated refractive index values.
+        refractive_total_full_medium->InitMatrix(unmodulated_refractive_index);
+        
         for (size_t i = 0; i < sensor_size; i++)
         {
-            nmap[index[i]] = modulated_refractive_index;  /// Fill the entire sphere (i.e. the sensor mask) with a constant value (modulated).
+            /// Update the sphere in the medium (i.e. the sensor mask) with a constant value
+            /// of refractive index that differs from outside of the sphere (i.e. modulated values).
+            nmap[index[i]] = modulated_refractive_index;
         }
         
         /// Update the refractive map
@@ -675,24 +692,22 @@ AO_Sim::Run_acousto_optics_sim_sphere_tagging_volume(TParameters * Parameters)
     
     if (sim_displacement)
     {
-        /// Fill the Nmap with a constant value below, for the photon to move through in the sphere
-        /// when calculating the optical path length (OPL) from the displacement contribution.
-        float * nmap_background = refractive_background_full_medium->GetRawData();
-        
         float * disp_x = disp_x_full_medium->GetRawData();
         float * disp_y = disp_y_full_medium->GetRawData();
         float * disp_z = disp_z_full_medium->GetRawData();
         const size_t  sensor_size = sensor_mask_ind->GetTotalElementCount();
         const long *  index = sensor_mask_ind->GetRawData();
         
+        /// Ensure the entire background medium has unmodulated refractive index values (only simulating displacement).
+        refractive_background_full_medium->InitMatrix(unmodulated_refractive_index);
+        
         for (size_t i = 0; i < sensor_size; i++)
         {
-            /// Fill the entire sphere (i.e. the sensor mask) with a constant value of
-            /// refractive index (unmodulated, only simulating displacement).
-            nmap_background[index[i]] = unmodulated_refractive_index;
             
-            /// Fill the entire sphere (i.e. the sensor mask) with a constant value of displacement (modulated) for the x-axis.
+            /// Fill the entire sphere (i.e. the sensor mask) with a constant
+            /// value of displacement (modulated) for the x-axis.
             disp_x[index[i]] = modulated_displacement;
+            
             /// No displacement on the remaining axes.
             disp_y[index[i]] = unmodulated_displacement;
             disp_z[index[i]] = unmodulated_displacement;
@@ -707,9 +722,11 @@ AO_Sim::Run_acousto_optics_sim_sphere_tagging_volume(TParameters * Parameters)
     }
     if (sim_combination)
     {
-        /// Fill the Nmap with a constant value below, for the photon to move through in the sphere
-        /// when calculating the optical path length (OPL) from the displacement contribution.
-        float * nmap_background = refractive_background_full_medium->GetRawData();
+
+        /// Ensure both medium's have unmodulated refractive index values.
+        /// The 'background' medium is for only displacements, while the 'total' medium is for refractive index and displacements.
+        refractive_background_full_medium->InitMatrix(unmodulated_refractive_index);
+        refractive_total_full_medium->InitMatrix(unmodulated_refractive_index);
         
         /// The Nmap that will eventually contain modulated values.
         float * nmap = refractive_total_full_medium->GetRawData();
@@ -722,14 +739,13 @@ AO_Sim::Run_acousto_optics_sim_sphere_tagging_volume(TParameters * Parameters)
         
         for (size_t i = 0; i < sensor_size; i++)
         {
-            /// Fill the entire sphere (i.e. the sensor mask) with a constant value of
-            /// refractive index (unmodulated).
-            nmap_background[index[i]] = unmodulated_refractive_index;
             
-            /// Assign the refractive index value (modulated).
+            
+            /// Only update the 'tagging sphere' with new refractive index values (modulated). The rest remains unmodulated.
             nmap[index[i]] = modulated_refractive_index;
             
-            /// Fill the entire sphere (i.e. the sensor mask) with a constant value of displacement (modulated) for the x-axis.
+            /// Fill the entire sphere (i.e. the sensor mask) with a
+            /// constant value of displacement (modulated) for the x-axis.
             disp_x[index[i]] = modulated_displacement;
             /// No displacement on the remaining axes.
             disp_y[index[i]] = unmodulated_displacement;

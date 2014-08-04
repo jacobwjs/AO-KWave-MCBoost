@@ -108,7 +108,7 @@ int main(int argc, char** argv)
 			cout << "Directory for storing speckle data to location [" << p_speckle_data << "] does not exist.\n"
                  << "Creating directory\n";
             
-            create_directories(p_speckle_data);
+            create_directories(p_speckle_data); 
 		}
 		
 	}

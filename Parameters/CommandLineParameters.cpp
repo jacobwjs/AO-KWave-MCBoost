@@ -143,18 +143,20 @@ void TCommandLineParameters::PrintUsageAndExit(){
  printf("\n");
  printf(" --modulation_depth               : Save the optical path lengths to disk for comparison\n");
  printf("\n");
- printf("  --n                             : Store index of refraction\n");
+ printf("  --n                             : Use and store index of refraction\n");
  printf("                                       (all axial components nx, ny, nz)\n");
- printf("  --n_total                       : Store the norm of the index of refraction\n");
- printf("  --refractive_x                  : Store the x-component of the index of refraction\n");
- printf("  --refractive_y                  : Store the y-component of the index of refraction\n");
- printf("  --refractive_z                  : Store the z-component of the index of refraction\n");
+ printf("  --n_total                       : Use and store the norm of the index of refraction\n");
+ printf("  --refractive_x                  : Use and store the x-component of the index of refraction\n");
+ printf("  --refractive_y                  : Use and store the y-component of the index of refraction\n");
+ printf("  --refractive_z                  : Use and store the z-component of the index of refraction\n");
  printf("\n");
- printf("  --d                             : Store displacements\n");
+ printf("  --d                             : Use and store displacements\n");
  printf("                                       (all axial components disp_x, disp_y, disp_z\n");
- printf("  --disp_x                        : Store displacement along x-axis\n");
- printf("  --disp_y                        : Store displacement along y-axis\n");
- printf("  --disp_z                        : Store displacement along z-axis\n");
+ printf("  --disp_x                        : Use and store displacement along x-axis\n");
+ printf("  --disp_y                        : Use and store displacement along y-axis\n");
+ printf("  --disp_z                        : Use and store displacement along z-axis\n");
+ printf("\n");
+ printf("  --combined                      : Use and store the combined AO mechanisms (displacement and refractive index changes)\n");
  printf("\n");
  printf(" --fluence_map                    : Store the fluence in the medium\n");
  printf("\n");
@@ -291,7 +293,7 @@ void TCommandLineParameters::ParseCommandLine(int argc, char** argv){
         { "disp_y", no_argument, NULL, 0},
         { "disp_z", no_argument, NULL, 0},
        
-        { "combination", no_argument, NULL, 0},
+        { "combined", no_argument, NULL, 0},
        
         { "fluence_map", no_argument, NULL, 0},
 
@@ -497,7 +499,7 @@ void TCommandLineParameters::ParseCommandLine(int argc, char** argv){
                 if( strcmp( "disp_z", longOpts[longIndex].name ) == 0) {
                     Store_disp_z = true;
                 } else
-                if( strcmp( "combination", longOpts[longIndex].name ) == 0) {
+                if( strcmp( "combined", longOpts[longIndex].name ) == 0) {
                     Store_combination = true;
                 } else
                 if( strcmp( "fluence_map", longOpts[longIndex].name ) == 0) {

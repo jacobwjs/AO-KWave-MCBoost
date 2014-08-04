@@ -107,6 +107,10 @@ public:
 	// Return the calculated medium reflectance (the boundary of the tissue).
 	double	getMediumReflectance(void);
     
+    /// Returns the modulated scattering length (\Delta{l} due to displacement from ultrasound
+    /// for two consecutive scattering events (previous and current scattering location).
+    double Get_displacement_modulated_scattering_length();
+    
     // Return the photon's current location in the medium.
     boost::shared_ptr<Vector3d> getPhotonCoords(void) {return currLocation;}
 

@@ -660,6 +660,72 @@ void Photon::performRoulette(void)
 
 
 
+double Photon::Get_displacement_modulated_scattering_length()
+{
+    const static double dx = m_medium->dx;
+	const static double Nx = m_medium->Nx;
+    
+	const static double dy = m_medium->dy;
+	const static double Ny = m_medium->Ny;
+    
+	const static double dz = m_medium->dz;
+	const static double Nz = m_medium->Nz;
+    
+    /// Transform the location of the photon in the medium to discrete locations in the grid.
+    /// Get the appropriate voxel numbers for the current and previous location for indexing into the 3-D grid.
+    ///
+    int _x_prev = prevLocation->location.x/dx - (prevLocation->location.x/dx)/Nx;
+	int _y_prev = prevLocation->location.y/dy - (prevLocation->location.y/dy)/Ny;
+	int _z_prev = prevLocation->location.z/dz - (prevLocation->location.z/dz)/Nz;
+    
+	int _x_curr = currLocation->location.x/dx - (currLocation->location.x/dx)/Nx;
+	int _y_curr = currLocation->location.y/dy - (currLocation->location.y/dy)/Ny;
+	int _z_curr = currLocation->location.z/dz - (currLocation->location.z/dz)/Nz;
+    
+    // Get the displacement caused by ultrasound pressure at this location of the scattering event.
+    ///
+    double curr_x_disp = m_medium->kwave.dmap->getDisplacementFromGridX(_x_curr, _y_curr, _z_curr);
+    double curr_y_disp = m_medium->kwave.dmap->getDisplacementFromGridY(_x_curr, _y_curr, _z_curr);
+    double curr_z_disp = m_medium->kwave.dmap->getDisplacementFromGridZ(_x_curr, _y_curr, _z_curr);
+    
+    double prev_x_disp = m_medium->kwave.dmap->getDisplacementFromGridX(_x_prev, _y_prev, _z_prev);
+    double prev_y_disp = m_medium->kwave.dmap->getDisplacementFromGridY(_x_prev, _y_prev, _z_prev);
+    double prev_z_disp = m_medium->kwave.dmap->getDisplacementFromGridZ(_x_prev, _y_prev, _z_prev);
+    
+    /// To mitigate any numerical instability in the displacement values that is
+    /// compounded over the time ultrasound propagates through the medium, we threshold
+    /// the displacement such that we don't displace this scattering event until the
+    /// displacement value exceeds the DISPLACEMENT_THRESHOLD value, which can only be caused
+    /// when we are in (or near) the ultrasound focus.
+    /// FIXME:
+    /// - This needs to be taken care of in the computation of the displacement values, so that
+    ///   this check never need take place.
+    ///
+    ///const float DISPLACEMENT_THRESHOLD = 0.0f; /// (meters)
+    ///if (abs(x_displacement) >= DISPLACEMENT_THRESHOLD) currLocation->location.x += x_displacement;
+    ///if (abs(y_displacement) >= DISPLACEMENT_THRESHOLD) currLocation->location.y += y_displacement;
+    ///if (abs(z_displacement) >= DISPLACEMENT_THRESHOLD) currLocation->location.z += z_displacement;
+    
+    ///NOTE:
+    /// - No longer updating position based upon displacement, produces uncorrelated photon paths.
+    ///
+    //currLocation->location.x += x_displacement;
+    //currLocation->location.y += y_displacement;
+    //currLocation->location.z += z_displacement;
+    
+    /// Calculate the Norm based on displacements found from the grid at this scattering event, and the previous.
+    /// This ends up being the path length change from modulation.
+    double temp_delta_x = (prev_x_disp - curr_x_disp);
+    double temp_delta_y = (prev_y_disp - curr_y_disp);
+    double temp_delta_z = (prev_z_disp - curr_z_disp);
+    double modulated_distance = sqrt((temp_delta_x*temp_delta_x) +
+                                     (temp_delta_y*temp_delta_y) +
+                                     (temp_delta_z*temp_delta_z));
+    
+    return modulated_distance;
+}
+
+
 void Photon::displacePhotonFromPressure(void)
 {
 
@@ -682,17 +748,16 @@ void Photon::displacePhotonFromPressure(void)
 
 
 
-	// Transform the location of the photon in the medium to discrete locations in the grid.
-	//
-	static double dx = m_medium->dx;
-	static double Nx = m_medium->Nx;
+	const static double dx = m_medium->dx;
+	const static double Nx = m_medium->Nx;
 
-	static double dy = m_medium->dy;
-	static double Ny = m_medium->Ny;
+	const static double dy = m_medium->dy;
+	const static double Ny = m_medium->Ny;
 
-	static double dz = m_medium->dz;
-	static double Nz = m_medium->Nz;
+	const static double dz = m_medium->dz;
+	const static double Nz = m_medium->Nz;
 
+    /// Transform the location of the photon in the medium to discrete locations in the grid.
     /// Get the appropriate voxel numbers for the current and previous location for indexing into the 3-D grid.
     int _x_prev = prevLocation->location.x/dx - (prevLocation->location.x/dx)/Nx;
 	int _y_prev = prevLocation->location.y/dy - (prevLocation->location.y/dy)/Ny;
@@ -721,39 +786,9 @@ void Photon::displacePhotonFromPressure(void)
 
 
 
-    // Get the displacement caused by ultrasound pressure at this location of the scattering event.
-	//
-    // Index into the displacement grids to retrieve the value of how much to
-    // displace the photon from it's current location along each axis (x,y,z).
-    ///
-    double curr_x_disp = m_medium->kwave.dmap->getDisplacementFromGridX(_x_curr, _y_curr, _z_curr);
-    double curr_y_disp = m_medium->kwave.dmap->getDisplacementFromGridY(_x_curr, _y_curr, _z_curr);
-    double curr_z_disp = m_medium->kwave.dmap->getDisplacementFromGridZ(_x_curr, _y_curr, _z_curr);
-    
-    double prev_x_disp = m_medium->kwave.dmap->getDisplacementFromGridX(_x_prev, _y_prev, _z_prev);
-    double prev_y_disp = m_medium->kwave.dmap->getDisplacementFromGridY(_x_prev, _y_prev, _z_prev);
-    double prev_z_disp = m_medium->kwave.dmap->getDisplacementFromGridZ(_x_prev, _y_prev, _z_prev);
+  
 
-    /// To mitigate any numerical instability in the displacement values that is
-    /// compounded over the time ultrasound propagates through the medium, we threshold
-    /// the displacement such that we don't displace this scattering event until the
-    /// displacement value exceeds the DISPLACEMENT_THRESHOLD value, which can only be caused
-    /// when we are in (or near) the ultrasound focus.
-    /// FIXME:
-    /// - This needs to be taken care of in the computation of the displacement values, so that
-    ///   this check never need take place.
-    ///
-    ///const float DISPLACEMENT_THRESHOLD = 0.0f; /// (meters)
-    ///if (abs(x_displacement) >= DISPLACEMENT_THRESHOLD) currLocation->location.x += x_displacement;
-    ///if (abs(y_displacement) >= DISPLACEMENT_THRESHOLD) currLocation->location.y += y_displacement;
-    ///if (abs(z_displacement) >= DISPLACEMENT_THRESHOLD) currLocation->location.z += z_displacement;
-    
-    ///NOTE:
-    /// - No longer updating position based upon displacement, produces uncorrelated photon paths.
-    ///
-    //currLocation->location.x += x_displacement;
-    //currLocation->location.y += y_displacement;
-    //currLocation->location.z += z_displacement;
+   
 
 
 	// Get the local refractive index based on the coordinates of the displaced photon.
@@ -773,13 +808,8 @@ void Photon::displacePhotonFromPressure(void)
 	// Get the distance between the previous location and the current location.
 	double distance_traveled = VectorMath::Distance(prevLocation, currLocation);
 
-    /// Calculate the Norm based on displacements found from the grid at this scattering event, and the previous.
-    double temp_delta_x = (prevLocation->location.x + prev_x_disp) - (currLocation->location.x + curr_x_disp);
-    double temp_delta_y = (prevLocation->location.y + prev_y_disp) - (currLocation->location.y + curr_y_disp);
-    double temp_delta_z = (prevLocation->location.z + prev_z_disp) - (currLocation->location.z + curr_z_disp);
-    double modulated_distance = sqrt((temp_delta_x*temp_delta_x) +
-                                     (temp_delta_y*temp_delta_y) +
-                                     (temp_delta_z*temp_delta_z));
+    /// The change in the length of this scattering event due to displacement of scatterers.
+    double modulated_distance = Get_displacement_modulated_scattering_length();
 
 	/// Update the optical path length of the photon through the medium by
 	/// calculating the distance between the two points (including the contribution from modulation) and multiplying by the refractive index.
@@ -962,14 +992,14 @@ void Photon::alterOPLFromAverageRefractiveChanges(void)
 	if (hit_x_bound || hit_y_bound || hit_z_bound) return;
 
 
-	static double dx = m_medium->dx;
-	static double Nx = m_medium->Nx;
-
-	static double dy = m_medium->dy;
-	static double Ny = m_medium->Ny;
-
-	static double dz = m_medium->dz;
-	static double Nz = m_medium->Nz;
+	const static double dx = m_medium->dx;
+	const static double Nx = m_medium->Nx;
+    
+	const static double dy = m_medium->dy;
+	const static double Ny = m_medium->Ny;
+    
+	const static double dz = m_medium->dz;
+	const static double Nz = m_medium->Nz;
 
 
 	// Used for discrete values that will index into the appropriate voxel in the refractive map grid.
@@ -1090,17 +1120,15 @@ void Photon::displacePhotonAndAlterOPLFromAverageRefractiveChanges(void)
 	alterOPLFromAverageRefractiveChanges();
 
     
+
+	const static double dx = m_medium->dx;
+	const static double Nx = m_medium->Nx;
     
-	// Transform the location of the photon in the medium to discrete locations in the grid.
-	//
-	static double dx = m_medium->dx;
-	static double Nx = m_medium->Nx;
+	const static double dy = m_medium->dy;
+	const static double Ny = m_medium->Ny;
     
-	static double dy = m_medium->dy;
-	static double Ny = m_medium->Ny;
-    
-	static double dz = m_medium->dz;
-	static double Nz = m_medium->Nz;
+	const static double dz = m_medium->dz;
+	const static double Nz = m_medium->Nz;
     
     /// Get the appropriate voxel numbers for the current and previous location for indexing into the 3-D grid.
     int _x_prev = prevLocation->location.x/dx - (prevLocation->location.x/dx)/Nx;
@@ -1111,22 +1139,6 @@ void Photon::displacePhotonAndAlterOPLFromAverageRefractiveChanges(void)
 	int _y_curr = currLocation->location.y/dy - (currLocation->location.y/dy)/Ny;
 	int _z_curr = currLocation->location.z/dz - (currLocation->location.z/dz)/Nz;
     
-    
-    
-    
-    // Get the displacement caused by ultrasound pressure at this location of the scattering event.
-	//
-    // Index into the displacement grids to retrieve the value of how much to
-    // displace the photon from it's current location along each axis (x,y,z).
-    ///
-    double curr_x_disp = m_medium->kwave.dmap->getDisplacementFromGridX(_x_curr, _y_curr, _z_curr);
-    double curr_y_disp = m_medium->kwave.dmap->getDisplacementFromGridY(_x_curr, _y_curr, _z_curr);
-    double curr_z_disp = m_medium->kwave.dmap->getDisplacementFromGridZ(_x_curr, _y_curr, _z_curr);
-    
-    double prev_x_disp = m_medium->kwave.dmap->getDisplacementFromGridX(_x_prev, _y_prev, _z_prev);
-    double prev_y_disp = m_medium->kwave.dmap->getDisplacementFromGridY(_x_prev, _y_prev, _z_prev);
-    double prev_z_disp = m_medium->kwave.dmap->getDisplacementFromGridZ(_x_prev, _y_prev, _z_prev);
-    
 	// Get the local refractive index based on the coordinates of the displaced photon.
 	double avg_local_refractive_index = (m_medium->kwave.nmap->getRefractiveIndexFromGrid(_x_prev, _y_prev, _z_prev) +
                                          m_medium->kwave.nmap->getRefractiveIndexFromGrid(_x_curr, _y_curr, _z_curr))/2;
@@ -1134,14 +1146,9 @@ void Photon::displacePhotonAndAlterOPLFromAverageRefractiveChanges(void)
 	// Get the distance between the previous location and the current location.
 	double distance_traveled = VectorMath::Distance(prevLocation, currLocation);
     
-    /// Calculate the Norm based on displacements found from the grid at this scattering event, and the previous.
-    /// This ends up being the path length change from modulation.
-    double temp_delta_x = (prev_x_disp - curr_x_disp);
-    double temp_delta_y = (prev_y_disp - curr_y_disp);
-    double temp_delta_z = (prev_z_disp - curr_z_disp);
-    double modulated_distance = sqrt((temp_delta_x*temp_delta_x) +
-                                     (temp_delta_y*temp_delta_y) +
-                                     (temp_delta_z*temp_delta_z));
+    /// The change in the length of this scattering event due to displacement of scatterers.
+    double modulated_distance = Get_displacement_modulated_scattering_length();
+    
     
 	/// Update the optical path length of the photon through the medium by
 	/// calculating the distance between the two points (including the contribution from modulation) and multiplying by the refractive index.

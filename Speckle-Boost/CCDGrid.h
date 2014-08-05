@@ -27,8 +27,7 @@ public:
 			double pixel_size,
             double center_x,
             double center_y,
-            std::string OPL_mechanism,
-			int num_detected_photons);
+            std::string OPL_mechanism);
 	~CCDGrid();
 
     // Place for various constructors to call a common initiliazation routine.
@@ -46,8 +45,14 @@ public:
     /// Load data into the CCD
     void Load_exit_data(const std::string &exit_data_filename);
     
+    /// Return the number of detected photons for the exit data file.
+    int  Get_num_detected_photons() const;
+    
     // Debugging.
     void printGrid(void);
+    
+    /// Display physical attributes of the CCD.
+    void Print_CCD_attributes();
 
 	/// Zero the CCD grid, effectively resetting it.
 	void Zero_grid(void);
@@ -59,6 +64,7 @@ private:
 	std::vector<std::vector<std::complex<double> > > grid;
 
 	// The pixel dimensions [meters];
+    double m_pixel_size;
 	double dx;
 	double dy;
     

@@ -6,6 +6,13 @@
 using std::cout;
 
 
+
+ExitData::ExitData()
+{
+    
+}
+
+
 ExitData::ExitData(const int num_detected_photons)
 {
 	values.reserve(num_detected_photons);
@@ -17,10 +24,40 @@ ExitData::~ExitData()
 
 }
 
+int ExitData::Get_num_exit_data_entries(const std::string &filename)
+{
+	int i = 0;
+	std::string line;
+    
+	// Input stream.
+	std::ifstream temp_stream;
+	temp_stream.open(filename.c_str());
+    
+	do
+	{
+    	getline(temp_stream,line);
+		if (temp_stream.fail())
+		{
+			break;
+		}
+ 		++i;
+	}
+	while (temp_stream.good());
+    
+	temp_stream.close();
+    
+    m_num_detected_photons = i;
+    
+	return i;
+}
+
+
 // Allocate a 2D vector to hold all of the exit aperture data.
 void ExitData::loadExitData(const std::string &filename)
 {
 	
+    values.reserve(Get_num_exit_data_entries(filename));
+    
     // Open the file that contains the exit data from the medium's aperture.
 	//
 	if (exit_file_stream.is_open())

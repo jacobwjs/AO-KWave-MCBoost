@@ -28,16 +28,17 @@ CCDGrid::CCDGrid(int x_pixels,
 				 double pixel_size,
                  double center_x,
                  double center_y,
-                 std::string mechanism,
-				 int num_detected_photons)
+                 std::string mechanism)
 {
     //initCommon();
     m_center_x = center_x;
     m_center_y = center_y;
     
+    m_pixel_size = pixel_size;
+    
     m_OPL_mechanism = mechanism;
     
-	exit_data = new ExitData(num_detected_photons);
+	exit_data = new ExitData();
 	setGrid(x_pixels, y_pixels, pixel_size);
 }
 
@@ -56,6 +57,12 @@ CCDGrid::~CCDGrid()
 void CCDGrid::initCommon(void)
 {
     
+}
+
+int CCDGrid::Get_num_detected_photons() const
+{
+    assert(exit_data != NULL);
+    return exit_data->getNumPhotons();
 }
 
 
@@ -87,6 +94,7 @@ void CCDGrid::Zero_grid(void)
 
 void CCDGrid::Load_exit_data(const std::string &input_filename)
 {
+
     if (exit_data)
     {
         exit_data->loadExitData(input_filename);
@@ -96,7 +104,7 @@ void CCDGrid::Load_exit_data(const std::string &input_filename)
         cout << "!!! Error: 'ExitData' object does not exist !!!\n"
              << "CCDGrid::Load_exit_data()\n";
 
-        exit(-1);
+        exit(EXIT_FAILURE);
     }
 }
 
@@ -173,7 +181,7 @@ void CCDGrid::makeSpeckle(const std::string &input_filename,
  
     // For each detected photon.
     //
-    for (int i = 0; i < exit_data->values.size(); i++)
+    for (size_t i = 0; i < exit_data->values.size(); i++)
     {
 
 
@@ -210,13 +218,13 @@ void CCDGrid::makeSpeckle(const std::string &input_filename,
 
         // For each pixel in the x-axis.
         //
-        for (int x = 0; x < grid.size(); x++)
+        for (size_t x = 0; x < grid.size(); x++)
         {
             x_pixel = start_x + (dx * (x+1));
             
             // For each pixel in the y-axis.
             //
-            for (int y = 0; y < grid[0].size(); y++)
+            for (size_t y = 0; y < grid[0].size(); y++)
             {
                 y_pixel = start_y + (dy * (y+1));
                 
@@ -278,9 +286,9 @@ void CCDGrid::writeGridToFile(const std::string &output_filename)
     //speckle_data_stream.setf(std::ios::showpoint | std::ios::fixed);
     speckle_data_stream.precision(6);
     
-    for (int x = 0; x < grid.size(); x++)
+    for (size_t x = 0; x < grid.size(); x++)
     {
-        for (int y = 0; y < grid[0].size(); y++)
+        for (size_t y = 0; y < grid[0].size(); y++)
         {
             //double temp = abs(pow(grid[x][y],2));
         	speckle_data_stream << abs(pow(grid[x][y],2)) << "\t";
@@ -296,14 +304,28 @@ void CCDGrid::printGrid(void)
 {
     // For each pixel in the x-axis.
     //
-    for (int x = 0; x < grid.size(); x++)
+    for (size_t x = 0; x < grid.size(); x++)
     {
 
         // For each pixel in the y-axis.
         //
-        for (int y = 0; y < grid[0].size(); y++)
+        for (size_t y = 0; y < grid[0].size(); y++)
         {
             cout << "Grid[" << x << "][" << y << "] = " << grid[x][y] << "\n";
         }
     }
+}
+
+
+void CCDGrid::Print_CCD_attributes()
+{
+    cout << "------------------------------------------" << endl
+        << "CCD attributes /" << endl
+        << "---------------\n"
+        << " - pixels: " << num_x_pixels << "x" << num_y_pixels << endl
+        << " - pixel size: " << m_pixel_size << " [meters]" << endl
+        << " - dimensions: " << m_pixel_size*num_x_pixels << "x" << m_pixel_size*num_y_pixels << " [meters]" << endl
+        << " - coordinates (x,y): " << "(" << m_center_x << "," << m_center_y << ") [meters]" << endl
+        << " - detecting AO mechanism: " << m_OPL_mechanism << endl
+        << "------------------------------------------" << endl;
 }

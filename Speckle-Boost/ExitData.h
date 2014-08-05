@@ -8,6 +8,7 @@ using std::ifstream;
 
 class ExitData {
 public:
+    ExitData();
 	ExitData(const int num_detected_photons);
 	~ExitData();
 
@@ -15,10 +16,14 @@ public:
 	
 	// Load in the data from the exit file.
 	void loadExitData(const std::string &filename);
+    
+    int  Get_num_exit_data_entries(const std::string &filename);
+    int  getNumPhotons()    const {return m_num_detected_photons;};
 
 
    	std::vector<std::vector<double> > values;
 private:
+    int m_num_detected_photons;
 	//std::vector<std::vector<double> > values;
 
 	// Input stream.

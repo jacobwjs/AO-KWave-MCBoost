@@ -30,13 +30,8 @@ struct filename_tstamp
 
 bool SortFunction (struct filename_tstamp a, struct filename_tstamp b) { return (a.tstamp < b.tstamp); };
 void printFiles(std::vector<filename_tstamp> files);
-int  Get_num_detected_photons(std::string &filename);
-void Print_CCD_attributes(const int pix_cnt_x,
-                          const int pix_cnt_y,
-                          const double pix_size,
-                          const double center_x,
-                          const double center_y,
-                          const std::string mechanism);
+
+
 
 
 /// Work around for compiler errors with boost
@@ -180,10 +175,8 @@ int main(int argc, char** argv)
 	// The number of exit-data files to read in and operate on.
 	//
     const size_t NUM_FILES = files.size();
-	int num_detected_photons = Get_num_detected_photons((files.at(0)).filename);
 	cout << separator;
 	cout << "Processing " << NUM_FILES << " exit data files.\n";
-	cout << "Detected photons: " << num_detected_photons << '\n';
 	cout << separator;
 
 
@@ -200,20 +193,14 @@ int main(int argc, char** argv)
 	///
 	for (size_t i = 0; i < NUM_THREADS; i++)
 	{
-		Print_CCD_attributes(PIXEL_CNT_X,
+        ccd[i] = new CCDGrid(PIXEL_CNT_X,
                              PIXEL_CNT_Y,
                              PIXEL_SIZE,
                              center_ccd_x_coord,
                              center_ccd_y_coord,
                              mechanism);
         
-        ccd[i] = new CCDGrid(PIXEL_CNT_X,
-                             PIXEL_CNT_Y,
-                             PIXEL_SIZE,
-                             center_ccd_x_coord,
-                             center_ccd_y_coord,
-                             mechanism,
-                             num_detected_photons);
+        ccd[i]->Print_CCD_attributes();
 	}
 
     /// Track how many times the threads have run, which allows displaying of which
@@ -244,6 +231,7 @@ int main(int argc, char** argv)
             ccd[j]->Load_exit_data(exit_data_filename);
 
         	cout << "Launching thread (" << ++thread_cnt << " of " << NUM_FILES << ").  Processing " << exit_data_filename << endl;
+            cout << " - Detected photons: " << ccd[j]->Get_num_detected_photons() << endl;
             boost::thread *t = new boost::thread(&CCDGrid::makeSpeckle,
                                                  ccd[j],
                                                  exit_data_filename,
@@ -289,23 +277,7 @@ int main(int argc, char** argv)
 
 
 
-void Print_CCD_attributes(const int pix_cnt_x,
-                          const int pix_cnt_y,
-                          const double pix_size,
-                          const double center_x,
-                          const double center_y,
-                          const std::string mechanism)
-{
-    cout << separator
-         << "CCD attributes /" << endl
-         << "---------------\n"
-         << " - pixels: " << pix_cnt_x << "x" << pix_cnt_y << endl
-         << " - pixel size: " << pix_size << " [meters]" << endl
-         << " - dimensions: " << pix_size*pix_cnt_x << "x" << pix_size*pix_cnt_y << " [meters]" << endl
-         << " - coordinates (x,y): " << "(" << center_x << "," << center_y << ") [meters]" << endl
-         << " - detecting AO mechanism: " << mechanism << endl
-         << separator << endl;
-}
+
 
 
 void printFiles(std::vector<filename_tstamp> f)
@@ -319,35 +291,5 @@ void printFiles(std::vector<filename_tstamp> f)
 
 
 }
-
-
-int Get_num_detected_photons(std::string &filename)
-{
-
-	int i = 0;
-	std::string line;
-	
-
-	// Input stream.
-	std::ifstream temp_stream;
-	temp_stream.open(filename.c_str());
-
-	do
-	{	 
-		
-    	getline(temp_stream,line);  	           
-		if (temp_stream.fail())
-		{
-			break;
-		}    
- 		++i;
-	}
-	while (temp_stream.good());
-
-	temp_stream.close();
-
-	return i;
-}
-
 
 

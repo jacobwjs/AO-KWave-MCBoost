@@ -133,10 +133,16 @@ int main(int argc, char** argv)
 			cout << "st.st_mtime = " << st.st_mtime << '\n';
 			exit(EXIT_FAILURE);
 		}
-        filename_tstamp temp;
-        temp.filename = *it;
-        temp.tstamp = st.st_mtime;
-        files.push_back(temp);
+        
+        /// Remove any directories, only interested in files.
+        path temp_path = *it;
+        if (is_regular_file(temp_path))
+        {
+            filename_tstamp temp;
+            temp.filename = *it;
+            temp.tstamp = st.st_mtime;
+            files.push_back(temp);
+        }
        
     }
     

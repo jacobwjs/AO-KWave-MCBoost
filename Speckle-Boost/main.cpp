@@ -233,9 +233,11 @@ int main(int argc, char** argv)
         	// The file name that holds the exit aperture data.  Within the loop below the time step
         	// is appended to this name so each thread operates on a separate data file.
         	//
-        	//std::string filename = "exit-aperture-" + boost::lexical_cast<std::string>(i+j) + ".dat";
-			std::string exit_data_filename = (files.at(i+j)).filename;            
-			std::string speckle_data_filename = p_speckle_data.string() + "/speckle_t" + boost::lexical_cast<std::string>(i+j) + ".dat";
+			std::string exit_data_filename = (files.at(i+j)).filename;
+            
+            /// Prepend 'SPECKLE' to the name of the exit data that is being processed so we can later match any speckle data file with it's exit data file.
+			std::string speckle_data_filename = p_speckle_data.string() + "SPECKLE_" + exit_data_filename.substr(exit_data_filename.find_last_of("/\\")+1);
+            
 
             /// Load the data into the virtual ccd for processing before the thread is spawned.
             ///

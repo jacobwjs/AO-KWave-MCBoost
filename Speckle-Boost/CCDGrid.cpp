@@ -276,7 +276,7 @@ void CCDGrid::writeGridToFile(const std::string &output_filename)
     // Set the precision and width of the data written to file.
     //speckle_data_stream.width(10);
     //speckle_data_stream.setf(std::ios::showpoint | std::ios::fixed);
-    speckle_data_stream.precision(5);
+    speckle_data_stream.precision(6);
     
     for (int x = 0; x < grid.size(); x++)
     {

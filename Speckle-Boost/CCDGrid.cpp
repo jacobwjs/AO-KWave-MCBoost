@@ -165,17 +165,17 @@ void CCDGrid::makeSpeckle(const std::string &input_filename,
 
     if (DISPLACEMENT_ENABLED)
 	{
-        cout << " Displacement: ON\n";
+        cout << " - Displacement: ON\n";
 		cout.flush();
 	}
     if (REFRACTION_ENABLED)
 	{
-        cout << " Refraction: ON\n";
+        cout << " - Refraction: ON\n";
 		cout.flush();
 	}
     if (COMBINED_ENABLED)
     {
-        cout << " Combined (Refraction + Displacement): ON\n";
+        cout << " - Combined (Refraction + Displacement): ON\n";
         cout.flush();
     }
  

@@ -232,6 +232,7 @@ int main(int argc, char** argv)
 
         	cout << "Launching thread (" << ++thread_cnt << " of " << NUM_FILES << ").  Processing " << exit_data_filename << endl;
             cout << " - Detected photons: " << ccd[j]->Get_num_detected_photons() << endl;
+            cout << " - Number of exit data entries per photon: " << ccd[j]->Get_num_photon_attributes() << endl;
             boost::thread *t = new boost::thread(&CCDGrid::makeSpeckle,
                                                  ccd[j],
                                                  exit_data_filename,

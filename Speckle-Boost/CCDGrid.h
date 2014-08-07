@@ -46,7 +46,10 @@ public:
     void Load_exit_data(const std::string &exit_data_filename);
     
     /// Return the number of detected photons for the exit data file.
-    int  Get_num_detected_photons() const;
+    size_t  Get_num_detected_photons()      const;
+    
+    /// Return the number of columns written to the exit data file.
+    size_t  Get_num_photon_attributes()     const;
     
     // Debugging.
     void printGrid(void);

@@ -24,8 +24,12 @@ ExitData::~ExitData()
 
 }
 
-int ExitData::Get_num_exit_data_entries(const std::string &filename)
+
+/// The number of lines written to the exit data file is the number
+/// of photons that were detected.
+size_t ExitData::Get_num_exit_data_lines(const std::string &filename)
 {
+    
 	int i = 0;
 	std::string line;
     
@@ -46,9 +50,36 @@ int ExitData::Get_num_exit_data_entries(const std::string &filename)
     
 	temp_stream.close();
     
+    
+    /// Update the internal value.    
     m_num_detected_photons = i;
     
 	return i;
+}
+
+size_t ExitData::Get_num_exit_data_entries_per_line()
+{
+    /// To know how large to make each vector we need to know how many data points
+	/// were written out to file while collecting data on exit photons.  Data is
+	/// written line by line, and based on what is chosen to be saved in the simulation
+	/// (e.g. weight, coords, etc.) this value changes.  Here we read in one line and
+	/// find out how many data points are on a single line.
+	std::istringstream stream1;
+	std::string line;
+	getline(exit_file_stream, line);
+	stream1.str(line);
+	double temp_num;
+	size_t cnt = 0;
+	while (stream1 >> temp_num) cnt++;
+    
+    /// Reset the ifstream back to the beginning of the file.
+    exit_file_stream.clear();
+    exit_file_stream.seekg(0, std::ios::beg);
+    
+    /// Update the internal value.
+    m_num_exit_data_entries_per_line = cnt;
+    
+    return cnt;
 }
 
 
@@ -56,7 +87,7 @@ int ExitData::Get_num_exit_data_entries(const std::string &filename)
 void ExitData::loadExitData(const std::string &filename)
 {
 	
-    values.reserve(Get_num_exit_data_entries(filename));
+    values.reserve(Get_num_exit_data_lines(filename));
     
     // Open the file that contains the exit data from the medium's aperture.
 	//
@@ -72,22 +103,9 @@ void ExitData::loadExitData(const std::string &filename)
         exit(1);
     }
 
-	/// To know how large to make each vector we need to know how many data points
-	/// were written out to file while collecting data on exit photons.  Data is
-	/// written line by line, and based on what is chosen to be saved in the simulation
-	/// (e.g. weight, coords, etc.) this value changes.  Here we read in one line and
-	/// find out how many data points are on a single line.
-	std::istringstream stream1;
-	std::string line;
-	getline(exit_file_stream, line);
-	stream1.str(line);
-	double temp_num;
-	size_t cnt = 0;	
-	while (stream1 >> temp_num) cnt++;
-
-	size_t COLS = cnt;
-	cout << " - Number of exit data entries per photon: " << COLS << '\n';
-	cout.flush();
+	
+    /// Find out how many columns of data were written to the exit data file.
+	size_t COLS = Get_num_exit_data_entries_per_line();
     
 
 	/// Capacity has been reserved upon creation, but to remove any issues
@@ -95,6 +113,7 @@ void ExitData::loadExitData(const std::string &filename)
 	values.clear();
 	assert(values.size() == 0);
 	
+    
 
     // Read and store the exit data to the 2D array.
     double temp = 0.0;

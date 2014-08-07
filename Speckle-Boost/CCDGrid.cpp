@@ -59,11 +59,19 @@ void CCDGrid::initCommon(void)
     
 }
 
-int CCDGrid::Get_num_detected_photons() const
+size_t CCDGrid::Get_num_detected_photons() const
 {
     assert(exit_data != NULL);
     return exit_data->getNumPhotons();
 }
+
+size_t CCDGrid::Get_num_photon_attributes() const
+{
+    assert(exit_data != NULL);
+    return exit_data->getNumPhotonAttributes();
+}
+
+
 
 
 void CCDGrid::setGrid(int x_pixels, int y_pixels, double pixel_size)

@@ -17,14 +17,20 @@ public:
 	// Load in the data from the exit file.
 	void loadExitData(const std::string &filename);
     
-    int  Get_num_exit_data_entries(const std::string &filename);
-    int  getNumPhotons()    const {return m_num_detected_photons;};
+    size_t  Get_num_exit_data_lines(const std::string &filename);
+    
+    size_t  Get_num_exit_data_entries_per_line();
+    
+    size_t  getNumPhotonAttributes()    const {return m_num_exit_data_entries_per_line;};
+    
+    size_t  getNumPhotons()             const {return m_num_detected_photons;};
 
 
    	std::vector<std::vector<double> > values;
 private:
-    int m_num_detected_photons;
-	//std::vector<std::vector<double> > values;
+    size_t m_num_detected_photons;
+	
+    size_t m_num_exit_data_entries_per_line;
 
 	// Input stream.
 	std::ifstream exit_file_stream;

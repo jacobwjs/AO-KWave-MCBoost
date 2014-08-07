@@ -86,7 +86,7 @@ void ExitData::loadExitData(const std::string &filename)
 	while (stream1 >> temp_num) cnt++;
 
 	size_t COLS = cnt;
-	cout << "Number of exit data entries per photon: " << COLS << '\n';
+	cout << " - Number of exit data entries per photon: " << COLS << '\n';
 	cout.flush();
     
 

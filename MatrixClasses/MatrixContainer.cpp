@@ -481,17 +481,7 @@ void TMatrixContainer::AddMatricesIntoContainer(){
     
     
     /// ------------------------------------- JWJS ---------------------------------------------------------------------------
-    if (Params->IsStore_combination())
-    {
-        /// FIXME:
-        /// - Need to add something for the background refractive index map.
-        
-        MatrixContainer[refractive_total_full_medium].SetAllValues(NULL,TMatrixRecord::mdtReal, FullDim, false, refractive_total_full_medium_Name);
-        MatrixContainer[disp_x_full_medium].SetAllValues(NULL,TMatrixRecord::mdtReal, FullDim, false, disp_x_full_medium_Name);
-        MatrixContainer[disp_y_full_medium].SetAllValues(NULL,TMatrixRecord::mdtReal, FullDim, false, disp_y_full_medium_Name);
-        MatrixContainer[disp_z_full_medium].SetAllValues(NULL,TMatrixRecord::mdtReal, FullDim, false, disp_z_full_medium_Name);
-    }
-    if (Params->IsStore_refractive_total())
+    if (Params->IsStore_refractive_total() || Params->IsStore_combination())
     {
        //MatrixContainer[refractive_total_sensor].SetAllValues(NULL,TMatrixRecord::mdtReal, SensorDims, false, refractive_total_sensor_Name);
        MatrixContainer[refractive_total_full_medium].SetAllValues(NULL,TMatrixRecord::mdtReal, FullDim, false, refractive_total_full_medium_Name);
@@ -510,20 +500,26 @@ void TMatrixContainer::AddMatricesIntoContainer(){
         MatrixContainer[refractive_z_full_medium].SetAllValues(NULL,TMatrixRecord::mdtReal, FullDim, false, refractive_z_full_medium_Name);
     }
     
-    if (Params->IsStore_disp_x())
+    if (Params->IsStore_disp_x() || Params->IsStore_combination())
     {
         //MatrixContainer[disp_x_sensor].SetAllValues(NULL,TMatrixRecord::mdtReal, SensorDims, false, disp_x_sensor_Name);
         MatrixContainer[disp_x_full_medium].SetAllValues(NULL,TMatrixRecord::mdtReal, FullDim, false, disp_x_full_medium_Name);
     }
-    if (Params->IsStore_disp_y())
+    if (Params->IsStore_disp_y() || Params->IsStore_combination())
     {
         //MatrixContainer[disp_y_sensor].SetAllValues(NULL,TMatrixRecord::mdtReal, SensorDims, false, disp_y_sensor_Name);
         MatrixContainer[disp_y_full_medium].SetAllValues(NULL,TMatrixRecord::mdtReal, FullDim, false, disp_y_full_medium_Name);
     }
-    if (Params->IsStore_disp_z())
+    if (Params->IsStore_disp_z() || Params->IsStore_combination())
     {
         //MatrixContainer[disp_z_sensor].SetAllValues(NULL,TMatrixRecord::mdtReal, SensorDims, false, disp_z_sensor_Name);
         MatrixContainer[disp_z_full_medium].SetAllValues(NULL,TMatrixRecord::mdtReal, FullDim, false, disp_z_full_medium_Name);
+    }
+    
+    /// If any of these options are turned on we want to save the background refractive index values.
+    if (Params->IsStore_disp_x() || Params->IsStore_disp_y() || Params->IsStore_disp_z() || Params->IsStore_refractive_total() || Params->IsStore_combination())
+    {
+        MatrixContainer[refractive_background_full_medium].SetAllValues(NULL,TMatrixRecord::mdtReal, FullDim, false, refractive_background_full_medium_Name);
     }
     /// --------------------------------------------/
     

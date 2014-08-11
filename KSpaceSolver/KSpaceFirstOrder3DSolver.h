@@ -182,6 +182,7 @@ public:
     void    FromAO_sim_PostProcessing	()            {PostProcessing();};
     void    FromAO_sim_WriteOutputDataInfo()          {WriteOutputDataInfo();};
 
+    void    FromAO_sim_compute_refractive_index_background()  {Compute_background_refractive_index();};
     void    FromAO_sim_compute_refractive_index_total() {Compute_refractive_index_total_data();};
     void    FromAO_sim_compute_refractive_index()     {Compute_refractive_index_gradient_data();};
     void    FromAO_sim_compute_displacement()         {Compute_displacement_data();};
@@ -189,8 +190,11 @@ public:
     void    FromAO_sim_init_refractive_index_matrix(const float refractive_index_val)
                     {Get_refractive_total_full_medium().InitMatrix(refractive_index_val);};
 
-    ///TRealMatrix & FromAO_sim_Get_refractive_total_sensor()      {return Get_refractive_total_sensor();};
-    TRealMatrix & FromAO_sim_Get_refractive_total_full_medium() {return Get_refractive_total_full_medium();};
+
+    
+    ///TRealMatrix & FromAO_sim_Get_refractive_total_sensor()            {return Get_refractive_total_sensor();};
+    TRealMatrix & FromAO_sim_Get_refractive_total_full_medium()             {return Get_refractive_total_full_medium();};
+    TRealMatrix & FromAO_sim_Get_background_refractive_index_full_medium()  {return Get_refractive_background_full_medium();};
     
     TRealMatrix & FromAO_sim_Get_refractive_x    ()     {return Get_refractive_x();};
     TRealMatrix & FromAO_sim_Get_refractive_y    ()     {return Get_refractive_y();};
@@ -241,6 +245,8 @@ protected:
     void Compute_refractive_index_gradient_data();
     /// Store max and min of refractive index data over all time
     void Compute_refractive_index_total_data();
+    /// Compute the refractive index background
+    void Compute_background_refractive_index();
     /// Store displacement data
     void Compute_displacement_data();
     /// --------------------------------------------------/
@@ -599,8 +605,11 @@ protected:
     ///            {return MatrixContainer.GetRealMatrix(refractive_total_sensor);};
     /// Get the refractive_total_full_medium from the container
     TRealMatrix         & Get_refractive_total_full_medium()
-    {return MatrixContainer.GetRealMatrix(refractive_total_full_medium);};
+                {return MatrixContainer.GetRealMatrix(refractive_total_full_medium);};
     
+    /// Get the refractive_backgroung_full_medium from the container
+    TRealMatrix         & Get_refractive_background_full_medium()
+                {return MatrixContainer.GetRealMatrix(refractive_background_full_medium);};
     
     /// Get the refractive_x from the container
     TRealMatrix         & Get_refractive_x()

@@ -215,6 +215,21 @@ void TKSpaceFirstOrder3DSolver::AllocateMemory(){
         disp_z_OutputStream = new TOutputHDF5Stream();
         if (!disp_z_OutputStream) throw bad_alloc();
     }
+    
+    if (Parameters->IsStore_combination())
+    {
+        refractive_total_OutputStream = new TOutputHDF5Stream();
+        if (!refractive_total_OutputStream) throw bad_alloc();
+        
+        disp_x_OutputStream = new TOutputHDF5Stream();
+        if (!disp_x_OutputStream) throw bad_alloc();
+        
+        disp_y_OutputStream = new TOutputHDF5Stream();
+        if (!disp_y_OutputStream) throw bad_alloc();
+        
+        disp_z_OutputStream = new TOutputHDF5Stream();
+        if (!disp_z_OutputStream) throw bad_alloc();
+    }
     /// ----------------------------------------------
 
 
@@ -394,7 +409,7 @@ void TKSpaceFirstOrder3DSolver::LoadInputData(){
     /// entire medium in order to save disk space when data is written out. Therefore to reflect
     /// this in the h5 we name the stream accordingly. This is done for all output streams below
     /// as well (i.e. named based on the sensor name specified in 'MatrixNames.h'.
-    if (Parameters->IsStore_refractive_total()) {
+    if (Parameters->IsStore_refractive_total() || Parameters->IsStore_combination()) {
         refractive_total_OutputStream->CreateStream(HDF5_OutputFile, refractive_total_sensor_Name, TotalSizes,
                                                     ChunkSizes, Parameters->GetCompressionLevel());
     }
@@ -411,15 +426,15 @@ void TKSpaceFirstOrder3DSolver::LoadInputData(){
                                                 ChunkSizes, Parameters->GetCompressionLevel());
     }
 
-    if (Parameters->IsStore_disp_x()) {
+    if (Parameters->IsStore_disp_x() || Parameters->IsStore_combination()) {
         disp_x_OutputStream->CreateStream(HDF5_OutputFile, disp_x_sensor_Name, TotalSizes,
                                           ChunkSizes, Parameters->GetCompressionLevel());
     }
-    if (Parameters->IsStore_disp_y()) {
+    if (Parameters->IsStore_disp_y() || Parameters->IsStore_combination()) {
         disp_y_OutputStream->CreateStream(HDF5_OutputFile, disp_y_sensor_Name, TotalSizes,
                                           ChunkSizes, Parameters->GetCompressionLevel());
     }
-    if (Parameters->IsStore_disp_z()) {
+    if (Parameters->IsStore_disp_z() || Parameters->IsStore_combination()) {
         disp_z_OutputStream->CreateStream(HDF5_OutputFile, disp_z_sensor_Name, TotalSizes,
                                           ChunkSizes, Parameters->GetCompressionLevel());
     }
@@ -510,6 +525,10 @@ void TKSpaceFirstOrder3DSolver::PreCompute(){
 
 
     PreProcessingPhase( );
+    
+    /// ----------------------------------------- JWJS ---------------------------
+    Compute_background_refractive_index();
+    /// -----------------------------------------------/
 
 
     fprintf(stdout,"Done \n");
@@ -611,6 +630,9 @@ void TKSpaceFirstOrder3DSolver::PrintFullNameCodeAndLicense(FILE * file){
     fprintf(file,"|                                                  |\n");
     fprintf(file,"| Copyright (C) 2012 Jiri Jaros and Bradley Treeby |\n");
     fprintf(file,"| http://www.k-wave.org                            |\n");
+    fprintf(file,"|                                                  |\n");
+    fprintf(file,"| (2014) Jacob Staley, Univeristy of Twente, BMPI  |\n");
+    fprintf(file,"| http://www.utwente.nl/tnw/bmpi/                  |\n");
     fprintf(file,"+--------------------------------------------------+\n");
     fprintf(file,"\n");
 }// end of GetFullCodeAndLincence
@@ -2905,10 +2927,20 @@ void TKSpaceFirstOrder3DSolver::PostProcessing(){
     /// ---------------------------- JWJS --------------------------------------------------------
                                         //-- refractive index --//
 
+        if (Parameters->IsStore_combination())
+        {
+            Get_refractive_background_full_medium().WriteDataToHDF5File(Parameters->HDF5_OutputFile,
+                                                                      MatrixContainer[refractive_background_full_medium].HDF5MatrixName.c_str(),
+                                                                      Parameters->GetCompressionLevel());
+            refractive_total_OutputStream->CloseStream();
+            disp_x_OutputStream->CloseStream();
+            disp_y_OutputStream->CloseStream();
+            disp_z_OutputStream->CloseStream();
+        }
         if (Parameters->IsStore_refractive_total()) {
-            //        Get_refractive_total().WriteDataToHDF5File(Parameters->HDF5_OutputFile,
-            //                                                   MatrixContainer[refractive_total].HDF5MatrixName.c_str(),
-            //                                                   Parameters->GetCompressionLevel());
+            Get_refractive_background_full_medium().WriteDataToHDF5File(Parameters->HDF5_OutputFile,
+                                                                      MatrixContainer[refractive_background_full_medium].HDF5MatrixName.c_str(),
+                                                                      Parameters->GetCompressionLevel());
             refractive_total_OutputStream->CloseStream();
         }
         if (Parameters->IsStore_refractive_x()) {
@@ -3098,7 +3130,7 @@ void TKSpaceFirstOrder3DSolver::StoreSensorData(){
 #endif
     	}
 
-    	if (Parameters->IsStore_refractive_total())
+    	if (Parameters->IsStore_refractive_total() || Parameters->IsStore_combination())
     	{
 
             /// Check if the current time step falls within the window of time which data is supposed to be saved (set via commandline), or if this is
@@ -3113,7 +3145,7 @@ void TKSpaceFirstOrder3DSolver::StoreSensorData(){
         
    		}
 
-    	if (Parameters->IsStore_disp_x() || Parameters->IsStore_disp_y() || Parameters->IsStore_disp_z())
+    	if (Parameters->IsStore_disp_x() || Parameters->IsStore_disp_y() || Parameters->IsStore_disp_z() || Parameters->IsStore_combination())
     	{
 	    	///Compute_displacement_data();
 
@@ -3263,6 +3295,54 @@ void TKSpaceFirstOrder3DSolver::Compute_refractive_index_gradient_data()
 }
 
 
+void TKSpaceFirstOrder3DSolver::Compute_background_refractive_index()
+{
+    cout << "\nComputing refractive background values and initializing refractive full medium\n";
+    
+    float rho0                      = 0.0f;
+    const float n_background        = 1.33f;
+    
+    const size_t full_medium_size   = Get_refractive_background_full_medium().GetTotalElementCount();
+    
+    float* n_total_full_medium         = Get_refractive_total_full_medium().GetRawData();
+    float* n_background_full_medium = Get_refractive_background_full_medium().GetRawData();
+ 
+    /// Check if the medium has uniform density.
+    if (Parameters->Get_rho0_scalar_flag())
+    {
+        rho0 = Parameters->Get_rho0_scalar();
+#ifndef __NO_OMP__
+#pragma omp parallel for schedule (static) if (full_medium_size > 1e5)
+#endif
+        for (size_t i = 0; i < full_medium_size; i++)
+        {
+            n_background_full_medium[i] = n_background;
+            n_total_full_medium[i]      = n_background;
+        }
+    }
+    else
+    {
+        const float* rho0_raw_data = Get_rho0().GetRawData();
+        
+#ifndef __NO_OMP__
+#pragma omp parallel for schedule (static) if (full_medium_size > 1e5)
+#endif
+        for (size_t i = 0; i < full_medium_size; i++)
+        {
+            /// FIXME:
+            /// - How should this be calculated with a non-uniform density?
+            /// - For now we just fill it with a constant value.
+            //n_background_full_medium[i] = n_background + ???
+            //n_total_full_medium[i]      = n_background + ???
+            n_background_full_medium[i] = n_background;
+            n_total_full_medium[i]      = n_background;
+        }
+    }
+    
+}
+
+
+
 void TKSpaceFirstOrder3DSolver::Compute_refractive_index_total_data()
 {
     cout << "Computing refractive total values\n";
@@ -3279,12 +3359,21 @@ void TKSpaceFirstOrder3DSolver::Compute_refractive_index_total_data()
     const float* rho_z         = Get_rhoz().GetRawData();
 
     float* n_total_full_medium         = Get_refractive_total_full_medium().GetRawData();
+    float* n_background_full_medium    = Get_refractive_background_full_medium().GetRawData();
     
     const long * index        = Get_sensor_mask_ind().GetRawData();
     const size_t sensor_size  = Get_sensor_mask_ind().GetTotalElementCount();
 
+    /// If we have come here at t=0 we need to calculate the background refractive index values based
+    /// on the medium's density and assign it to the total medium.
+//    if (GetTimeIndex()==0)
+//    {
+//        Compute_refractive_index_background();
+//        
+//    }
     
     
+    /// Compute the modulated refractive index.
     if (Parameters->Get_rho0_scalar_flag())
     {
         rho0 = Parameters->Get_rho0_scalar();
@@ -3292,7 +3381,7 @@ void TKSpaceFirstOrder3DSolver::Compute_refractive_index_total_data()
         #ifndef __NO_OMP__
         #pragma omp parallel for schedule (static) if (sensor_size > 1e5)
         #endif
-        for (size_t i = 0; i <sensor_size; i++)
+        for (size_t i = 0; i < sensor_size; i++)
         {
             /// Calculate the background density with the addition of the pressure induced variations.
             /// NOTE:
@@ -3338,7 +3427,7 @@ void TKSpaceFirstOrder3DSolver::Compute_refractive_index_total_data()
         #ifndef __NO_OMP__
         #pragma omp parallel for schedule (static) if (sensor_size > 1e5)
         #endif
-        for (size_t i = 0; i <sensor_size; i++)
+        for (size_t i = 0; i < sensor_size; i++)
         {
             /// Calculate the background density with the addition of the pressure induced variations.
             /// NOTE:

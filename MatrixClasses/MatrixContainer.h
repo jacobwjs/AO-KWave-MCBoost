@@ -90,6 +90,7 @@ enum TMatrixID     {kappa, c2, p,
                       /// ---------------------------------- JWJS -------------------------------------------------------
                       ///refractive_total_sensor,
                       refractive_total_full_medium,
+                      refractive_background_full_medium,
                       refractive_x_full_medium, refractive_y_full_medium, refractive_z_full_medium,
                       ///disp_x_sensor, disp_y_sensor, disp_z_sensor,
                       disp_x_full_medium, disp_y_full_medium, disp_z_full_medium,

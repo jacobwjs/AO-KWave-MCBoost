@@ -9,7 +9,7 @@
 #define REFRACTIVEMAP_H_
 
 
-
+#include <MatrixClasses/LongMatrix.h>
 #include <MatrixClasses/RealMatrix.h>
 #include <Utils/DimensionSizes.h>
 
@@ -96,7 +96,7 @@ public:
 
     /// Invert the phase of the refractive index data by multiplying all the values by -1.
     /// Essentually a 180 degree phase shift.
-    void    Invert_phase(void);
+    void    Invert_phase(TLongMatrix * sensor_mask_index);
 
 
 	void	setBackgroundRefractiveIndex(const double n_bg) {this->n_background = n_bg;}

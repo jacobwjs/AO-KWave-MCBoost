@@ -281,6 +281,8 @@ const char * const  Iz_max_Name = "Iz_max";
 const char * const  refractive_total_sensor_Name        = "refractive_total_sensor";
 /// refractive_total_full_medium
 const char * const  refractive_total_full_medium_Name   = "refractive_total_full_medium";
+/// refractive_background_full_medium
+const char * const  refractive_background_full_medium_Name = "refractive_background_full_medium";
 
 /// refractive_x_full_medium variable name
 const char * const  refractive_x_full_medium_Name   = "refractive_x_full_medium";

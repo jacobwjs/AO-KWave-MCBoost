@@ -160,15 +160,17 @@ RefractiveMap::getBackgroundRefractiveIndexFromGrid(const int x_photon, const in
 
 /// Invert the phase of the refractive index data 180 degrees by multiplying through the matrix by -1.
 void
-RefractiveMap::Invert_phase(void)
+RefractiveMap::Invert_phase(TLongMatrix * sensor_mask_index)
 {
     float * raw_data        = refractive_total->GetRawData();
-    const size_t sensor_size  = refractive_total->GetTotalElementCount();
-
+    const size_t sensor_size = sensor_mask_index->GetTotalElementCount();
+    const long *  index = sensor_mask_index->GetRawData();
+    
+    /// Only invert the medium where the sensor locations exist.
     for (size_t i = 0; i < sensor_size; i++)
     {
         /// Perform the inversion.
-        raw_data[i] *= -1.0f;
+        raw_data[index[i]] *= raw_data[index[i]] * -1.0f;
     }
 }
 

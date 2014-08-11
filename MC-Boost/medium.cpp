@@ -531,9 +531,9 @@ void Medium::Create_refractive_map(TRealMatrix * refractive_x,
 
 }
 
-void Medium::Invert_refractive_map_phase()
+void Medium::Invert_refractive_map_phase(TLongMatrix * sensor_mask_index)
 {
-    kwave.nmap->Invert_phase();
+    kwave.nmap->Invert_phase(sensor_mask_index);
 }
 
 void Medium::Invert_displacement_map_phase()

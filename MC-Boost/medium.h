@@ -146,7 +146,7 @@ public:
                                                      TRealMatrix * disp_z);
 
     /// Invert the phase of the refractive index data by multiplying everything by -1 (180 degree phase shift).
-    void    Invert_refractive_map_phase();
+    void    Invert_refractive_map_phase(TLongMatrix * sensor_mask_index);
 
     /// Invert the phase of the displacement data by multiplying everything by -1 (180 degree phase shift).
     void    Invert_displacement_map_phase();

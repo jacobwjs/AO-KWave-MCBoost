@@ -116,7 +116,7 @@ source_strength = 0;
 % =========================================================================
 
 if (SPHERE_TAGGING_VOL)
-    sensor_Nx = Nx/2;
+    sensor_Nx = Nx/4;
     sensor_Ny = Ny/2;
     sensor_Nz = Nz/2;
     sensor_radius = round(0.0006/dx);   % 1.25 mm diameter
@@ -340,7 +340,7 @@ end
 
 % run the simulation
 if (SAVE_TO_DISK)
-    filename = ['AO_sim_Debug_', num2str(tone_burst_cycles), 'cycles_INPUT.h5'];
+    filename = ['AO_sim_', num2str(tone_burst_cycles), 'cycles_INPUT.h5'];
     kspaceFirstOrder3D(kgrid, medium, transducer, sensor, 'SaveToDisk', filename, input_args{:});
 else
     [sensor_data] = kspaceFirstOrder3D(kgrid, medium, transducer, sensor, input_args{:});

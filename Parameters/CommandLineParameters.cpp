@@ -565,7 +565,7 @@ void TCommandLineParameters::ParseCommandLine(int argc, char** argv){
        fprintf(stderr, "%s", "!!! ERROR: Nothing has been specified to store or simulate. Exiting!\n");
        PrintUsageAndExit();
    }
-   if (Phase_inversion && !US_freq_known)
+   if (Phase_inversion && (!US_freq_known || Run_AO_sim_loadData))
    {
        fprintf(stderr, "%s", "!!! ERROR: 'phase_inversion' was specified, but the ultrasound frequency was not provided. Exiting!\n");
        PrintUsageAndExit();

@@ -6,7 +6,7 @@ clear all;
 
 % Decide to run the simulation in matlab or save it to an h5 file for running 
 % in the AO_sim for debugging.
-SAVE_TO_DISK = true;
+SAVE_TO_DISK = false;
 BOX_TAGGING_VOL = false;
 SPHERE_TAGGING_VOL = true; 
 PLANAR_WAVE = true;
@@ -119,89 +119,89 @@ if (SPHERE_TAGGING_VOL)
     sensor_Nx = Nx/2;
     sensor_Ny = Ny/2;
     sensor_Nz = Nz/2;
-    %sensor_radius = round(0.0006/dx);   % 1.25 mm diameter
+    sensor_radius = round(0.0006/dx);   % 1.25 mm diameter
     %sensor_radius = round(0.0012/dx);   % 2.50 mm diameter
-    sensor_radius = round(0.0018/dx);   % 3.75 mm diameter
-    display('Sphere diameter: '); 
+    %sensor_radius = round(0.0018/dx);   % 3.75 mm diameter
+    display('Sphere diameter: ');
     2*sensor_radius*dx
     pause(2);
-    num_cycles = 1;
-    source_strength = 10;
-elseif (BOX_TAGGING_VOL)
-% define properties of the input signal
-%
-% 11 cycles:
-% ---------------------------------------------------
-% x_size = round(lambda/dx*11); % Reserve '11 cycles' of voxels.
-% y_size = 22;
-% z_size = 16;
-% 
-% sensor_Nx = round(Nx/2-(x_size/2):Nx/2+(x_size/2));
-% sensor_Ny = round(Ny/2-(y_size/2):Ny/2+(y_size/2));
-% sensor_Nz = round(Nz/2-(z_size/2):Nz/2+(z_size/2));
-% 
-% if (PLANAR_WAVE)
-%     source_strength = 1.0e6;
-%     num_cycles = 100;
-% else
-%     source_strength = 0.889825*1e6;   % [Pa] 11 cycles
-%     num_cycles = 11;
-% end
-    
-% % 9 cycles:
-% % ---------------------------------------------------
-%     x_size = round(lambda/dx*9); % Reserve '9 cycles' of voxels.
-%     y_size = 14;
-%     z_size = 16;
-%     
-%     sensor_Nx = round(Nx/2-(x_size/2):Nx/2+(x_size/2));
-%     sensor_Ny = round(Ny/2-(y_size/2):Ny/2+(y_size/2));
-%     sensor_Nz = round(Nz/2-(z_size/2):Nz/2+(z_size/2));
-% if (PLANAR_WAVE)
-% 
-%     
-%     source_strength = 1.0e6;
-%     num_cycles = 100;
-% else
-%     source_strength = 0.9038*1e6; % [Pa] 9cycles
-%     num_cycles = 9;
-% end
-
-% % 7 cycles:
-% % ----------------------------------------------------
-% if (PLANAR_WAVE)
-%     x_size = round(lambda/dx*7); % Reserve '7 cycles' of voxels.
-%     y_size = 6;
-%     z_size = 16;
-%     
-%     sensor_Nx = round(Nx/2-(x_size/2):Nx/2+(x_size/2));
-%     sensor_Ny = round(Ny/2-(y_size/2):Ny/2+(y_size/2));
-%     sensor_Nz = round(Nz/2-(z_size/2):Nz/2+(z_size/2));
-%     
-%     source_strength = 1.0e6;
-%     num_cycles = 100;
-% else
-%     source_strength = 0.932*1e6;  % [Pa] 7cycles
-%     num_cycles = 7;
-% end
-
-% % 5 cycles:
-% % ----------------------------------------------------
-if (PLANAR_WAVE)
-    x_size = round(lambda/dx*5); % Reserve '5 cycles' of voxels.
-    y_size = 6;
-    z_size = 16;
-    
-    sensor_Nx = round(Nx/2-(x_size/2):Nx/2+(x_size/2));
-    sensor_Ny = round(Ny/2-(y_size/2):Ny/2+(y_size/2));
-    sensor_Nz = round(Nz/2-(z_size/2):Nz/2+(z_size/2));
-    
     source_strength = 1.0e6;
     num_cycles = 100;
-else
-    source_strength = 1.0052*1e6;      % [Pa] 5cycles
-    num_cycles = 5;
-end
+elseif (BOX_TAGGING_VOL)
+    % define properties of the input signal
+    %
+    % 11 cycles:
+    % ---------------------------------------------------
+    % x_size = round(lambda/dx*11); % Reserve '11 cycles' of voxels.
+    % y_size = 22;
+    % z_size = 16;
+    %
+    % sensor_Nx = round(Nx/2-(x_size/2):Nx/2+(x_size/2));
+    % sensor_Ny = round(Ny/2-(y_size/2):Ny/2+(y_size/2));
+    % sensor_Nz = round(Nz/2-(z_size/2):Nz/2+(z_size/2));
+    %
+    % if (PLANAR_WAVE)
+    %     source_strength = 1.0e6;
+    %     num_cycles = 100;
+    % else
+    %     source_strength = 0.889825*1e6;   % [Pa] 11 cycles
+    %     num_cycles = 11;
+    % end
+    
+    % % 9 cycles:
+    % % ---------------------------------------------------
+    %     x_size = round(lambda/dx*9); % Reserve '9 cycles' of voxels.
+    %     y_size = 14;
+    %     z_size = 16;
+    %
+    %     sensor_Nx = round(Nx/2-(x_size/2):Nx/2+(x_size/2));
+    %     sensor_Ny = round(Ny/2-(y_size/2):Ny/2+(y_size/2));
+    %     sensor_Nz = round(Nz/2-(z_size/2):Nz/2+(z_size/2));
+    % if (PLANAR_WAVE)
+    %
+    %
+    %     source_strength = 1.0e6;
+    %     num_cycles = 100;
+    % else
+    %     source_strength = 0.9038*1e6; % [Pa] 9cycles
+    %     num_cycles = 9;
+    % end
+    
+    % % 7 cycles:
+    % % ----------------------------------------------------
+    % if (PLANAR_WAVE)
+    %     x_size = round(lambda/dx*7); % Reserve '7 cycles' of voxels.
+    %     y_size = 6;
+    %     z_size = 16;
+    %
+    %     sensor_Nx = round(Nx/2-(x_size/2):Nx/2+(x_size/2));
+    %     sensor_Ny = round(Ny/2-(y_size/2):Ny/2+(y_size/2));
+    %     sensor_Nz = round(Nz/2-(z_size/2):Nz/2+(z_size/2));
+    %
+    %     source_strength = 1.0e6;
+    %     num_cycles = 100;
+    % else
+    %     source_strength = 0.932*1e6;  % [Pa] 7cycles
+    %     num_cycles = 7;
+    % end
+    
+    % % 5 cycles:
+    % % ----------------------------------------------------
+    if (PLANAR_WAVE)
+        x_size = round(lambda/dx*5); % Reserve '5 cycles' of voxels.
+        y_size = 6;
+        z_size = 16;
+        
+        sensor_Nx = round(Nx/2-(x_size/2):Nx/2+(x_size/2));
+        sensor_Ny = round(Ny/2-(y_size/2):Ny/2+(y_size/2));
+        sensor_Nz = round(Nz/2-(z_size/2):Nz/2+(z_size/2));
+        
+        source_strength = 1.0e6;
+        num_cycles = 100;
+    else
+        source_strength = 1.0052*1e6;      % [Pa] 5cycles
+        num_cycles = 5;
+    end
 else
     display('Nothing chosen to simulate');
     return;
@@ -334,7 +334,8 @@ else
     input_args = {'DisplayMask', transducer.all_elements_mask | sensor.mask, ...
         'PMLInside', true, 'PlotPML', false, 'PMLSize', [PML_X_SIZE, PML_Y_SIZE, PML_Z_SIZE], ...
         'DataCast', DATA_CAST, 'PlotScale', [-source_strength/2, source_strength/2],...
-        }; %'PerfectPlanar', 'x-axis'};
+        'PerfectPlanar', 'x-axis',...
+        }; 
 end
 
 % run the simulation

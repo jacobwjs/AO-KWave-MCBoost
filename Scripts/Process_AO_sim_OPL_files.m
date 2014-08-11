@@ -88,6 +88,8 @@ if (strcmp(MEAS_TYPE, 'OPL_data'))
                                     data.displacement_OPLs(:,2));
     info.modulation_indices_Cmap = find(data.combined_OPLs(:,1) ~=...
                                     data.combined_OPLs(:,2)); 
+                                
+    
   
     % Calculate the phase shift (in degrees) for all photons that were modulated.
     % The OPLs, after multiplication with the wavenumber, are in radians. Here
@@ -145,6 +147,10 @@ elseif (strcmp(MEAS_TYPE, 'EXIT_data'))
     info.modulation_indices_Nmap = find(t0(:,3) ~= t1(:,3));
     info.modulation_indices_Cmap = find(t0(:,4) ~= t1(:,4));
     
+    
+    
+    
+    
     % Store the seeds that created photon paths that underwent modulation
     % and those that didn't (i.e. tagged and untagged photons).
     % NOTE:
@@ -155,12 +161,18 @@ elseif (strcmp(MEAS_TYPE, 'EXIT_data'))
     modulation_indices = [];
     if (~isempty(info.modulation_indices_Dmap))
         modulation_indices = info.modulation_indices_Dmap;
+        data.modulated_exit_photons_Dmap_t0 = t0(modulation_indices,:);
+        data.modulated_exit_photons_Dmap_t1 = t1(modulation_indices,:);
     end
     if (~isempty(info.modulation_indices_Nmap))
         modulation_indices = info.modulation_indices_Nmap;
+        data.modulated_exit_photons_Nmap_t0 = t0(modulation_indices,:);
+        data.modulated_exit_photons_Nmap_t1 = t1(modulation_indices,:);
     end
     if (~isempty(info.modulation_indices_Cmap))
         modulation_indices = info.modulation_indices_Cmap;
+        data.modulated_exit_photons_Cmap_t0 = t0(modulation_indices,:);
+        data.modulated_exit_photons_Cmap_t1 = t1(modulation_indices,:);
     end
     % Update the arrays that contain seeds based on the indices found
     % above.

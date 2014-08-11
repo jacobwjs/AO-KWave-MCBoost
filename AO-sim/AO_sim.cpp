@@ -1412,7 +1412,7 @@ AO_Sim::Run_acousto_optics_sim_loadData(TParameters * Parameters)
 
     /// Print the number of time steps that were recorded and stored out of the total
     /// number of time steps simulated.
-    cout << "Simulation time steps (recorded): " << recorded_time_steps << '\n';
+    cout << " Simulation time steps (recorded): " << recorded_time_steps << '\n';
     
      
    

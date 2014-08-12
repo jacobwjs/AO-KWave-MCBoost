@@ -1436,7 +1436,7 @@ AO_Sim::Run_acousto_optics_sim_loadData(TParameters * Parameters)
             /// - The saving of the origin OUTPUT h5 file should contain the refractive index value (if homogeneous) and
             ///   load it in here to populate the full medium.
             //refractive_total_full_medium->InitMatrix(1.33);
-            refractive_total_full_medium = refractive_background_full_medium;
+            refractive_total_full_medium->CopyData((*refractive_background_full_medium));
             
             
             float * nmap = refractive_total_full_medium->GetRawData();
@@ -1499,7 +1499,7 @@ AO_Sim::Run_acousto_optics_sim_loadData(TParameters * Parameters)
             HDF5_OutputFile.ReadCompleteDataset(refractive_background_full_medium_Name, FullDim, refractive_background_full_medium->GetRawData());
             
             /// Update the full medium with the background refractive index values. The full medium will be updated at the sensor locations below.
-            refractive_total_full_medium = refractive_background_full_medium;
+            refractive_total_full_medium->CopyData((*refractive_background_full_medium));
             
             /// Read displacment data in from the HDF5 file that holds the precomputed values for
             /// a previously run kWave simulation.

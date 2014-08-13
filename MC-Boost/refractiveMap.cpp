@@ -158,19 +158,31 @@ RefractiveMap::getBackgroundRefractiveIndexFromGrid(const int x_photon, const in
 }
 
 
-/// Invert the phase of the refractive index data 180 degrees by multiplying through the matrix by -1.
+/// Invert the phase of the refractive index data 180 degrees by calculating the
+/// modulated value, inverting its sign (+ or -) and placing the new value back.
 void
 RefractiveMap::Invert_phase(TLongMatrix * sensor_mask_index)
 {
-    float * raw_data        = refractive_total->GetRawData();
+    float * nmap = refractive_total->GetRawData();
+    const float * nmap_background = background_refractive_total->GetRawData();
+    
     const size_t sensor_size = sensor_mask_index->GetTotalElementCount();
     const long *  index = sensor_mask_index->GetRawData();
+    
+    float modulated_value = 0.0f;
     
     /// Only invert the medium where the sensor locations exist.
     for (size_t i = 0; i < sensor_size; i++)
     {
+        /// The change in refractive index due to ultrasound.
+        modulated_value = nmap[index[i]] - nmap_background[index[i]];
+        
+        
         /// Perform the inversion.
-        raw_data[index[i]] *= raw_data[index[i]] * -1.0f;
+        /// If the modulated value was initially positive, then we flip its sign (-) and add it to the background medium.
+        /// If initially negative the opposite occurs. Essentially the same as sending in another pulse of ultrasound with
+        /// an initial phase shift of 180 degrees.
+        nmap[index[i]] = nmap_background[index[i]] + (-1*modulated_value);
     }
 }
 

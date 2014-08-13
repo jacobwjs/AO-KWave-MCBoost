@@ -1284,10 +1284,10 @@ AO_Sim::Run_acousto_optics_sim_loadData(TParameters * Parameters)
     }
     if (sim_combination)
     {
-        /// ------------------------- displacement allocation
         /// Inform the MC_sim that displacement mechanisms should be turned on.
-        da_boost->Simulate_displacement(true);
+        da_boost->Simulate_combination(true);
         
+        /// ------------------------- displacement allocation
         /// Allocate input streams to read data from the previously saved HDF5 file.
         displacement_x_InputStream = new TInputHDF5Stream();
         if (!displacement_x_InputStream)  throw bad_alloc();
@@ -1314,9 +1314,6 @@ AO_Sim::Run_acousto_optics_sim_loadData(TParameters * Parameters)
         
         
         /// ------------------------- refractive allocation
-        /// Inform the MC_sim that refraction mechanisms should be turned on.
-        da_boost->Simulate_refractive_total(true);
-        
         /// Allocate an input stream to read data from the previously saved HDF5 file.
         refractive_total_InputStream = new TInputHDF5Stream();
         if (!refractive_total_InputStream)  throw bad_alloc();
@@ -1331,6 +1328,7 @@ AO_Sim::Run_acousto_optics_sim_loadData(TParameters * Parameters)
         
         /// The output file contains the saved data from the previous run. Set it here.
         refractive_total_InputStream->SetHDF5File(HDF5_OutputFile);
+        
         
         cout << "Displacement + refraction: ON\n";
     }
@@ -1436,10 +1434,11 @@ AO_Sim::Run_acousto_optics_sim_loadData(TParameters * Parameters)
             /// - The saving of the origin OUTPUT h5 file should contain the refractive index value (if homogeneous) and
             ///   load it in here to populate the full medium.
             //refractive_total_full_medium->InitMatrix(1.33);
+            float * nmap = refractive_total_full_medium->GetRawData();
             refractive_total_full_medium->CopyData((*refractive_background_full_medium));
             
             
-            float * nmap = refractive_total_full_medium->GetRawData();
+            
             const float * nmap_sensor = refractive_total_sensor->GetRawData();
             const size_t  sensor_size = sensor_mask_ind->GetTotalElementCount();
             const long *  index = sensor_mask_ind->GetRawData();
@@ -1499,6 +1498,7 @@ AO_Sim::Run_acousto_optics_sim_loadData(TParameters * Parameters)
             HDF5_OutputFile.ReadCompleteDataset(refractive_background_full_medium_Name, FullDim, refractive_background_full_medium->GetRawData());
             
             /// Update the full medium with the background refractive index values. The full medium will be updated at the sensor locations below.
+            float * nmap = refractive_total_full_medium->GetRawData();
             refractive_total_full_medium->CopyData((*refractive_background_full_medium));
             
             /// Read displacment data in from the HDF5 file that holds the precomputed values for
@@ -1510,7 +1510,7 @@ AO_Sim::Run_acousto_optics_sim_loadData(TParameters * Parameters)
             
             /// Update the 'full_medium' from the sensor data.
             ///
-            float * nmap = refractive_total_full_medium->GetRawData();
+            
             const float * nmap_sensor = refractive_total_sensor->GetRawData();
             
             float * dmap_x = disp_x_full_medium->GetRawData();

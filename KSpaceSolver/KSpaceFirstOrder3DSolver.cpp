@@ -3515,7 +3515,11 @@ void TKSpaceFirstOrder3DSolver::Compute_displacement_data()
     
     const long * index        = Get_sensor_mask_ind().GetRawData();
     const size_t sensor_size = Get_sensor_mask_ind().GetTotalElementCount();
-
+    
+    float max_disp_x = 0.0f;
+    float max_disp_y = 0.0f;
+    float max_disp_z = 0.0f;
+    
     #ifndef __NO_OMP__
         #pragma omp parallel for schedule (static) if (sensor_size > 1e5)
     #endif
@@ -3526,12 +3530,19 @@ void TKSpaceFirstOrder3DSolver::Compute_displacement_data()
         disp_y_sensor[i] += uy_raw_data[index[i]]*Parameters->Get_dt();
         disp_z_sensor[i] += uz_raw_data[index[i]]*Parameters->Get_dt();
         
+        /// Update the max values.
+        if (disp_x_sensor[i] > max_disp_x) max_disp_x = disp_x_sensor[i];
+        if (disp_y_sensor[i] > max_disp_y) max_disp_y = disp_y_sensor[i];
+        if (disp_z_sensor[i] > max_disp_z) max_disp_z = disp_z_sensor[i];
+        
         /// Update the full medium displacement maps used by the AO_sim.
         disp_x_full_medium[index[i]] = disp_x_sensor[i];
         disp_y_full_medium[index[i]] = disp_y_sensor[i];
         disp_z_full_medium[index[i]] = disp_z_sensor[i];
     }
     
+    /// Display the max displacement values for this time step.
+    cout << " dispX=" << max_disp_x << ", dispY=" << max_disp_y << ", dispZ=" << max_disp_z << '\n';
 
     
 }

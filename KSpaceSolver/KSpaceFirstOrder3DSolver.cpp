@@ -527,7 +527,10 @@ void TKSpaceFirstOrder3DSolver::PreCompute(){
     PreProcessingPhase( );
     
     /// ----------------------------------------- JWJS ---------------------------
-    if (Parameters->IsSim_refractive_total()) Compute_background_refractive_index();
+    if (Parameters->IsSim_refractive_total() || Parameters->IsSim_combination())
+    {
+        Compute_background_refractive_index();
+    }
     /// -----------------------------------------------/
 
 

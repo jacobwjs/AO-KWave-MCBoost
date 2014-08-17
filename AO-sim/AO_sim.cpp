@@ -1215,6 +1215,9 @@ AO_Sim::Run_acousto_optics_sim_loadData(TParameters * Parameters)
     /// Read in the sensor data indices. This will be used to map the sensor to the full medium.
     HDF5_InputFile.ReadCompleteDataset(sensor_mask_index_Name, SensorMaskDims, sensor_mask_ind->GetRawData());
     
+    /// Read in the refractive background values. Only needs to happen once since the static background should never change.
+    HDF5_OutputFile.ReadCompleteDataset(refractive_background_full_medium_Name, FullDim, refractive_background_full_medium->GetRawData());
+    
     /// Move index counts from Matlab->C++
     sensor_mask_ind->RecomputeIndices();
     
@@ -1424,7 +1427,6 @@ AO_Sim::Run_acousto_optics_sim_loadData(TParameters * Parameters)
             /// Read refractive total data in from the HDF5 file that holds the computed values for
             /// a previously run kWave simulation.
             refractive_total_InputStream->ReadData(refractive_total_sensor_Name, (*sensor_mask_ind), refractive_total_sensor->GetRawData());
-            HDF5_OutputFile.ReadCompleteDataset(refractive_background_full_medium_Name, FullDim, refractive_background_full_medium->GetRawData());
             
             
             /// Initialize the full medium with the background (i.e. unmodulated) refractive index value.
@@ -1454,9 +1456,6 @@ AO_Sim::Run_acousto_optics_sim_loadData(TParameters * Parameters)
         }
         if (sim_displacement)
         {
-            /// - Read in background Nmap and update the medium below for the MC_sim.
-            HDF5_OutputFile.ReadCompleteDataset(refractive_background_full_medium_Name, FullDim, refractive_background_full_medium->GetRawData());
-            
             /// Read displacment data in from the HDF5 file that holds the precomputed values for
             /// a previously run kWave simulation.
             displacement_x_InputStream->ReadData(disp_x_sensor_Name, (*sensor_mask_ind), disp_x_sensor->GetRawData());
@@ -1495,7 +1494,7 @@ AO_Sim::Run_acousto_optics_sim_loadData(TParameters * Parameters)
             /// Read refractive total data in from the HDF5 file that holds the computed values for
             /// a previously run kWave simulation.
             refractive_total_InputStream->ReadData(refractive_total_sensor_Name, (*sensor_mask_ind), refractive_total_sensor->GetRawData());
-            HDF5_OutputFile.ReadCompleteDataset(refractive_background_full_medium_Name, FullDim, refractive_background_full_medium->GetRawData());
+            
             
             /// Update the full medium with the background refractive index values. The full medium will be updated at the sensor locations below.
             float * nmap = refractive_total_full_medium->GetRawData();
@@ -1510,7 +1509,6 @@ AO_Sim::Run_acousto_optics_sim_loadData(TParameters * Parameters)
             
             /// Update the 'full_medium' from the sensor data.
             ///
-            
             const float * nmap_sensor = refractive_total_sensor->GetRawData();
             
             float * dmap_x = disp_x_full_medium->GetRawData();

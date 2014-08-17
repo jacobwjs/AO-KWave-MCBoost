@@ -1215,8 +1215,7 @@ AO_Sim::Run_acousto_optics_sim_loadData(TParameters * Parameters)
     /// Read in the sensor data indices. This will be used to map the sensor to the full medium.
     HDF5_InputFile.ReadCompleteDataset(sensor_mask_index_Name, SensorMaskDims, sensor_mask_ind->GetRawData());
     
-    /// Read in the refractive background values. Only needs to happen once since the static background should never change.
-    HDF5_OutputFile.ReadCompleteDataset(refractive_background_full_medium_Name, FullDim, refractive_background_full_medium->GetRawData());
+    
     
     /// Move index counts from Matlab->C++
     sensor_mask_ind->RecomputeIndices();
@@ -1369,7 +1368,8 @@ AO_Sim::Run_acousto_optics_sim_loadData(TParameters * Parameters)
     cout << " Simulation time steps (total): " << Parameters->Get_Nt() << '\n';
 
     
-
+    /// Read in the refractive background values. Only needs to happen once since the static background should never change.
+    HDF5_OutputFile.ReadCompleteDataset(refractive_background_full_medium_Name, FullDim, refractive_background_full_medium->GetRawData());
 
    
     

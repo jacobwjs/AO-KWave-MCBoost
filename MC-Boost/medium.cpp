@@ -536,9 +536,9 @@ void Medium::Invert_refractive_map_phase(TLongMatrix * sensor_mask_index)
     kwave.nmap->Invert_phase(sensor_mask_index);
 }
 
-void Medium::Invert_displacement_map_phase()
+void Medium::Invert_displacement_map_phase(TLongMatrix * sensor_mask_index)
 {
-    kwave.dmap->Invert_phase();
+    kwave.dmap->Invert_phase(sensor_mask_index);
 }
 
 

@@ -9,7 +9,7 @@
 #define DISPLACEMENTMAP_H_
 
 
-
+#include <MatrixClasses/LongMatrix.h>
 #include <MatrixClasses/RealMatrix.h>
 
 #include <MC-Boost/vectorMath.h>
@@ -75,7 +75,7 @@ public:
 
     /// Invert the phase of the displacement data by multiplying all the values by -1.
     /// Essentually a 180 degree phase shift.
-    void    Invert_phase(void);
+    void    Invert_phase(TLongMatrix * sensor_mask_index);
 
     
     // Returns the individual axis displacements.

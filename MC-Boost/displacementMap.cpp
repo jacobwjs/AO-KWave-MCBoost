@@ -88,22 +88,22 @@ double DisplacementMap::getDisplacementFromGridZ(const int x_photon, const int y
 
 
 /// Invert the phase of the displacement data 180 degrees by multiplying through the matrix by -1.
-void DisplacementMap::Invert_phase(void)
+void DisplacementMap::Invert_phase(TLongMatrix * sensor_mask_index)
 {
-    float * raw_data_x = displacement_map_x->GetRawData();
-    float * raw_data_y = displacement_map_y->GetRawData();
-    float * raw_data_z = displacement_map_z->GetRawData();
+    float * disp_x = displacement_map_x->GetRawData();
+    float * disp_y = displacement_map_y->GetRawData();
+    float * disp_z = displacement_map_z->GetRawData();
+    
+    const size_t sensor_size = sensor_mask_index->GetTotalElementCount();
+    const long *  index = sensor_mask_index->GetRawData();
 
-    /// NOTE:
-    /// - The total element count is the same for each axial component of the displacement.
-    const size_t sensor_size  = displacement_map_x->GetTotalElementCount();
 
     for (size_t i = 0; i < sensor_size; i++)
     {
         /// Perform the inversion.
-        raw_data_x[i] *= -1.0f;
-        raw_data_y[i] *= -1.0f;
-        raw_data_z[i] *= -1.0f;
+        disp_x[index[i]] = disp_x[index[i]] * -1.0f;
+        disp_y[index[i]] = disp_y[index[i]] * -1.0f;
+        disp_z[index[i]] = disp_z[index[i]] * -1.0f;
     }
 }
 

@@ -1317,6 +1317,7 @@ AO_Sim::Run_acousto_optics_sim_loadData(TParameters * Parameters)
         /// Allocate an input stream to read data from the previously saved HDF5 file.
         refractive_total_InputStream = new TInputHDF5Stream();
         if (!refractive_total_InputStream)  throw bad_alloc();
+        refractive_total_InputStream->SetHDF5File(HDF5_OutputFile);
         
         /// Allocate matrices to hold data read in from previously generated HDF5 output file.
         refractive_total_full_medium = new TRealMatrix(FullDim);
@@ -1326,8 +1327,7 @@ AO_Sim::Run_acousto_optics_sim_loadData(TParameters * Parameters)
         refractive_background_full_medium = new TRealMatrix(FullDim);
         if (!refractive_background_full_medium) throw bad_alloc();
         
-        /// The output file contains the saved data from the previous run. Set it here.
-        refractive_total_InputStream->SetHDF5File(HDF5_OutputFile);
+        
         
         
         cout << "Displacement + refraction: ON\n";
@@ -1570,14 +1570,14 @@ AO_Sim::Run_acousto_optics_sim_loadData(TParameters * Parameters)
             if (sim_displacement)
             {
                 /// Notify the medium to invert the data for creating the phase shift.
-                m_medium->Invert_displacement_map_phase();
+                m_medium->Invert_displacement_map_phase(sensor_mask_ind);
             }
             if (sim_combination)
             {
                 /// Notify the medium to invert the data for creating the phase shift.
                 m_medium->Invert_refractive_map_phase(sensor_mask_ind);
                 /// Notify the medium to invert the data for creating the phase shift.
-                m_medium->Invert_displacement_map_phase();
+                m_medium->Invert_displacement_map_phase(sensor_mask_ind);
             }
             
             cout << "-------------------- Running Phase Inversion (180 deg shifted) ------------------\n";

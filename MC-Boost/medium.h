@@ -149,7 +149,7 @@ public:
     void    Invert_refractive_map_phase(TLongMatrix * sensor_mask_index);
 
     /// Invert the phase of the displacement data by multiplying everything by -1 (180 degree phase shift).
-    void    Invert_displacement_map_phase();
+    void    Invert_displacement_map_phase(TLongMatrix * sensor_mask_index);
 
 	// Returns the absorption coefficient (mu_a) for a given depth (i.e. a layer).
 	double	getLayerAbsorptionCoeff(double depth);

@@ -111,6 +111,8 @@ public:
     /// for two consecutive scattering events (previous and current scattering location).
     double Get_displacement_modulated_scattering_length();
     
+    double Get_displaced_scattering_length(void);
+    
     // Return the photon's current location in the medium.
     boost::shared_ptr<Vector3d> getPhotonCoords(void) {return currLocation;}
 
@@ -250,7 +252,6 @@ private:
 	
     
     // A vector object that contains the photon's location and direction.
-    //boost::shared_ptr<Vector3d> photonVect;
     boost::shared_ptr<Vector3d> currLocation;
     boost::shared_ptr<Vector3d> prevLocation;
     

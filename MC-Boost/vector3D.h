@@ -33,6 +33,7 @@ public:
     bool hasDirection(void) {return direction==NULL ? false:true;}
     
     // Overloaded operators for working with Vector3d.
+    Vector3d& operator=(Vector3d &rhs);
     boost::shared_ptr<Vector3d> operator-(Vector3d &rhs);
     boost::shared_ptr<Vector3d> operator+(Vector3d &rhs);
     boost::shared_ptr<Vector3d> operator*(double num);

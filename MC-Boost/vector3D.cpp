@@ -48,6 +48,29 @@ Vector3d::~Vector3d()
 }
 
 
+Vector3d& Vector3d::operator=(Vector3d &rhs)
+{
+    Vector3d result;
+    
+    result.location.x = rhs.location.x;
+    result.location.y = rhs.location.y;
+    result.location.z = rhs.location.z;
+    
+    // Test if the 'rhs' vector has direction.  If so update accordingly.
+    if (rhs.hasDirection())
+    {
+        // Initialize the direction portion of the vector.
+        result.withDirection();
+        
+        // Assign directions.
+        result.setDirX(rhs.getDirX());
+        result.setDirY(rhs.getDirY());
+        result.setDirZ(rhs.getDirZ());
+    }
+    
+    return result;
+}
+
 
 // Here we overload the - operator so we can subtract vectors 
 boost::shared_ptr<Vector3d> Vector3d::operator-(Vector3d &rhs)

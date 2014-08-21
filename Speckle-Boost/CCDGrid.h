@@ -51,6 +51,9 @@ public:
     /// Return the number of columns written to the exit data file.
     size_t  Get_num_photon_attributes()     const;
     
+    /// Set whether or not data is written out to disk in complex form.
+    void Write_complex_data_to_file(bool flag) { write_complex_data = flag;};
+    
     // Debugging.
     void printGrid(void);
     
@@ -81,6 +84,10 @@ private:
     /// Center location of the CCD.
     double m_center_x;
     double m_center_y;
+    
+    
+    /// Boolean to decide if data should be written out to disk in complex form.
+    bool write_complex_data;
     
     
     /// String representing which OPL from the exit data file should be used

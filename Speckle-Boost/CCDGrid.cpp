@@ -38,6 +38,9 @@ CCDGrid::CCDGrid(int x_pixels,
     
     m_OPL_mechanism = mechanism;
     
+    /// Default to false
+    write_complex_data = false;
+    
 	exit_data = new ExitData();
 	setGrid(x_pixels, y_pixels, pixel_size);
 }
@@ -259,7 +262,7 @@ void CCDGrid::makeSpeckle(const std::string &input_filename,
                 //   it to changes in the number of photons simulated.  That is, simulating 10K photons and 50K photons
                 //   should result in roughly a 5x increase in the mean intensity.
                 //grid[x][y] = grid[x][y] + 1.0/((distance_to_pixel) * (1)) * exp(-1.0 * im * (L*PI*2/LAMBDA));
-                grid[x][y] = grid[x][y] + (1.0/(distance_to_pixel*distance_to_pixel)) * sqrt(weight) * exp(-1.0 * im * (L*PI*2/LAMBDA));
+                grid[x][y] = grid[x][y] + (1.0/(distance_to_pixel*distance_to_pixel)) * sqrt(weight) * exp(1.0 * im * (L*PI*2/LAMBDA));
                 
             }
         }
@@ -294,14 +297,20 @@ void CCDGrid::writeGridToFile(const std::string &output_filename)
     // Set the precision and width of the data written to file.
     //speckle_data_stream.width(10);
     //speckle_data_stream.setf(std::ios::showpoint | std::ios::fixed);
-    speckle_data_stream.precision(6);
+    speckle_data_stream.precision(9);
     
     for (size_t x = 0; x < grid.size(); x++)
     {
         for (size_t y = 0; y < grid[0].size(); y++)
         {
-            //double temp = abs(pow(grid[x][y],2));
-        	speckle_data_stream << abs(pow(grid[x][y],2)) << "\t";
+            if (write_complex_data)
+            {
+                speckle_data_stream << real(grid[x][y]) << "+" << imag(grid[x][y]) << "*1i" << "\t";
+            }
+            else
+            {
+                speckle_data_stream << abs(pow(grid[x][y],2)) << "\t";
+            }
 
         }
         speckle_data_stream << "\n";

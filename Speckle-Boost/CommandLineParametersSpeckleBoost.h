@@ -131,6 +131,9 @@ public:
     /// Is --AO_sim set
     bool IsRun_AO_sim()                 const {return Run_AO_sim;};
     
+    /// Is --complex_data set
+    bool IsWrite_complex_data()         const {return write_complex_data;};
+    
 
     /// Print usage and exit
     void PrintUsageAndExit();   
@@ -158,6 +161,9 @@ private:
   
     /// PrintVersion value
     bool        PrintVersion;
+    
+    /// Boolean to decide if data should be left in complex form when it is written out to disk.
+    bool        write_complex_data;
     
     /// Create the interference pattern based on the contribution from displacements
     bool        compute_displacement_OPL;

@@ -65,6 +65,8 @@ void TCommandLineParametersSpeckleBoost::PrintUsageAndExit()
  printf("                                      (creates directory if it doesn't already exist)\n");
  printf("  -t <num_threads>                 : Number of CPU threads to run\n");
  printf("                                      (default = 1\n");
+ printf("  --complex_data               : Write data to file in complex valued format\n ");
+ printf("\n");
  printf("  --x_pixels <pixels>              : Number of pixels along the x-dimension\n");
  printf("  --y_pixels <pixels>              : Number of pixels along the y-dimension\n");
  printf("  --pixel_size <size>              : Pixel size (meters)\n");
@@ -144,7 +146,7 @@ void TCommandLineParametersSpeckleBoost::ParseCommandLine(int argc, char** argv)
         { "s", required_argument, NULL, 's'},
         { "e", required_argument, NULL, 'e'},
 
-        { "AO_sim",          no_argument, NULL, 0},
+        { "complex_data", no_argument, NULL, 0},
        
         { NULL, no_argument, NULL, 0 }
     };
@@ -229,6 +231,9 @@ void TCommandLineParametersSpeckleBoost::ParseCommandLine(int argc, char** argv)
                 } else
                 if( strcmp( "combined_OPL", longOpts[longIndex].name ) == 0) {
                     compute_combined_OPL = true;
+                } else
+                if( strcmp( "complex_data", longOpts[longIndex].name ) == 0) {
+                    write_complex_data = true;
                 }
                 else {
                     PrintUsageAndExit();

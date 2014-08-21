@@ -199,7 +199,7 @@ int main(int argc, char** argv)
                              center_ccd_x_coord,
                              center_ccd_y_coord,
                              mechanism);
-        
+        ccd[i]->Write_complex_data_to_file(CommandLineParams.IsWrite_complex_data());
         ccd[i]->Print_CCD_attributes();
 	}
 

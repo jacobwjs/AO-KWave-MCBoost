@@ -6,7 +6,7 @@ clear all;
 
 % Decide to run the simulation in matlab or save it to an h5 file for running 
 % in the AO_sim for debugging.
-SAVE_TO_DISK = false;
+SAVE_TO_DISK = true;
 BOX_TAGGING_VOL = false;
 SPHERE_TAGGING_VOL = true; 
 PLANAR_WAVE = true;
@@ -24,9 +24,9 @@ PML_Y_SIZE = 10;            % [grid points]
 PML_Z_SIZE = 10;            % [grid points]
 
 % set total number of grid points not including the PML
-x_axis_num_points = 128*2;
-y_axis_num_points = 128;
-z_axis_num_points = 128;
+x_axis_num_points = 256; %(128*2);
+y_axis_num_points = 128; %(128);
+z_axis_num_points = 128; %(128);
 Nx = x_axis_num_points; 
 %Nx = (x_axis_num_points - 2*PML_X_SIZE);    % [grid points]
 Ny = y_axis_num_points; 
@@ -38,7 +38,7 @@ Nz = z_axis_num_points;
 x = 40e-3;                  % [m]
 
 % calculate the spacing between the grid points
-dx = x/Nx;                  % [m]
+dx = (x/Nx);                  % [m]
 dy = dx;                    % [m]
 dz = dx;                    % [m]
 
@@ -96,7 +96,7 @@ pi_phase_shift = lambda/2 * (1/c0);
 display('To meet criteria of the medium, max time step allowed is: ');
 cfl*dx/c0
 display('Setting time step to: ');
-dt = (pi_phase_shift/16)
+dt = (pi_phase_shift/32)
 pause(2);
 % Calculate the number of steps we must take to allow the ultrasound to
 % reach the distance created by t_end/dt.
@@ -116,7 +116,7 @@ source_strength = 0;
 % =========================================================================
 
 if (SPHERE_TAGGING_VOL)
-    sensor_Nx = Nx/4;
+    sensor_Nx = Nx/2;
     sensor_Ny = Ny/2;
     sensor_Nz = Nz/2;
     sensor_radius = round(0.0006/dx);   % 1.25 mm diameter
@@ -124,6 +124,10 @@ if (SPHERE_TAGGING_VOL)
     %sensor_radius = round(0.0018/dx);   % 3.75 mm diameter
     display('Sphere diameter: ');
     2*sensor_radius*dx
+    display('Sphere location: ');
+    sensor_Nx
+    sensor_Ny
+    sensor_Nz
     pause(2);
     source_strength = 1.0e6;
     num_cycles = 100;
@@ -227,10 +231,10 @@ input_signal = (source_strength./(c0*rho0)).*input_signal;
 % =========================================================================
 
 % physical properties of the transducer
-transducer.number_elements = 64;    % total number of transducer elements
+transducer.number_elements = 64/2;    % total number of transducer elements
 transducer.element_width = 1;       % width of each element [grid points]
 if (PLANAR_WAVE)
-    transducer.element_length = 64;     % length of each element [grid points]
+    transducer.element_length = 64/2;     % length of each element [grid points]
 else
     transducer.element_length = 12;
 end

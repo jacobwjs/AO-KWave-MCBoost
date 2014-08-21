@@ -206,7 +206,7 @@ info.total_bin_width = total_bin_width;
 
 
 
-% Plot the histogram of the absolute phase shift in degrees.
+% % Plot the histogram of the absolute phase shift in degrees.
 if (~isempty(info.modulation_indices_Cmap))
     max_phase_shift = 0;
     if (max(data.combined_phase_shifts) >...
@@ -253,104 +253,104 @@ if (~isempty(info.modulation_indices_Cmap))
     ylabel('Number of photons');
     set(gca,'FontSize',14,'fontWeight','normal')
     set(findall(gcf,'type','text'),'FontSize',14,'fontWeight','normal')
-
-else
-
-    if (~isempty(info.modulation_indices_Nmap))
-        max_phase_shift = 0;
-        if (max(data.refractive_phase_shifts) >...
-                abs(min(data.refractive_phase_shifts)))
-            max_phase_shift = max(data.refractive_phase_shifts);
-        else
-            max_phase_shift = abs(min(data.refractive_phase_shifts));
-        end
-        
-        figure;
-        subplot(2,2,1);
-        hist(abs(data.refractive_phase_shifts),...
-            2:2:max_phase_shift);
-        title('Magnitude of phase shifts (\Delta{n})');
-        xlabel('\Phi_j (degrees)');
-        ylabel('Number of photons');
-        set(gca,'FontSize',14,'fontWeight','normal')
-        set(findall(gcf,'type','text'),'FontSize',14,'fontWeight','normal')
-        
-        subplot(2,2,2);
-        hist(abs(data.refractive_phase_shifts(info.modulation_indices_Nmap)),...
-            2:2:max_phase_shift);
-        title('Magnitude of phase shifts (\Delta{n})');
-        xlabel('\Phi_j (degrees)');
-        ylabel('Number of photons');
-        set(gca,'FontSize',14,'fontWeight','normal')
-        set(findall(gcf,'type','text'),'FontSize',14,'fontWeight','normal')
-        
-        subplot(2,2,3)
-        hist(data.refractive_phase_shifts,...
-            -max_phase_shift:2:max_phase_shift);
-        title('Absolute phase shifts (\Delta{n})');
-        xlabel('\Phi_j (degrees)');
-        ylabel('Number of photons');
-        set(gca,'FontSize',14,'fontWeight','normal')
-        set(findall(gcf,'type','text'),'FontSize',14,'fontWeight','normal')
-        
-        subplot(2,2,4)
-        hist(data.refractive_phase_shifts(info.modulation_indices_Nmap),...
-            -max_phase_shift:2:max_phase_shift);
-        title('Absolute phase shifts (\Delta{n})');
-        xlabel('\Phi_j (degrees)');
-        ylabel('Number of photons');
-        set(gca,'FontSize',14,'fontWeight','normal')
-        set(findall(gcf,'type','text'),'FontSize',14,'fontWeight','normal')
-    end
-    
-    
-    if (~isempty(info.modulation_indices_Dmap))
-        max_phase_shift = 0;
-        if (max(data.displacement_phase_shifts) >...
-                abs(min(data.displacement_phase_shifts)))
-            max_phase_shift = max(data.displacement_phase_shifts);
-        else
-            max_phase_shift = abs(min(data.displacement_phase_shifts));
-        end
-        
-        figure;
-        subplot(2,2,1);
-        hist(abs(data.displacement_phase_shifts),...
-            2:2:max_phase_shift);
-        title('Magnitude of phase shifts (\Delta{d})');
-        xlabel('\Phi_j (degrees)');
-        ylabel('Number of photons');
-        set(gca,'FontSize',14,'fontWeight','normal')
-        set(findall(gcf,'type','text'),'FontSize',14,'fontWeight','normal')
-        
-        subplot(2,2,2);
-        hist(abs(data.displacement_phase_shifts(info.modulation_indices_Dmap)),...
-            2:2:max_phase_shift);
-        title('Absolute phase shifts (\Delta{d})');
-        xlabel('\Phi_j (degrees)');
-        ylabel('Number of photons');
-        set(gca,'FontSize',14,'fontWeight','normal')
-        set(findall(gcf,'type','text'),'FontSize',14,'fontWeight','normal')
-        
-        subplot(2,2,3);
-        hist(data.displacement_phase_shifts,...
-            -max_phase_shift:2:max_phase_shift);
-        title('Absolute phase shifts (\Delta{d})');
-        xlabel('\Phi_j (degrees)');
-        ylabel('Number of photons');
-        set(gca,'FontSize',14,'fontWeight','normal')
-        set(findall(gcf,'type','text'),'FontSize',14,'fontWeight','normal')
-        
-        subplot(2,2,4);
-        hist(data.displacement_phase_shifts(info.modulation_indices_Dmap),...
-            -max_phase_shift:2:max_phase_shift);
-        title('Absolute phase shifts (\Delta{d})');
-        xlabel('\Phi_j (degrees)');
-        ylabel('Number of photons');
-        set(gca,'FontSize',14,'fontWeight','normal')
-        set(findall(gcf,'type','text'),'FontSize',14,'fontWeight','normal')
-    end
 end
+% else
+
+if (~isempty(info.modulation_indices_Nmap))
+    max_phase_shift = 0;
+    if (max(data.refractive_phase_shifts) >...
+            abs(min(data.refractive_phase_shifts)))
+        max_phase_shift = max(data.refractive_phase_shifts);
+    else
+        max_phase_shift = abs(min(data.refractive_phase_shifts));
+    end
+    
+    figure;
+    subplot(2,2,1);
+    hist(abs(data.refractive_phase_shifts),...
+        2:2:max_phase_shift);
+    title('Magnitude of phase shifts (\Delta{n})');
+    xlabel('\Phi_j (degrees)');
+    ylabel('Number of photons');
+    set(gca,'FontSize',14,'fontWeight','normal')
+    set(findall(gcf,'type','text'),'FontSize',14,'fontWeight','normal')
+    
+    subplot(2,2,2);
+    hist(abs(data.refractive_phase_shifts(info.modulation_indices_Nmap)),...
+        2:2:max_phase_shift);
+    title('Magnitude of phase shifts (\Delta{n})');
+    xlabel('\Phi_j (degrees)');
+    ylabel('Number of photons');
+    set(gca,'FontSize',14,'fontWeight','normal')
+    set(findall(gcf,'type','text'),'FontSize',14,'fontWeight','normal')
+    
+    subplot(2,2,3)
+    hist(data.refractive_phase_shifts,...
+        -max_phase_shift:2:max_phase_shift);
+    title('Absolute phase shifts (\Delta{n})');
+    xlabel('\Phi_j (degrees)');
+    ylabel('Number of photons');
+    set(gca,'FontSize',14,'fontWeight','normal')
+    set(findall(gcf,'type','text'),'FontSize',14,'fontWeight','normal')
+    
+    subplot(2,2,4)
+    hist(data.refractive_phase_shifts(info.modulation_indices_Nmap),...
+        -max_phase_shift:2:max_phase_shift);
+    title('Absolute phase shifts (\Delta{n})');
+    xlabel('\Phi_j (degrees)');
+    ylabel('Number of photons');
+    set(gca,'FontSize',14,'fontWeight','normal')
+    set(findall(gcf,'type','text'),'FontSize',14,'fontWeight','normal')
+end
+
+
+if (~isempty(info.modulation_indices_Dmap))
+    max_phase_shift = 0;
+    if (max(data.displacement_phase_shifts) >...
+            abs(min(data.displacement_phase_shifts)))
+        max_phase_shift = round(max(data.displacement_phase_shifts));
+    else
+        max_phase_shift = round(abs(min(data.displacement_phase_shifts)));
+    end
+    
+    figure;
+    subplot(2,2,1);
+    hist(abs(data.displacement_phase_shifts),...
+        2:2:max_phase_shift);
+    title('Magnitude of phase shifts (\Delta{d})');
+    xlabel('\Phi_j (degrees)');
+    ylabel('Number of photons');
+    set(gca,'FontSize',14,'fontWeight','normal')
+    set(findall(gcf,'type','text'),'FontSize',14,'fontWeight','normal')
+    
+    subplot(2,2,2);
+    hist(abs(data.displacement_phase_shifts(info.modulation_indices_Dmap)),...
+        2:2:max_phase_shift);
+    title('Absolute phase shifts (\Delta{d})');
+    xlabel('\Phi_j (degrees)');
+    ylabel('Number of photons');
+    set(gca,'FontSize',14,'fontWeight','normal')
+    set(findall(gcf,'type','text'),'FontSize',14,'fontWeight','normal')
+    
+    subplot(2,2,3);
+    hist(data.displacement_phase_shifts,...
+        -max_phase_shift:2:max_phase_shift);
+    title('Magnitude of phase shifts (\Delta{d})');
+    xlabel('\Phi_j (degrees)');
+    ylabel('Number of photons');
+    set(gca,'FontSize',14,'fontWeight','normal')
+    set(findall(gcf,'type','text'),'FontSize',14,'fontWeight','normal')
+    
+    subplot(2,2,4);
+    hist(data.displacement_phase_shifts(info.modulation_indices_Dmap),...
+        -max_phase_shift:2:max_phase_shift);
+    title('Absolute phase shifts (\Delta{d})');
+    xlabel('\Phi_j (degrees)');
+    ylabel('Number of photons');
+    set(gca,'FontSize',14,'fontWeight','normal')
+    set(findall(gcf,'type','text'),'FontSize',14,'fontWeight','normal')
+end
+
 
 % figure; 
 % plot(n_data.refractive_OPLs(:,1)./3e8);

@@ -1,8 +1,13 @@
 % Processes complex to form speckle pattern from a virtual CCD detection.
+function [CCD] = Process_complex_CCD(x_pixels, y_pixels)
 
-fid = fopen('SPECKLE_trans-100photons 3.dat');
+[filename,path] = uigetfile('*.dat','Open optical path length *.dat file');
+if filename==0 ,return ,end
+filename = strcat(path,filename);
 
-CCD = zeros(512, 512);
+fid = fopen(filename);
+
+CCD = zeros(x_pixels, y_pixels);
 i = 1;
 tline = fgetl(fid);
 while ischar(tline)

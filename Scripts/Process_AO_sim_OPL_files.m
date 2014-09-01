@@ -32,6 +32,16 @@ data.displacement_OPLs = [];
 data.refractive_OPLs   = [];
 data.combined_OPLs     = [];
 
+% Holds the tagged and untagged electric field for each mechanism
+data.E_tagged_Dmap = [];
+data.E_tagged_Nmap = [];
+data.E_tagged_Cmap = [];
+
+data.E_total_Dmap = [];
+data.E_total_Nmap = [];
+data.E_total_Cmap = [];
+
+
 
 
 temp = [];
@@ -128,7 +138,7 @@ elseif (strcmp(MEAS_TYPE, 'EXIT_data'))
     % column(5)  => x-axis exit location
     % column(6)  => y-axis exit location
     % column(7)  => z-axis exit location
-    % column(8)  => seeds.s1
+    % column(8)  => seeds.s1a
     % column(9)  => seeds.s2
     % column(10) => seeds.s3
     % column(11) => seeds.s4
@@ -208,6 +218,14 @@ info.total_bin_width = total_bin_width;
 
 % % Plot the histogram of the absolute phase shift in degrees.
 if (~isempty(info.modulation_indices_Cmap))
+    
+    data.E_tagged_Cmap = sqrt(t1(modulation_indices,1)).* ...
+                         exp(1i*k*(t1(modulation_indices,4) - t0(modulation_indices,4)));
+    data.E_total_Cmap  = sqrt(t0(:,1)).* ...
+                         exp(1i*k*t0(:,4));
+    data.tagged_fraction_Cmap = mean(abs(data.E_tagged_Cmap).^2)/...
+                                mean(abs(data.E_total_Cmap).^2);
+    
     max_phase_shift = 0;
     if (max(data.combined_phase_shifts) >...
         abs(min(data.combined_phase_shifts)))
@@ -257,6 +275,16 @@ end
 % else
 
 if (~isempty(info.modulation_indices_Nmap))
+    
+    
+    data.E_tagged_Nmap = sqrt(t1(modulation_indices,1)).* ...
+                         exp(1i*k*(t1(modulation_indices,3) - t0(modulation_indices,3)));
+    data.E_total_Nmap  = sqrt(t0(:,1)).* ...
+                         exp(1i*k*t0(:,3));
+    data.tagged_fraction_Nmap = mean(abs(data.E_tagged_Cmap).^2)/...
+                                mean(abs(data.E_total_Cmap).^2);
+    
+    
     max_phase_shift = 0;
     if (max(data.refractive_phase_shifts) >...
             abs(min(data.refractive_phase_shifts)))
@@ -305,6 +333,16 @@ end
 
 
 if (~isempty(info.modulation_indices_Dmap))
+    
+    
+    data.E_tagged_Dmap = sqrt(t1(modulation_indices,1)).* ...
+                         exp(1i*k*(t1(modulation_indices,2) - t0(modulation_indices,2)));
+    data.E_total_Dmap  = sqrt(t0(:,1)).* ...
+                         exp(1i*k*t0(:,2));
+    data.tagged_fraction_Dmap = mean(abs(data.E_tagged_Cmap).^2)/...
+                                mean(abs(data.E_total_Cmap).^2);
+    
+    
     max_phase_shift = 0;
     if (max(data.displacement_phase_shifts) >...
             abs(min(data.displacement_phase_shifts)))
@@ -359,6 +397,14 @@ end
 % ylabel('Time [sec]');
 % set(gca,'FontSize',16,'fontWeight','normal')
 % set(findall(gcf,'type','text'),'FontSize',16,'fontWeight','normal')
+
+
+% % Example of calculating tagged fraction without creating speckle
+% % patterns using 'Speckle-boost'
+% E_t0 = (sqrt(t0(:,1)).*exp(1i*t0(:,4)*2*pi/532e-9));
+% E_t1 = (sqrt(t1(:,1)).*exp(1i*t1(:,4)*2*pi/532e-9));
+% E_tagged = E_t1 - E_t0;
+% mean(abs(E_tagged).^2)/mean(abs(E_t1).^2)
 
 
 % % Example of writing seeds out to disk after processing.

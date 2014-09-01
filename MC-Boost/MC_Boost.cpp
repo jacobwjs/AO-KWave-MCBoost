@@ -87,7 +87,13 @@ MC_Boost::Generate_MC_RNG_seeds_single_input_aperture(Medium * medium, Aperture 
     
     
     // Initialize the C++ RNG.
-    srand(13);
+    /// Different initialization seeds for finding std dev. in simulations.
+    //srand(13);
+    //srand(14);
+    //srand(15);
+    //srand(16);
+    //srand(17);
+    srand(18);
     
     
     /// Generate seeds from only 1 thread, ensuring the seeds used in the threaded propagation are not

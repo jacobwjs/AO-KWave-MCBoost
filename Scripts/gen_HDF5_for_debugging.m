@@ -24,9 +24,9 @@ PML_Y_SIZE = 10;            % [grid points]
 PML_Z_SIZE = 10;            % [grid points]
 
 % set total number of grid points not including the PML
-x_axis_num_points = 256; %(128*2);
-y_axis_num_points = 128; %(128);
-z_axis_num_points = 128; %(128);
+x_axis_num_points = 256*2; %(128*2);
+y_axis_num_points = 128*2; %(128);
+z_axis_num_points = 128*2; %(128);
 Nx = x_axis_num_points; 
 %Nx = (x_axis_num_points - 2*PML_X_SIZE);    % [grid points]
 Ny = y_axis_num_points; 
@@ -88,16 +88,16 @@ t_end = (Nx*dx)*1.1/c0;                % [s]
 % Calculate time step.  Based on the CFL, max SOS and the minimum voxel
 % size.
 %dt = cfl*dx/medium.sound_speed;
-US_freq = 1.0e6;
+US_freq = 5.0e6;
 lambda = c0 / US_freq;
 % Time it takes to propagate the US 180degrees. For the AO sim to be
 % correct 'dt' must evenly divide this number.
 pi_phase_shift = lambda/2 * (1/c0);
-display('To meet criteria of the medium, max time step allowed is: ');
-cfl*dx/c0
-display('Setting time step to: ');
-dt = (pi_phase_shift/32)
-pause(2);
+fprintf('To meet criteria of the medium, max time step allowed is: %.12f [secs]\n', cfl*dx/c0);
+%dt = (pi_phase_shift/32)
+dt = cfl*dx/c0;
+fprintf('Setting time step to: %.12f [secs]\n', dt);
+pause(1);
 % Calculate the number of steps we must take to allow the ultrasound to
 % reach the distance created by t_end/dt.
 Nt = floor(t_end/dt);
@@ -114,20 +114,17 @@ source_strength = 0;
 % =========================================================================
 % DEFINE THE INPUT SIGNAL
 % =========================================================================
-
 if (SPHERE_TAGGING_VOL)
     sensor_Nx = Nx/2;
     sensor_Ny = Ny/2;
     sensor_Nz = Nz/2;
-    sensor_radius = round(0.0006/dx);   % 1.25 mm diameter
+    %sensor_radius = round(0.0003/dx);   % 0.625 mm diameter
+    %sensor_radius = round(0.0006/dx);   % 1.25 mm diameter
     %sensor_radius = round(0.0012/dx);   % 2.50 mm diameter
     %sensor_radius = round(0.0018/dx);   % 3.75 mm diameter
-    display('Sphere diameter: ');
-    2*sensor_radius*dx
-    display('Sphere location: ');
-    sensor_Nx
-    sensor_Ny
-    sensor_Nz
+    sensor_radius = round(0.0025/dx);   % 5.00 mm diameter
+    fprintf('Sphere diameter: %f [meters]\n', 2*sensor_radius*dx);
+    fprintf('Sphere location: Nx=%d, Ny=%d, Nz=%d\n', sensor_Nx, sensor_Ny, sensor_Nz);
     pause(2);
     source_strength = 1.0e6;
     num_cycles = 100;
@@ -191,21 +188,21 @@ elseif (BOX_TAGGING_VOL)
     
     % % 5 cycles:
     % % ----------------------------------------------------
-    if (PLANAR_WAVE)
-        x_size = round(lambda/dx*5); % Reserve '5 cycles' of voxels.
-        y_size = 6;
-        z_size = 16;
-        
-        sensor_Nx = round(Nx/2-(x_size/2):Nx/2+(x_size/2));
-        sensor_Ny = round(Ny/2-(y_size/2):Ny/2+(y_size/2));
-        sensor_Nz = round(Nz/2-(z_size/2):Nz/2+(z_size/2));
-        
-        source_strength = 1.0e6;
-        num_cycles = 100;
-    else
-        source_strength = 1.0052*1e6;      % [Pa] 5cycles
-        num_cycles = 5;
-    end
+%     if (PLANAR_WAVE)
+%         x_size = round(lambda/dx*5); % Reserve '5 cycles' of voxels.
+%         y_size = 6;
+%         z_size = 16;
+%         
+%         sensor_Nx = round(Nx/2-(x_size/2):Nx/2+(x_size/2));
+%         sensor_Ny = round(Ny/2-(y_size/2):Ny/2+(y_size/2));
+%         sensor_Nz = round(Nz/2-(z_size/2):Nz/2+(z_size/2));
+%         
+%         source_strength = 1.0e6;
+%         num_cycles = 100;
+%     else
+%         source_strength = 1.0052*1e6;      % [Pa] 5cycles
+%         num_cycles = 5;
+%     end
 else
     display('Nothing chosen to simulate');
     return;
@@ -231,10 +228,10 @@ input_signal = (source_strength./(c0*rho0)).*input_signal;
 % =========================================================================
 
 % physical properties of the transducer
-transducer.number_elements = 64/2;    % total number of transducer elements
+transducer.number_elements = Ny/2;    % total number of transducer elements
 transducer.element_width = 1;       % width of each element [grid points]
 if (PLANAR_WAVE)
-    transducer.element_length = 64/2;     % length of each element [grid points]
+    transducer.element_length = Nz/2;     % length of each element [grid points]
 else
     transducer.element_length = 12;
 end

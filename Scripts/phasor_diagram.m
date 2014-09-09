@@ -7,7 +7,7 @@
 % tX = dlmread('trans_tX_exit_data.dat');
 % phasor_tX = sqrt(tX(:,1).*exp(1i*k*tX(:,4));  % combined OPL is position 4.
 
-POLAR_PLOT   = true;
+
 DISPLACEMENT = true;
 REFRACTIVE   = true;
 COMBINED     = true;
@@ -107,18 +107,29 @@ end
 
 if (DISPLACEMENT)
     figure;
-    if (POLAR_PLOT)
-        polar(0,1),
-        hold on;
-    else
-        hold on;
-        line([0 0], [-1 1], 'LineStyle', '--', 'Color', 'k');
-        line([-1 1], [0 0], 'LineStyle', '--', 'Color', 'k');
-    end
+    
+    hs_polar = subplot(1,2,2);
+    polar(0,1),
+    hold on;
+    
+    hs_complex = subplot(1,2,1);
+    hold on;
+    line([0 0], [-1 1], 'LineStyle', '--', 'Color', 'k');
+    line([-1 1], [0 0], 'LineStyle', '--', 'Color', 'k');
     axis([-1, 1, -1, 1])
+    
+    subplot(hs_polar);
+    arrow3([0 0], Pd(1,:), 'r');
+    
+    subplot(hs_complex);
     arrow3([0 0], Pd(1,:), 'r');
     for i = 2:num_files
         pause(0.25);
+        
+        subplot(hs_polar);
+        arrow3([0 0], Pd(i,:), 'colors');
+        
+        subplot(hs_complex);
         arrow3([0 0], Pd(i,:), 'colors');
     end
     hold off;
@@ -126,18 +137,29 @@ end
 
 if (REFRACTIVE)
     figure;
-    if (POLAR_PLOT)
-        polar(0,1),
-        hold on;
-    else
-        hold on;
-        line([0 0], [-1 1], 'LineStyle', '--', 'Color', 'k');
-        line([-1 1], [0 0], 'LineStyle', '--', 'Color', 'k');
-    end
+    
+    hs_polar = subplot(1,2,2);
+    polar(0,1),
+    hold on;
+    
+    hs_complex = subplot(1,2,1);
+    hold on;
+    line([0 0], [-1 1], 'LineStyle', '--', 'Color', 'k');
+    line([-1 1], [0 0], 'LineStyle', '--', 'Color', 'k');
     axis([-1, 1, -1, 1])
+    
+    subplot(hs_polar);
+    arrow3([0 0], Pn(1,:), 'r');
+    
+    subplot(hs_complex);
     arrow3([0 0], Pn(1,:), 'r');
     for i = 2:num_files
         pause(0.25);
+        
+        subplot(hs_polar);
+        arrow3([0 0], Pn(i,:), 'colors');
+        
+        subplot(hs_complex);
         arrow3([0 0], Pn(i,:), 'colors');
     end
     hold off;
@@ -145,18 +167,29 @@ end
 
 if (COMBINED)
     figure;
-    if (POLAR_PLOT)
-        polar(0,1),
-        hold on;
-    else
-        hold on;
-        line([0 0], [-1 1], 'LineStyle', '--', 'Color', 'k');
-        line([-1 1], [0 0], 'LineStyle', '--', 'Color', 'k');
-    end
+    
+    hs_polar = subplot(1,2,2);
+    polar(0,1),
+    hold on;
+    
+    hs_complex = subplot(1,2,1);
+    hold on;
+    line([0 0], [-1 1], 'LineStyle', '--', 'Color', 'k');
+    line([-1 1], [0 0], 'LineStyle', '--', 'Color', 'k');
     axis([-1, 1, -1, 1])
+    
+    subplot(hs_polar);
+    arrow3([0 0], Pc(1,:), 'r');
+    
+    subplot(hs_complex);
     arrow3([0 0], Pc(1,:), 'r');
     for i = 2:num_files
         pause(0.25);
+        
+        subplot(hs_polar);
+        arrow3([0 0], Pc(i,:), 'colors');
+        
+        subplot(hs_complex);
         arrow3([0 0], Pc(i,:), 'colors');
     end
     hold off;
@@ -165,8 +198,8 @@ end
 
 
 
-p0 = mod(angle(exit_data(1).phasor(tagged_index(path)))*180/pi+360, 360);
-p1 = mod(angle(exit_data(8).phasor(tagged_index(path)))*180/pi+360, 360);
+p0 = mod(angle(exit_data(1).phasor_C(tagged_index(path)))*180/pi+360, 360);
+p1 = mod(angle(exit_data(8).phasor_C(tagged_index(path)))*180/pi+360, 360);
 
 min(abs(p1-p0))
 max(abs(p1-p0))

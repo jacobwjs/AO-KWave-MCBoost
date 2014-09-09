@@ -598,7 +598,7 @@ using namespace std;
  * ------------------------------------------------------- Various functions for Monte-Carlo -----------------
  */
 // Number of photons to simulate.
-const int MAX_PHOTONS = 10e3;
+const int MAX_PHOTONS = 50e6;
 
 // Testing routines.
 void testVectorMath(void);
@@ -783,15 +783,15 @@ int main(int argc, char** argv)
 
         /// Reflection mode
         /// ---------------
-        Aperture_Properties refl_detection_aperture;
-        refl_detection_aperture.xy_plane = true;
-        refl_detection_aperture.radius = 0.0030;
-    	//detector_props.x_coord = 0.0225;    //  Upon inspection, the US focus is located here.
-        refl_detection_aperture.center_coords.location.x = AO_simulation.Get_MC_Xaxis_depth()/2;  // Perfectly centered in the medium.
-        refl_detection_aperture.center_coords.location.y = AO_simulation.Get_MC_Yaxis_depth()/2;
-        refl_detection_aperture.center_coords.location.z = 0.0f;
-        refl_detection_aperture.name = "refl";
-        AO_simulation.Add_circular_detector_MC_medium(refl_detection_aperture);
+//        Aperture_Properties refl_detection_aperture;
+//        refl_detection_aperture.xy_plane = true;
+//        refl_detection_aperture.radius = 0.0030;
+//    	//detector_props.x_coord = 0.0225;    //  Upon inspection, the US focus is located here.
+//        refl_detection_aperture.center_coords.location.x = AO_simulation.Get_MC_Xaxis_depth()/2;  // Perfectly centered in the medium.
+//        refl_detection_aperture.center_coords.location.y = AO_simulation.Get_MC_Yaxis_depth()/2;
+//        refl_detection_aperture.center_coords.location.z = 0.0f;
+//        refl_detection_aperture.name = "refl";
+//        AO_simulation.Add_circular_detector_MC_medium(refl_detection_aperture);
 
 
 

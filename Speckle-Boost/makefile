@@ -29,10 +29,10 @@ endif
 # Makefile is giving an error.  This is a temporary fix.
 #g++ *.cpp -lboost_thread -lboost_system -lboost_filesystem
 # CFLAGS for running
-#CFLAGS = -Wall -mtune=native  -m64 -msse4.2 -O3
+CFLAGS = -Wall -mtune=native  -m64 -msse4.2 -O3
 
 # CFLAGS for debugging
-CFLAGS = -Wall -O0 -g
+#CFLAGS = -Wall -O0 -g
 
 RM = rm -rf
 LIBS =-lboost_thread -lboost_filesystem -lboost_system

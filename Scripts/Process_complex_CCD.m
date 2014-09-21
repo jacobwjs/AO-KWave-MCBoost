@@ -8,8 +8,12 @@
 %                over an US period) we simply pass in the extension of the
 %                file (e.g. '.dat') and load all files in the current
 %                directory based on the extension.
-function [CCD_complex_image, tagged_fraction] = Process_complex_CCD(x_pixels, y_pixels, extension)
+function [CCD_complex_image, tagged_fraction, SPD_tagged_fraction] = Process_complex_CCD(x_pixels, y_pixels, extension)
 
+% Speckle Pattern Difference method of tagged fraction.
+SPD_tagged_fraction = [];
+
+% Our theory.
 tagged_fraction = [];
 
 if (isempty(extension))
@@ -65,18 +69,35 @@ else
         drawnow
     end
     
-    
-    % Computation of the tagged fraction. This assumes data was collected
-    % over an US period, and the first image is the unmodulated (i.e. no
-    % pertubation to the medium) case.
+%     
+%     % Computation of the tagged fraction. This assumes data was collected
+%     % over an US period, and the first image is the unmodulated (i.e. no
+%     % pertubation to the medium) case.
+    frame1 = squeeze(CCD_complex_image(2,:,:));
+    I1 = abs(frame1).^2;
     for i=2:num_files
-        frame1 = squeeze(CCD_complex_image(2,:,:));
         frameN = squeeze(CCD_complex_image(i,:,:));
-        tagged_fraction(i) = 2*mean2(abs(frame1 - frameN).^2) / mean2(abs(frame1).^2);
+        I_N = abs(frame1 - frameN).^2;
+        tagged_fraction(i) = 1/4*mean2(I_N)/mean2(I1);
+        
+%         tagged_fraction(i) = 2*mean2(abs(frame1 - frameN).^2) / ...
+%                              (8*mean2(abs(frame1).^2));
     end
-    
     figure; plot(tagged_fraction);
     
+
+    % Computation of the tagged fraction using Steffen's speckle pattern
+    % difference method.
+    frame1 = squeeze(CCD_complex_image(2,:,:));
+    I1 = abs(frame1).^2;
+    for i=2:num_files
+        frameN = squeeze(CCD_complex_image(i,:,:));
+        In = abs(frameN).^2;
+        SPD_tagged_fraction(i) = (mean2((In/mean2(In) - I1/mean2(I1)).^2)) /...
+                                 (8);
+    end
+    figure; plot(SPD_tagged_fraction); 
+        
 end
 
 

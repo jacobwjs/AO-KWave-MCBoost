@@ -120,9 +120,9 @@ if (SPHERE_TAGGING_VOL)
     sensor_Nz = Nz/2;
     %sensor_radius = round(0.0003/dx);   % 0.625 mm diameter
     %sensor_radius = round(0.0006/dx);   % 1.25 mm diameter
-    %sensor_radius = round(0.0012/dx);   % 2.50 mm diameter
-    %sensor_radius = round(0.0018/dx);   % 3.75 mm diameter
-    sensor_radius = round(0.0025/dx);   % 5.00 mm diameter
+    %sensor_radius = round(0.00125/dx);   % 2.50 mm diameter
+    sensor_radius = round(0.00185/dx);   % 3.75 mm diameter
+    %sensor_radius = round(0.0025/dx);   % 5.00 mm diameter
     fprintf('Sphere diameter: %f [meters]\n', 2*sensor_radius*dx);
     fprintf('Sphere location: Nx=%d, Ny=%d, Nz=%d\n', sensor_Nx, sensor_Ny, sensor_Nz);
     pause(2);

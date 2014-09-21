@@ -138,7 +138,7 @@ elseif (strcmp(MEAS_TYPE, 'EXIT_data'))
     % column(5)  => x-axis exit location
     % column(6)  => y-axis exit location
     % column(7)  => z-axis exit location
-    % column(8)  => seeds.s1a
+    % column(8)  => seeds.s1
     % column(9)  => seeds.s2
     % column(10) => seeds.s3
     % column(11) => seeds.s4

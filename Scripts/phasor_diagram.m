@@ -11,7 +11,7 @@
 DISPLACEMENT = true;
 REFRACTIVE   = true;
 COMBINED     = true;
-MOVIE        = true;
+MOVIE        = false;
 
 k = 2*pi/532e-9;
 

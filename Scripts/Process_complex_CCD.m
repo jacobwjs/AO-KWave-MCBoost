@@ -78,7 +78,7 @@ else
     for i=2:num_files
         frameN = squeeze(CCD_complex_image(i,:,:));
         I_N = abs(frame1 - frameN).^2;
-        tagged_fraction(i) = 1/4*mean2(I_N)/mean2(I1);
+        tagged_fraction(i-1) = 1/4*mean2(I_N)/mean2(I1);
         
 %         tagged_fraction(i) = 2*mean2(abs(frame1 - frameN).^2) / ...
 %                              (8*mean2(abs(frame1).^2));
@@ -93,8 +93,8 @@ else
     for i=2:num_files
         frameN = squeeze(CCD_complex_image(i,:,:));
         In = abs(frameN).^2;
-        SPD_tagged_fraction(i) = (mean2((In/mean2(In) - I1/mean2(I1)).^2)) /...
-                                 (8);
+        SPD_tagged_fraction(i-1) = (mean2((In/mean2(In) - I1/mean2(I1)).^2)) /...
+                                   (8);
     end
     figure; plot(SPD_tagged_fraction); 
         

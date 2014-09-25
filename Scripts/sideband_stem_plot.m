@@ -24,7 +24,7 @@ end
 xlabels = [xlabels, {' '}];
 
 
-figure('position', [100, 50, 800, 600])  % create new figure with specified size
+figure('position', [100, 50, 1050, 600])  % create new figure with specified size
 %figure; 
 
 % Coord=get(gca,'Position');
@@ -45,7 +45,7 @@ if (isempty(mod_index))
         writeVideo(writerObj_disp, frame);
     end
     
-    for i=1:20
+    for i=1:60
         
         % Bessel function orders 0-to-'order'
         %         pos_temp = besselj(0:order, modulation_index);
@@ -64,14 +64,14 @@ if (isempty(mod_index))
         axis([0 (order*2 + 2) 0 1]);
         set(gca, 'Xtick', 0:length(xlabels)); % Change x-axis ticks
         set(gca, 'XtickLabel', xlabels);
-        legend(num2str(modulation_index));
+        legend(strcat('m=',num2str(modulation_index)));
         
         if (MOVIE)
             frame = getframe(gcf);
             writeVideo(writerObj_disp, frame);
         end
         
-        pause(0.5);
+        pause(0.25);
         modulation_index = modulation_index + 0.1;
     end
     
@@ -98,6 +98,6 @@ else
     set(gca, 'Xtick', 0:length(xlabels)); % Change x-axis ticks
     set(gca, 'XtickLabel', xlabels);
     
-    legend(num2str(modulation_index));
+    legend(strcat('m=',num2str(modulation_index)));
 end
 

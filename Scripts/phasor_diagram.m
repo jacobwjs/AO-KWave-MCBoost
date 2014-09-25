@@ -87,8 +87,8 @@ min_path_5p00mm = 53394;
 
 % This is a common modulated path (i.e. it is present in small spheres and
 % larger).
-%path = 1292;
-path = max_path_5p00mm;
+path = 1292;
+%path = max_path_5p00mm;
 
 % The first file in the exit-data for the 'AO_sim_loadData' case is the
 % unmodulated paths. We grab those for reference.
@@ -282,7 +282,20 @@ if (COMBINED)
 end
 
 
-
+for i=1:length(exit_data)
+    if (DISPLACEMENT)
+        modulation_index.D(i) = abs(abs(angle(exit_data(1).phasor_D(path))) - ...
+            abs(angle(exit_data(i).phasor_D(path))));
+    end
+    if (REFRACTIVE)
+        modulation_index.N(i) = abs(abs(angle(exit_data(1).phasor_D(path))) - ...
+            abs(angle(exit_data(i).phasor_D(path))));
+    end
+    if (COMBINED)
+        modulation_index.C(i) = abs(abs(angle(exit_data(1).phasor_D(path))) - ...
+            abs(angle(exit_data(i).phasor_D(path))));
+    end
+end
 
 p0 = mod(angle(exit_data(1).phasor_C(path)*180/pi+360), 360);
 p1 = mod(angle(exit_data(8).phasor_C(path)*180/pi+360), 360);

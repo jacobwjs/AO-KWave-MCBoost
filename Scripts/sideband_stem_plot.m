@@ -2,15 +2,21 @@
 % indices using Bessel functions of the 1st kind for integer orders.
 function [stem_data] = sideband_stem_plot(mod_index, order)
 
+
+MOVIE = true;
+
+
 stem_data = [];
 
+
+% Create the labels for the plot
 bands = [-order:order];
 clear xlabels;
 xlabels = [];
 xlabels = {' '};
 for i=1:length(bands)
     if (bands(i) == 0)
-        xlabels = [xlabels, {'W_c'}];
+        xlabels = [xlabels, {'Wc'}];
     else
         xlabels = [xlabels, {strcat(num2str(bands(i)), 'Wm')}];
     end
@@ -18,11 +24,26 @@ end
 xlabels = [xlabels, {' '}];
 
 
+figure('position', [100, 50, 800, 600])  % create new figure with specified size
+%figure; 
 
-figure; 
+% Coord=get(gca,'Position');
+% set(gca,'Position', [0,0,700,700]);
 
 if (isempty(mod_index))
     modulation_index = 0.1;
+    
+     if (MOVIE)
+        writerObj_disp = VideoWriter('sidebands.avi');
+        writerObj_disp.FrameRate = 2;
+        writerObj_disp.Quality   = 95;
+        open(writerObj_disp);
+        %set(gca, 'nextplot', 'replacechildren');
+        set(gcf, 'Renderer', 'zbuffer');
+        
+        frame = getframe(gcf);
+        writeVideo(writerObj_disp, frame);
+    end
     
     for i=1:20
         
@@ -33,6 +54,7 @@ if (isempty(mod_index))
         %stem(stem_data(i,:), 'LineWidth', 2);
         
         stem_data = abs(besselj(-order:order, modulation_index));
+        
         clf;
         hold on;
         stem(stem_data(1:order), 'or', 'LineWidth', 2);
@@ -40,9 +62,21 @@ if (isempty(mod_index))
         stem([order+2:order*2+1], stem_data(order+2:end), 'or', 'LineWidth', 2);
         hold off;
         axis([0 (order*2 + 2) 0 1]);
+        set(gca, 'Xtick', 0:length(xlabels)); % Change x-axis ticks
+        set(gca, 'XtickLabel', xlabels);
+        legend(num2str(modulation_index));
         
-        pause(0.25);
+        if (MOVIE)
+            frame = getframe(gcf);
+            writeVideo(writerObj_disp, frame);
+        end
+        
+        pause(0.5);
         modulation_index = modulation_index + 0.1;
+    end
+    
+    if (MOVIE)
+        close(writerObj_disp);
     end
    
 else
@@ -53,13 +87,17 @@ else
     %stem_data = [neg_temp, pos_temp];   % Positive sidebands, negative sidebands, and the carrier.
     
     stem_data = abs(besselj(-order:order, modulation_index));
+    
     hold on;
     stem(stem_data(1:order), 'or', 'LineWidth', 2);
     stem(order+1, stem_data(order+1), 'ob', 'LineWidth', 2);
     stem([order+2:order*2+1], stem_data(order+2:end), 'or', 'LineWidth', 2);
     hold off;
-    axis([0 (order*2 + 2) 0 1]);
-    %set(gca, 'XtickLabel', xlabels);
     
+    axis([0 (order*2 + 2) 0 1]);
+    set(gca, 'Xtick', 0:length(xlabels)); % Change x-axis ticks
+    set(gca, 'XtickLabel', xlabels);
+    
+    legend(num2str(modulation_index));
 end
 

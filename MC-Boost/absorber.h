@@ -20,6 +20,7 @@ class Logger;
 class Absorber 
 {
 public:
+    Absorber();
     Absorber(const double x, const double y, const double z);
     Absorber(const Vector3d &location);
     Absorber(const boost::shared_ptr<Vector3d> location);

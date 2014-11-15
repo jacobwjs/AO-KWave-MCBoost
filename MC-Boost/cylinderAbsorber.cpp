@@ -12,7 +12,7 @@
 // of the cylinder.
 CylinderAbsorber::CylinderAbsorber(const double radius, const boost::shared_ptr<Vector3d> cap_A,
                                                         const boost::shared_ptr<Vector3d> cap_B)
-:Absorber(center)
+:Absorber()
 {
     // Calculate the length of the cylinder.
     this->length = sqrt(pow(cap_A->location.x - cap_B->location.x, 2) +

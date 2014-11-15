@@ -11,6 +11,12 @@
 
 
 
+
+Absorber::Absorber()
+{
+    InitCommon();
+}
+
 Absorber::Absorber(const double x, const double y, const double z)
 {
     center = boost::shared_ptr<Vector3d> (new Vector3d);

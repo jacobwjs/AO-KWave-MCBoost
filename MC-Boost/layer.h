@@ -119,7 +119,7 @@ private:
 	// The impedance of the layer.
 	double impedance;
     
-    // A vector that holds all the abosrbers in this layer.
+    // A vector that holds all the absorbers in this layer.
     std::vector<Absorber *> p_absorbers;
 	
 };

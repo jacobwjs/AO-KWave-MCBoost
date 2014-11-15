@@ -24,7 +24,8 @@ public:
     virtual bool inAbsorber(const boost::shared_ptr<Vector3d> photonVector);
     virtual bool crossedAbsorber(const boost::shared_ptr<Vector3d> photonVector);
     
-    
+    // Check if photon is within the volume of the absorber.
+    bool inCylinderVolume(const boost::shared_ptr<Vector3d> photonVector);
     void    cartesianToCylindrical(void);
     
 private:
@@ -34,11 +35,11 @@ private:
     
     // Cartesian coordinates of the center location of one end
     // of the cyclinder.
-    Vector3d topCenter;       
+    Vector3d cap_A;
     
     // Cartesian coordinates of center location of the other end
     // of the cyclinder.
-    Vector3d bottomCenter;
+    Vector3d cap_B;
 };
 
 #endif

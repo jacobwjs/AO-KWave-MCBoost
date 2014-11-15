@@ -1,6 +1,5 @@
 
 % Defining An Ultrasound Transducer for Debugging.
-
 clear all;
 
 
@@ -24,9 +23,9 @@ PML_Y_SIZE = 10;            % [grid points]
 PML_Z_SIZE = 10;            % [grid points]
 
 % set total number of grid points not including the PML
-x_axis_num_points = 256*2; %(128*2);
-y_axis_num_points = 128*2; %(128);
-z_axis_num_points = 128*2; %(128);
+x_axis_num_points = 256*4; %(128*2);
+y_axis_num_points = 128*4; %(128);
+z_axis_num_points = 128*4; %(128);
 Nx = x_axis_num_points; 
 %Nx = (x_axis_num_points - 2*PML_X_SIZE);    % [grid points]
 Ny = y_axis_num_points; 
@@ -48,21 +47,28 @@ kgrid = makeGrid(Nx, dx, Ny, dy, Nz, dz);
 % =========================================================================
 % DEFINE THE MEDIUM PARAMETERS
 % =========================================================================
-c0 = 1500;
+
+% Density, attenuation, SOS, etc. of Agar
+% ---------------------------------------
+rho0_agar           = 1024;
+c0_agar             = 1500;
+alpha_atten_agar    = 0.7;
+alpha_power_agar    = 1.5;
+BonA_agar           = 6.0;
+
+% Define the acoustic properties of the medium
+%
+c0 = c0_agar;
 rho0 = 1000;
-% define the properties of the propagation medium
-%medium.sound_speed = 1500;      % [m/s]
-%medium.density = 1000;          % [kg/m^3]
-%medium.alpha_coeff = 0.0;      % [dB/(MHz^y cm)]
-%medium.alpha_power = 0.0;
-%medium.BonA = 0;
-
-
-
+% Non-linear effects
+% -------------------------------------------------------
+% medium.alpha_coeff = alpha_atten_agar; 	
+% medium.alpha_power = alpha_power_agar;
+medium.BonA = BonA_agar;
 % Acoustically homogeneous medium
+% -------------------------------------------------------
 medium.sound_speed = c0;
 medium.density     = rho0;
-
 % Acoustically heterogeneous medium
 % -------------------------------------------------------
 % define a random distribution of ultrasound scatterers for the medium
@@ -76,11 +82,13 @@ medium.density     = rho0;
 % medium.sound_speed = sound_speed_map(:, :, :);  % [m/s]
 % medium.density = density_map(:, :, :);          % [kg/m^3]
 
+
+
 %Courant-Friedrichs-Lewy (CFL) stability level (k-Wave default is 0.3) 
 cfl = 0.3; 
 
 % Simulation runtime
-% Only transmitting, so t_end is only gtbased on the time needed to reach the
+% Only transmitting, so t_end is only based on the time needed to reach the
 % bottom of the medium (plus a little more, thus the 1.1 factor).
 % Subtraction of 100 is just to reduce computation time. We don't need the
 % full medium simulated when testing/debugging.
@@ -119,14 +127,15 @@ if (SPHERE_TAGGING_VOL)
     sensor_Ny = Ny/2;
     sensor_Nz = Nz/2;
     %sensor_radius = round(0.0003/dx);   % 0.625 mm diameter
-    %sensor_radius = round(0.0006/dx);   % 1.25 mm diameter
+    sensor_radius = round(0.0006/dx);   % 1.25 mm diameter
     %sensor_radius = round(0.00125/dx);   % 2.50 mm diameter
-    sensor_radius = round(0.00185/dx);   % 3.75 mm diameter
+    %sensor_radius = round(0.00185/dx);   % 3.75 mm diameter
     %sensor_radius = round(0.0025/dx);   % 5.00 mm diameter
     fprintf('Sphere diameter: %f [meters]\n', 2*sensor_radius*dx);
     fprintf('Sphere location: Nx=%d, Ny=%d, Nz=%d\n', sensor_Nx, sensor_Ny, sensor_Nz);
     pause(2);
     source_strength = 1.0e6;
+%     source_strength = 3.846; gives 3.968MPa w/ non-linear US
     num_cycles = 100;
 elseif (BOX_TAGGING_VOL)
     % define properties of the input signal

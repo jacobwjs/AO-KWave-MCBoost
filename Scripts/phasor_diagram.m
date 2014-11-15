@@ -88,7 +88,7 @@ min_path_5p00mm = 53394;
 % This is a common modulated path (i.e. it is present in small spheres and
 % larger).
 path = 1292;
-%path = max_path_5p00mm;
+%path = max_path_1p25mm;
 
 % The first file in the exit-data for the 'AO_sim_loadData' case is the
 % unmodulated paths. We grab those for reference.
@@ -107,7 +107,7 @@ end
  
 
 
-% Build up the coordinates for the arrows in the phasor diagram.
+% Build up the coordinates for the arrows in the phasor diagram for a single path.
 for i=2:num_files
     if (DISPLACEMENT)
         Pd = [Pd; real(exit_data(i).phasor_D(path)) ...
@@ -123,7 +123,46 @@ for i=2:num_files
     end
 end
 
+% Build up the phasor for the sum of all modulated and unmodulated light
+% paths.
+sum_Pd = [];
+sum_Pn = [];
+sum_Pc = [];
+% Add in the unmodulated case (i.e. no ultrasound in the medium).
+sum_Pd = sum(exit_data(1).phasor_D);
+sum_Pd = sum_Pd / abs(sum_Pd); % normalize the phasor to have unity magnitude.
+sum_Pd = [real(sum_Pd) imag(sum_Pd)];
+    
+sum_Pn = sum(exit_data(1).phasor_N);
+sum_Pn = sum_Pn / abs(sum_Pn); 
+sum_Pn = [real(sum_Pn) imag(sum_Pn)];
 
+sum_Pc = sum(exit_data(1).phasor_C);
+sum_Pc = sum_Pc / abs(sum_Pc);
+sum_Pc = [real(sum_Pc) imag(sum_Pc)];
+for i=2:num_files
+    if (DISPLACEMENT)
+        temp = sum(exit_data(i).phasor_D);
+        temp = temp / abs(temp); % normalize the phasor to have unity magnitude.
+        sum_Pd = [sum_Pd; real(temp) imag(temp)];
+    end
+    if (REFRACTIVE)
+        temp = sum(exit_data(i).phasor_N);
+        temp = temp / abs(temp); % normalize the phasor to have unity magnitude.
+        sum_Pn = [sum_Pn; real(temp) imag(temp)];
+    end
+    if (COMBINED)
+        temp = sum(exit_data(i).phasor_C);
+        temp = temp / abs(temp); % normalize the phasor to have unity magnitude.
+        sum_Pc = [sum_Pc; real(temp) imag(temp)];
+    end
+end
+
+display('Assuming phasor plot to be sum of all components');
+pause(2);
+Pd = sum_Pd;
+Pn = sum_Pn;
+Pc = sum_Pc;
 
 if (DISPLACEMENT)
     figure;
@@ -285,15 +324,15 @@ end
 for i=1:length(exit_data)
     if (DISPLACEMENT)
         modulation_index.D(i) = abs(abs(angle(exit_data(1).phasor_D(path))) - ...
-            abs(angle(exit_data(i).phasor_D(path))));
+                                    abs(angle(exit_data(i).phasor_D(path))));
     end
     if (REFRACTIVE)
-        modulation_index.N(i) = abs(abs(angle(exit_data(1).phasor_D(path))) - ...
-            abs(angle(exit_data(i).phasor_D(path))));
+        modulation_index.N(i) = abs(abs(angle(exit_data(1).phasor_N(path))) - ...
+                                    abs(angle(exit_data(i).phasor_N(path))));
     end
     if (COMBINED)
-        modulation_index.C(i) = abs(abs(angle(exit_data(1).phasor_D(path))) - ...
-            abs(angle(exit_data(i).phasor_D(path))));
+        modulation_index.C(i) = abs(abs(angle(exit_data(1).phasor_C(path))) - ...
+                                    abs(angle(exit_data(i).phasor_C(path))));
     end
 end
 
@@ -311,4 +350,7 @@ max(abs(p1-p0))
 % 
 % figure;
 % arrow(origin, P);
+
+
+
 

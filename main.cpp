@@ -574,6 +574,7 @@ Name                            Size           Data type        Domain Type     
  */
 #include <AO-sim/AO_sim.h>
 #include <MC-Boost/sphereAbsorber.h>
+#include <MC-Boost/cylinderAbsorber.h>
 #include <MC-Boost/layer.h>
 #include <MC-Boost/loggerBase.h>
 #include <MC-Boost/logger.h>
@@ -598,7 +599,9 @@ using namespace std;
  * ------------------------------------------------------- Various functions for Monte-Carlo -----------------
  */
 // Number of photons to simulate.
-const int MAX_PHOTONS = 50e6;
+//const int MAX_PHOTONS = 50e6;
+const int MAX_PHOTONS = 100e3;
+
 
 // Testing routines.
 void testVectorMath(void);
@@ -745,21 +748,41 @@ int main(int argc, char** argv)
         Layer *layer1 = new Layer(layer_props);
 
         /// Add an absorber to the layer.
+        /// ------------------------------------------------------------------------------------
+        /// Create a cylindrical absorber that is a factor of 10 higher absorption
+        /// than the background. The cylinder is centered over the injection aperture
+        /// and lies 4mm deep along the optical axis.
+        double cylinder_radius = 0.001;     // Radius of cylinder [meters]
+        boost::shared_ptr<Vector3d> pointA(new Vector3d(AO_simulation.Get_MC_Xaxis_depth()/2,
+                                                        0.001,
+                                                        0.004));
+        boost::shared_ptr<Vector3d> pointB(new Vector3d(AO_simulation.Get_MC_Xaxis_depth()/2,
+                                                        AO_simulation.Get_MC_Yaxis_depth() - 0.001,
+                                                        0.004));
+        CylinderAbsorber *cylinder_absorber_near_input_aperture = new CylinderAbsorber(cylinder_radius,
+                                                                              pointA,
+                                                                              pointB);
+        cylinder_absorber_near_input_aperture->setAbsorberAbsorptionCoeff(layer_props.mu_a * 100);
+        cylinder_absorber_near_input_aperture->setAbsorberScatterCoeff(layer_props.mu_s);
+        cylinder_absorber_near_input_aperture->setAbsorberAnisotropy(layer_props.anisotropy);
+        cylinder_absorber_near_input_aperture->setAbsorberRefractiveIndex(layer_props.refractive_index);
+        layer1->addAbsorber(cylinder_absorber_near_input_aperture);
+
         /// Note:
         ///  - The absober is centered in the US focus, which is co-aligned with
         ///    the injection of light and the detector on the front and back aperture.
-//        double absorber_radius = 0.002;     // Radius of absorber [meters]
-//        SphereAbsorber *absorber_middle_of_medium = new SphereAbsorber(absorber_radius,
-//                                                                       AO_simulation.Get_MC_Xaxis_depth()/2,
-//                                                                       AO_simulation.Get_MC_Yaxis_depth()/2,
-//                                                                       AO_simulation.Get_MC_Zaxis_depth()/2);
-//        /// Set the inclusion to (some value)x the background absorption, and to the same
-//        /// properties as the rest of the background layer.
-//        absorber_middle_of_medium->setAbsorberAbsorptionCoeff(layer_props.mu_a);  /// Set it to the background for reference meas.
-//        absorber_middle_of_medium->setAbsorberScatterCoeff(layer_props.mu_s);
-//        absorber_middle_of_medium->setAbsorberAnisotropy(layer_props.anisotropy);
-//        absorber_middle_of_medium->setAbsorberRefractiveIndex(layer_props.refractive_index);
-//        layer1->addAbsorber(absorber_middle_of_medium);
+        double absorber_radius = 0.002;     // Radius of absorber [meters]
+        SphereAbsorber *sphere_absorber_middle_of_medium = new SphereAbsorber(absorber_radius,
+                                                                       AO_simulation.Get_MC_Xaxis_depth()/2,
+                                                                       AO_simulation.Get_MC_Yaxis_depth()/2,
+                                                                       AO_simulation.Get_MC_Zaxis_depth()/2);
+        /// Set the inclusion to (some value)x the background absorption, and to the same
+        /// properties as the rest of the background layer.
+        sphere_absorber_middle_of_medium->setAbsorberAbsorptionCoeff(layer_props.mu_a * 100);  /// Set it to the background for reference meas.
+        sphere_absorber_middle_of_medium->setAbsorberScatterCoeff(layer_props.mu_s);
+        sphere_absorber_middle_of_medium->setAbsorberAnisotropy(layer_props.anisotropy);
+        sphere_absorber_middle_of_medium->setAbsorberRefractiveIndex(layer_props.refractive_index);
+        layer1->addAbsorber(sphere_absorber_middle_of_medium);
 
 
         /// Add the layer to the monte-carlo medium.

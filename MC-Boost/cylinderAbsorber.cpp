@@ -6,6 +6,9 @@
 //
 #include "absorber.h"
 #include "cylinderAbsorber.h"
+#include <cmath>
+#include <iostream>
+using std::cout;
 
 
 // Cylinder constructor takes the radius and the top and bottom coordinates
@@ -31,15 +34,20 @@ CylinderAbsorber::~CylinderAbsorber()
 }
 
 
-bool CylinderAbsorber::crossedAbsorber(const boost::shared_ptr<Vector3d> photonVector)
+bool CylinderAbsorber::crossedAbsorber(const boost::shared_ptr<Vector3d> A,
+                                       const boost::shared_ptr<Vector3d> B)
 {
     // STUB
+    cout << "CylinderAbsorber::crossedAbsorber() stub\n";
+    return false;
 }
 
 
 bool CylinderAbsorber::hitAbsorberBoundary(const boost::shared_ptr<Vector3d> photonVector)
 {
     // STUB
+    cout << "CylinderAbsorber::hitAbsorberBoundary() stub\n";
+    return false;
 }
 
 // Need to draw a line from top and bottom disc of the cylinder.
@@ -47,9 +55,9 @@ bool CylinderAbsorber::hitAbsorberBoundary(const boost::shared_ptr<Vector3d> pho
 // larger than the cylinder's radius, then return false.  Else
 // return true.
 // Also need to check if the photon had passed through the cylinder.
-bool CylinderAbsorber::inAbsorber(const boost::shared_ptr<Vector3d> photonVector)
+bool CylinderAbsorber::inAbsorber(const boost::shared_ptr<Vector3d> photonLocation)
 {
-    if (inCylinderVolume(photonVector))
+    if (inCylinderVolume(photonLocation))
     {
         return true;
     }
@@ -61,18 +69,22 @@ bool CylinderAbsorber::inAbsorber(const boost::shared_ptr<Vector3d> photonVector
 
 bool CylinderAbsorber::inCylinderVolume(const boost::shared_ptr<Vector3d> photonLocation)
 {
+
+//    boost::shared_ptr<Vector3d> A = cap_A;
+//    boost::shared_ptr<Vector3d> B = cap_B;
+
     // Subtract the previous location (B) of the photon from the current location (A)
     // to form a new vector.
-    boost::shared_ptr<Vector3d> AB = (*cap_A) - (*cap_B);
+    boost::shared_ptr<Vector3d> BA = cap_B - cap_A;
     
     // Subtract the current location of the photon (A) from the center location of the
     // absorber (center) to yield a new vector.
-    boost::shared_ptr<Vector3d> AP = (*cap_A) - (*photonLocation);
+    boost::shared_ptr<Vector3d> PA = (*photonLocation) - cap_A;
     
     // Take the cross-product of AB and AC to get the area of the parallelogram formed
     // from A-B and A-C
-    double c1 = VectorMath::dotProduct(AB, AP);
-    double c2 = VectorMath::dotProduct(AB, AB);
+    double c1 = VectorMath::dotProduct(PA, BA);
+    double c2 = VectorMath::dotProduct(BA, BA);
     
     double t = c1 / c2;
     
@@ -91,9 +103,10 @@ bool CylinderAbsorber::inCylinderVolume(const boost::shared_ptr<Vector3d> photon
     /// now we need to check if it is within the radius of the cylinder.
     
     /// Point on the line between the caps of the cylinder that is closest to the photon.
-    Pt = (*cap_A) + t*((*cap_B)-(*cap_A));
+    /// Pt = A + t*(B-A)
+    Vector3d Pt = VectorMath::addCoords(cap_A, VectorMath::multiply(BA, t));
     
-    double distance_to_photon = VectorMath::Distance(abs((*Pt) - (*photonLocation)));
+    double distance_to_photon = VectorMath::Distance(Pt, (*photonLocation));
     
     if (distance_to_photon < radius)
     {

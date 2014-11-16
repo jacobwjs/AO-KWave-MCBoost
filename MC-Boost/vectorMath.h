@@ -81,18 +81,51 @@ namespace VectorMath
         
 		return sqrt(disX*disX + disY*disY + disZ*disZ);
     }
+
+    inline Vector3d multiply(const boost::shared_ptr<Vector3d> A, const double val)
+    {
+        Vector3d result;
+
+        result.location.x = A->location.x * val;
+        result.location.y = A->location.y * val;
+        result.location.z = A->location.z * val;
+
+        return result;
+    };
+
+    inline Vector3d multiply(const Vector3d &A, const double val)
+    {
+        Vector3d result;
+
+        result.location.x = A.location.x * val;
+        result.location.y = A.location.y * val;
+        result.location.z = A.location.z * val;
+
+        return result;
+    }
     
     inline Vector3d subtractCoords(const Vector3d &A, const Vector3d &B)
     {
         Vector3d result;
-        
+
         result.location.x = A.location.x - B.location.x;
         result.location.y = A.location.y - B.location.y;
         result.location.z = A.location.z - B.location.z;
-        
+
         return result;
     }
-    
+
+    inline Vector3d addCoords(const Vector3d &A, const Vector3d &B)
+    {
+        Vector3d result;
+
+        result.location.x = A.location.x + B.location.x;
+        result.location.y = A.location.y + B.location.y;
+        result.location.z = A.location.z + B.location.z;
+
+        return result;
+    }
+
     
     // XXX: Is this correct?
     inline coords multiplyCoords(const coords &A, const coords &B)

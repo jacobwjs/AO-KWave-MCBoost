@@ -43,7 +43,6 @@ public:
     inline friend ostream& operator<< (ostream &out, const boost::shared_ptr<Vector3d> rhs);
 
     
-    
     // Get the coordinates.
     double getDirX(void);
     double getDirY(void);

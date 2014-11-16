@@ -22,11 +22,12 @@ public:
     
     virtual bool hitAbsorberBoundary(const boost::shared_ptr<Vector3d> photonVector);
     virtual bool inAbsorber(const boost::shared_ptr<Vector3d> photonVector);
-    virtual bool crossedAbsorber(const boost::shared_ptr<Vector3d> photonVector);
+    virtual bool crossedAbsorber(const boost::shared_ptr<Vector3d> A,
+                                 const boost::shared_ptr<Vector3d> B);
     
     // Check if photon is within the volume of the absorber.
     bool inCylinderVolume(const boost::shared_ptr<Vector3d> photonVector);
-    void    cartesianToCylindrical(void);
+    void cartesianToCylindrical(void);
     
 private:
     // The height and radius of the cylindrical absorber.

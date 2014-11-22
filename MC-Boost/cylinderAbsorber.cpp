@@ -13,8 +13,8 @@ using std::cout;
 
 // Cylinder constructor takes the radius and the top and bottom coordinates
 // of the cylinder.
-CylinderAbsorber::CylinderAbsorber(const double radius, const boost::shared_ptr<Vector3d> cap_A,
-                                                        const boost::shared_ptr<Vector3d> cap_B)
+CylinderAbsorber::CylinderAbsorber(const double radius, const boost::shared_ptr<Vector3d> &cap_A,
+                                                        const boost::shared_ptr<Vector3d> &cap_B)
 :Absorber()
 {
     // Calculate the length of the cylinder.
@@ -23,8 +23,8 @@ CylinderAbsorber::CylinderAbsorber(const double radius, const boost::shared_ptr<
                         pow(cap_A->location.z - cap_B->location.z, 2));
     
     this->radius = radius;
-    this->cap_A  = (*cap_A);
-    this->cap_B  = (*cap_B);
+    this->cap_A  = cap_A;
+    this->cap_B  = cap_B;
 }
 
 
@@ -75,17 +75,17 @@ bool CylinderAbsorber::inCylinderVolume(const boost::shared_ptr<Vector3d> photon
 
     // Subtract the previous location (B) of the photon from the current location (A)
     // to form a new vector.
-    boost::shared_ptr<Vector3d> BA = cap_B - cap_A;
+    boost::shared_ptr<Vector3d> BA = (*cap_B) - (*cap_A);
     
     // Subtract the current location of the photon (A) from the center location of the
     // absorber (center) to yield a new vector.
-    boost::shared_ptr<Vector3d> PA = (*photonLocation) - cap_A;
-    
+    boost::shared_ptr<Vector3d> PA = (*photonLocation) - (*cap_A);
+
     // Take the cross-product of AB and AC to get the area of the parallelogram formed
     // from A-B and A-C
     double c1 = VectorMath::dotProduct(PA, BA);
     double c2 = VectorMath::dotProduct(BA, BA);
-    
+
     double t = c1 / c2;
     
     /// 't' is the portion along the line from 'cap_A' to 'cap_B' that represents the point along
@@ -98,13 +98,13 @@ bool CylinderAbsorber::inCylinderVolume(const boost::shared_ptr<Vector3d> photon
     {
         return false;
     }
-    
+
     /// If we make it here the photon is between the two caps of the cylinder somewhere in 3D space,
     /// now we need to check if it is within the radius of the cylinder.
     
     /// Point on the line between the caps of the cylinder that is closest to the photon.
     /// Pt = A + t*(B-A)
-    Vector3d Pt = VectorMath::addCoords(cap_A, VectorMath::multiply(BA, t));
+    Vector3d Pt = VectorMath::addCoords((*cap_A), VectorMath::multiply(BA, t));
     
     double distance_to_photon = VectorMath::Distance(Pt, (*photonLocation));
     

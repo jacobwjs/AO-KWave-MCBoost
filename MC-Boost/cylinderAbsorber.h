@@ -11,13 +11,14 @@
 #include <cmath>
 
 class Absorber;
+class Vector3d;
 
 class CylinderAbsorber : public Absorber 
 {
 public:
     CylinderAbsorber(const double radius, const double x, const double y, const double z);
-    CylinderAbsorber(const double radius, const boost::shared_ptr<Vector3d> top,
-                                        const boost::shared_ptr<Vector3d>bottom); 
+    CylinderAbsorber(const double radius, const boost::shared_ptr<Vector3d> &top,
+                                        const boost::shared_ptr<Vector3d> &bottom);
     ~CylinderAbsorber();
     
     virtual bool hitAbsorberBoundary(const boost::shared_ptr<Vector3d> photonVector);
@@ -36,11 +37,11 @@ private:
     
     // Cartesian coordinates of the center location of one end
     // of the cyclinder.
-    Vector3d cap_A;
+    boost::shared_ptr<Vector3d> cap_A;
     
     // Cartesian coordinates of center location of the other end
     // of the cyclinder.
-    Vector3d cap_B;
+    boost::shared_ptr<Vector3d> cap_B;
 };
 
 #endif

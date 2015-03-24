@@ -78,7 +78,7 @@ BonA_breast             = 9.63;
 % Density, attenuation, SOS, etc. of Agar
 % ---------------------------------------
 rho0_agar           = 1024;
-c0_agar             = 1500;
+c0_agar             = 1510;
 alpha_atten_agar    = 0.7;
 alpha_power_agar    = 1.5;
 BonA_agar           = 6.0;
@@ -107,9 +107,9 @@ dt = cfl*dx/c0;
 % can be done.  That is if the CFL safe dt is larger than 10 ns, we can
 % reduce it without worrying about accuracy (in fact it becomes more
 % accurate).
-if (dt > 5e-9)
+if (dt > 10e-9)
     display('Setting dt = ');
-    dt = 5e-9
+    dt = 10e-9
 else
     display('Cannot set dt=5 ns');
     display('Using default: ')
@@ -142,7 +142,7 @@ kgrid.t_array = 0:dt:(Nt-1)*dt;
 source_strength = 1.0e6;    	% [Pa] 
 tone_burst_freq = 5.0e6;        % [Hz]
 source_freq = tone_burst_freq;
-tone_burst_cycles = 5;
+tone_burst_cycles = 7;
 
 
 % create the input signal using toneBurst
@@ -172,38 +172,46 @@ transducer.radius = inf;                % radius of curvature of the transducer 
 transducer_width = transducer.number_elements*transducer.element_width ...
     + (transducer.number_elements - 1)*transducer.element_spacing;
 
-% use this to position the transducer in the middle of the computational grid
-% Note the placement below the PML with some cushion.
-MIDDLE_of_medium = round([PML_X_SIZE+5,...
-                          Ny/2 - transducer_width/2,...
-                          Nz/2 - transducer.element_length/2]);
+% % use this to position the transducer in the middle of the computational grid
+% % Note the placement below the PML with some cushion.
+% MIDDLE_of_medium = round([PML_X_SIZE+5,...
+%                           Ny/2 - transducer_width/2,...
+%                           Nz/2 - transducer.element_length/2]);
                       
-FRONT_EDGE_of_medium_5mmOpticalDepth_0mmShift = round([PML_X_SIZE+5,...
-                                                    Ny/2 - transducer_width/2,...
-                                                    Nz/3 - transducer.element_length/2]);
-% FIXME:
-% - Why does the extra 64 pixels need to be included.
-azimuthal_4mmShift = round(0.004/dy); 
-FRONT_EDGE_of_medium_5mmOpticalDepth_4mmShift = round([PML_X_SIZE+5,...
-                                                       Ny/2 - transducer_width/2 - azimuthal_4mmShift,...
-                                                       Nz/3 - transducer.element_length/2]);
-                                                
-% Bead is ~6 mm deep (optical axis), so center the US probe that depth along
-% z-axis (taking into account PML)
-BEAD_A_centered = round([(PML_X_SIZE+5), ...                                        % x-axis
-                         (Ny/2 - transducer_width/2), ...                           % y-axis
-                         (PML_Z_SIZE + 6e-3/dz  + transducer.element_length/2)]);   % z-axis
+% FRONT_EDGE_of_medium_5mmOpticalDepth_0mmShift = round([PML_X_SIZE+5,...
+%                                                     Ny/2 - transducer_width/2,...
+%                                                     Nz/3 - transducer.element_length/2]);
 
+% % FIXME:
+% % - Why does the extra 64 pixels need to be included.
+% azimuthal_4mmShift = round(0.004/dy); 
+% FRONT_EDGE_of_medium_5mmOpticalDepth_4mmShift = round([PML_X_SIZE+5,...
+%                                                        Ny/2 - transducer_width/2 - azimuthal_4mmShift,...
+%                                                        Nz/3 - transducer.element_length/2]);
+                                                
+% % Bead is ~6 mm deep (optical axis), so center the US probe that depth along
+% % z-axis (taking into account PML)
+% BEAD_A_centered = round([(PML_X_SIZE+5), ...                                        % x-axis
+%                          (Ny/2 - transducer_width/2), ...                           % y-axis
+%                          (PML_Z_SIZE + 6e-3/dz  + transducer.element_length/2)]);   % z-axis
+
+% % This defines the location of the front edge of the transducer, which
+% extends 5 mm deeper (elevation height) into the medium. Therefore the
+% center of the probe is the value below, plus half the elevation height.
+Optical_depth_1p5mm = round(0.0015/dy);
+Transducer_4mm_optical_depth = round([PML_X_SIZE+5,...
+                                      Ny/2 - transducer_width/2 - Optical_depth_1p5mm,...
+                                      Nz/2 - transducer.element_length/2]);
+                                  
 % Assign the transducer position.
-transducer.position = MIDDLE_of_medium;
+transducer.position = Transducer_4mm_optical_depth;
 
 
 % Define the focal depth
-focal_depth = 21.5e-3;
-
+focal_depth = 20e-3;
 
 % Create the steering angle for moving 4mm along the azimuthal plane.
-horizontal_steering_angle_4mm = 180/pi*atan(4e-3/focal_depth);
+horizontal_steering_angle_2mm = 180/pi*atan(2e-3/focal_depth);
 
 % The steering angle along the azimuthal plane for focusing.
 steering_angle = 0;

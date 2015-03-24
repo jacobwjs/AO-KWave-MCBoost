@@ -651,10 +651,6 @@ int main(int argc, char** argv)
     }
     
 
-    
-    
-
-
 	/// What should be simulated - Ultrasound, Monte-Carlo, Both (Acousto-Optics)?
 	bool sim_monte_carlo             = Parameters->IsRun_MC_sim();
 	bool sim_kWave                   = Parameters->IsRun_kWave_sim();
@@ -734,14 +730,13 @@ int main(int argc, char** argv)
         ///   event in the monte-carlo simulation, which is typically ~1000 x number_of_photons.
     
         ///   and mu_s dimensions from cm^-1 to m^-1.
-        layer_props.mu_a        = 0.01f;              // cm^-1
-        layer_props.mu_s        = 100.0f;                // cm^-1
+        layer_props.mu_a = 0.01f;                       // cm^-1
+        layer_props.mu_s = 100.0f;                      // cm^-1
         layer_props.mu_a = layer_props.mu_a * 100;      // m^-1
         layer_props.mu_s = layer_props.mu_s * 100;      // m^-1
 
         
     	layer_props.refractive_index = 1.33f;
-        //layer_props.refractive_index = 1.0f;
     	layer_props.anisotropy  = 0.9f;
     	layer_props.start_depth = 0.0f;
         layer_props.end_depth   = AO_simulation.Get_MC_Zaxis_depth();
@@ -755,145 +750,201 @@ int main(int argc, char** argv)
         /// Create a cylindrical absorber that is a factor of 10 higher absorption
         /// than the background. The cylinder is centered over the injection aperture
         /// and lies 4mm deep along the optical axis.
-        double cylinder_radius = 0.0001;     // Radius of cylinder [meters]
-        double x_location = AO_simulation.Get_MC_Xaxis_depth()/2;
-        double y_location = 0.001;  // [meters]
-        double z_location = 0.004;  // [meters]. 'z' axis is the optical axis.
+        double cylinder_radius = 0.0f;
+        double x_location = 0.0f;
+        double y_location = 0.0f;
+        double z_location = 0.0f;
         boost::shared_ptr<Vector3d> pointA(new Vector3d(x_location,
                                                         y_location,
                                                         z_location));
         boost::shared_ptr<Vector3d> pointB(new Vector3d(x_location,
-                                                        AO_simulation.Get_MC_Yaxis_depth() - y_location,
+                                                        y_location,
                                                         z_location));
-        CylinderAbsorber *cylinder_absorber_0p1mm = new CylinderAbsorber(cylinder_radius,
-                                                                         pointA,
-                                                                         pointB);
-        cylinder_absorber_0p1mm->setAbsorberAbsorptionCoeff(layer_props.mu_a * 100);
-        cylinder_absorber_0p1mm->setAbsorberScatterCoeff(layer_props.mu_s);
-        cylinder_absorber_0p1mm->setAbsorberAnisotropy(layer_props.anisotropy);
-        cylinder_absorber_0p1mm->setAbsorberRefractiveIndex(layer_props.refractive_index);
-        layer1->addAbsorber(cylinder_absorber_0p1mm);
-        
-        /// Create a cylindrical absorber that is a factor of 10 higher absorption
-        /// than the background. The cylinder is centered over the injection aperture
-        /// and lies 7.5mm deep along the optical axis.
-        cylinder_radius = 0.0002; // [meters]
-        z_location = 0.0075;       // [meters]. Move the new absorber deeper into the medium.
-        pointA.reset(new Vector3d(x_location,
-                                  y_location,
-                                  z_location));
-        pointB.reset(new Vector3d(x_location,
-                                  AO_simulation.Get_MC_Yaxis_depth() - y_location,
-                                  z_location));
-        CylinderAbsorber *cylinder_absorber_0p2mm = new CylinderAbsorber(cylinder_radius,
-                                                                         pointA,
-                                                                         pointB);
-        cylinder_absorber_0p2mm->setAbsorberAbsorptionCoeff(layer_props.mu_a * 100);
-        cylinder_absorber_0p2mm->setAbsorberScatterCoeff(layer_props.mu_s);
-        cylinder_absorber_0p2mm->setAbsorberAnisotropy(layer_props.anisotropy);
-        cylinder_absorber_0p2mm->setAbsorberRefractiveIndex(layer_props.refractive_index);
-        layer1->addAbsorber(cylinder_absorber_0p2mm);
-        
-        /// Create a cylindrical absorber that is a factor of 10 higher absorption
-        /// than the background. The cylinder is centered over the injection aperture
-        /// and lies 10mm deep along the optical axis.
-        cylinder_radius = 0.0003; // [meters]
-        z_location = 0.010;       // Move the new absorber deeper into the medium [meters].
-        pointA.reset(new Vector3d(x_location,
-                                  y_location,
-                                  z_location));
-        pointB.reset(new Vector3d(x_location,
-                                  AO_simulation.Get_MC_Yaxis_depth() - y_location,
-                                  z_location));
-        CylinderAbsorber *cylinder_absorber_0p3mm = new CylinderAbsorber(cylinder_radius,
-                                                                         pointA,
-                                                                         pointB);
-        cylinder_absorber_0p3mm->setAbsorberAbsorptionCoeff(layer_props.mu_a * 100);
-        cylinder_absorber_0p3mm->setAbsorberScatterCoeff(layer_props.mu_s);
-        cylinder_absorber_0p3mm->setAbsorberAnisotropy(layer_props.anisotropy);
-        cylinder_absorber_0p3mm->setAbsorberRefractiveIndex(layer_props.refractive_index);
-        layer1->addAbsorber(cylinder_absorber_0p3mm);
-        
 
-        /// Create a spherical absorber that is a factor of 5 higher absorption than the background.
-        /// The sphere is centered over the injection aperture and lies 2mm deep along the optical axis.
-        double absorber_radius = 0.0001;     // Radius of absorber [meters]
-        z_location = 0.002;                  // [meters]
-        SphereAbsorber *sphere_absorber_0p1mm = new SphereAbsorber(absorber_radius,
-                                                                   x_location,
-                                                                   y_location,
-                                                                   z_location);
-        sphere_absorber_0p1mm->setAbsorberAbsorptionCoeff(layer_props.mu_a * 50);
-        sphere_absorber_0p1mm->setAbsorberScatterCoeff(layer_props.mu_s);
-        sphere_absorber_0p1mm->setAbsorberAnisotropy(layer_props.anisotropy);
-        sphere_absorber_0p1mm->setAbsorberRefractiveIndex(layer_props.refractive_index);
-        layer1->addAbsorber(sphere_absorber_0p1mm);
+
         
-        /// Create a spherical absorber that is a factor of 5 higher absorption than the background.
-        /// The sphere is centered over the injection aperture and lies 4mm deep along the optical axis
-        /// and 4mm below the center and 2mm to the left of the input aperture.
-        absorber_radius = 0.0002;     // Radius of absorber [meters]
-        x_location = AO_simulation.Get_MC_Xaxis_depth()/2 + 0.004;
-        y_location = AO_simulation.Get_MC_Yaxis_depth()/2 - 0.002;
-        z_location = 0.004;                  // [meters]
-        SphereAbsorber *sphere_absorber_0p2mm = new SphereAbsorber(absorber_radius,
-                                                                   x_location,
-                                                                   y_location,
-                                                                   z_location);
-        sphere_absorber_0p2mm->setAbsorberAbsorptionCoeff(layer_props.mu_a * 50);
-        sphere_absorber_0p2mm->setAbsorberScatterCoeff(layer_props.mu_s);
-        sphere_absorber_0p2mm->setAbsorberAnisotropy(layer_props.anisotropy);
-        sphere_absorber_0p2mm->setAbsorberRefractiveIndex(layer_props.refractive_index);
-        layer1->addAbsorber(sphere_absorber_0p2mm);
+//        /// Create a cylindrical absorber that is a factor of 10 higher absorption
+//        /// than the background. The cylinder is centered over the injection aperture
+//        /// and lies 7.5mm deep along the optical axis.
+//        cylinder_radius = 0.0002; // [meters]
+//        z_location = 0.0075;       // [meters]. Move the new absorber deeper into the medium.
+//        pointA.reset(new Vector3d(x_location,
+//                                  y_location,
+//                                  z_location));
+//        pointB.reset(new Vector3d(x_location,
+//                                  AO_simulation.Get_MC_Yaxis_depth() - y_location,
+//                                  z_location));
+//        CylinderAbsorber *cylinder_absorber_0p2mm = new CylinderAbsorber(cylinder_radius,
+//                                                                         pointA,
+//                                                                         pointB);
+//        cylinder_absorber_0p2mm->setAbsorberAbsorptionCoeff(layer_props.mu_a * 100);
+//        cylinder_absorber_0p2mm->setAbsorberScatterCoeff(layer_props.mu_s);
+//        cylinder_absorber_0p2mm->setAbsorberAnisotropy(layer_props.anisotropy);
+//        cylinder_absorber_0p2mm->setAbsorberRefractiveIndex(layer_props.refractive_index);
+//        layer1->addAbsorber(cylinder_absorber_0p2mm);
         
-        /// Create a spherical absorber that is a factor of 5 higher absorption than the background.
-        /// The sphere is centered over the injection aperture and lies 6.5mm deep along the optical axis
-        absorber_radius = 0.0003;     // Radius of absorber [meters]
+//        /// Create a cylindrical absorber that is a factor of 10 higher absorption
+//        /// than the background. The cylinder is centered over the injection aperture
+//        /// and lies 10mm deep along the optical axis.
+//        cylinder_radius = 0.0003; // [meters]
+//        z_location = 0.010;       // Move the new absorber deeper into the medium [meters].
+//        pointA.reset(new Vector3d(x_location,
+//                                  y_location,
+//                                  z_location));
+//        pointB.reset(new Vector3d(x_location,
+//                                  AO_simulation.Get_MC_Yaxis_depth() - y_location,
+//                                  z_location));
+//        CylinderAbsorber *cylinder_absorber_0p3mm = new CylinderAbsorber(cylinder_radius,
+//                                                                         pointA,
+//                                                                         pointB);
+//        cylinder_absorber_0p3mm->setAbsorberAbsorptionCoeff(layer_props.mu_a * 100);
+//        cylinder_absorber_0p3mm->setAbsorberScatterCoeff(layer_props.mu_s);
+//        cylinder_absorber_0p3mm->setAbsorberAnisotropy(layer_props.anisotropy);
+//        cylinder_absorber_0p3mm->setAbsorberRefractiveIndex(layer_props.refractive_index);
+//        layer1->addAbsorber(cylinder_absorber_0p3mm);
+
+
+        /// Define a cylindrical absorber that runs along the optical axis depth.
+        cylinder_radius = 0.000267;     // Radius of cylinder [meters]
         x_location = AO_simulation.Get_MC_Xaxis_depth()/2;
-        y_location = AO_simulation.Get_MC_Yaxis_depth()/2;
-        z_location = 0.0065;                  // [meters]
-        SphereAbsorber *sphere_absorber_0p3mm = new SphereAbsorber(absorber_radius,
-                                                                   x_location,
-                                                                   y_location,
-                                                                   z_location);
-        sphere_absorber_0p3mm->setAbsorberAbsorptionCoeff(layer_props.mu_a * 50);
-        sphere_absorber_0p3mm->setAbsorberScatterCoeff(layer_props.mu_s);
-        sphere_absorber_0p3mm->setAbsorberAnisotropy(layer_props.anisotropy);
-        sphere_absorber_0p3mm->setAbsorberRefractiveIndex(layer_props.refractive_index);
-        layer1->addAbsorber(sphere_absorber_0p3mm);
-        
-        /// Create a spherical absorber that is a factor of 5 higher absorption than the background.
-        /// The sphere is centered over the injection aperture and lies 7.5mm deep along the optical axis
-        /// and 4mm above the center and 2mm to the left of the input aperture.
-        absorber_radius = 0.0004;     // Radius of absorber [meters]
-        x_location = AO_simulation.Get_MC_Xaxis_depth()/2 - 0.004;
-        y_location = AO_simulation.Get_MC_Yaxis_depth()/2 + 0.002;
-        z_location = 0.0075;                 // [meters]
-        SphereAbsorber *sphere_absorber_0p4mm = new SphereAbsorber(absorber_radius,
-                                                                   x_location,
-                                                                   y_location,
-                                                                   z_location);
-        sphere_absorber_0p4mm->setAbsorberAbsorptionCoeff(layer_props.mu_a * 50);
-        sphere_absorber_0p4mm->setAbsorberScatterCoeff(layer_props.mu_s);
-        sphere_absorber_0p4mm->setAbsorberAnisotropy(layer_props.anisotropy);
-        sphere_absorber_0p4mm->setAbsorberRefractiveIndex(layer_props.refractive_index);
-        layer1->addAbsorber(sphere_absorber_0p4mm);
-        
-        /// Create a spherical absorber that is a factor of 5 higher absorption than the background.
-        /// The sphere is centered over the injection aperture and lies 8.75mm deep along the optical axis
-        absorber_radius = 0.0005;     // Radius of absorber [meters]
+        y_location = AO_simulation.Get_MC_Yaxis_depth()/2;  // [meters]
+        z_location = 1e-6;  // [meters]. 'z' axis is the optical axis.
+        pointA.reset(new Vector3d(x_location,
+                                  y_location,
+                                  z_location));
+        pointB.reset(new Vector3d(x_location,
+                                  y_location,
+                                  AO_simulation.Get_MC_Zaxis_depth() - z_location));
+        CylinderAbsorber *cylinder_absorber1_0p267mm_along_optical_axis = new CylinderAbsorber(cylinder_radius,
+                                                                         pointA,
+                                                                         pointB);
+        cylinder_absorber1_0p267mm_along_optical_axis->setAbsorberAbsorptionCoeff(layer_props.mu_a * 100);
+        cylinder_absorber1_0p267mm_along_optical_axis->setAbsorberScatterCoeff(layer_props.mu_s);
+        cylinder_absorber1_0p267mm_along_optical_axis->setAbsorberAnisotropy(layer_props.anisotropy);
+        cylinder_absorber1_0p267mm_along_optical_axis->setAbsorberRefractiveIndex(layer_props.refractive_index);
+        layer1->addAbsorber(cylinder_absorber1_0p267mm_along_optical_axis);
+
+
+        /// Define a second cylindrical absorber that runs along the optical axis depth.
+        cylinder_radius = 0.000267;     // Radius of cylinder [meters]
         x_location = AO_simulation.Get_MC_Xaxis_depth()/2;
-        y_location = AO_simulation.Get_MC_Yaxis_depth()/2;
-        z_location = 0.00875;                 // [meters]
-        SphereAbsorber *sphere_absorber_0p5mm = new SphereAbsorber(absorber_radius,
-                                                                   x_location,
-                                                                   y_location,
-                                                                   z_location);
-        sphere_absorber_0p5mm->setAbsorberAbsorptionCoeff(layer_props.mu_a * 50);
-        sphere_absorber_0p5mm->setAbsorberScatterCoeff(layer_props.mu_s);
-        sphere_absorber_0p5mm->setAbsorberAnisotropy(layer_props.anisotropy);
-        sphere_absorber_0p5mm->setAbsorberRefractiveIndex(layer_props.refractive_index);
-        layer1->addAbsorber(sphere_absorber_0p5mm);
+        y_location = AO_simulation.Get_MC_Yaxis_depth()/2 - 0.002;  // Move this absorber 2 mm to the side of the first. [meters]
+        z_location = 1e-6;  // [meters]. 'z' axis is the optical axis.
+        pointA.reset(new Vector3d(x_location,
+                                  y_location,
+                                  z_location));
+        pointB.reset(new Vector3d(x_location,
+                                  y_location,
+                                  AO_simulation.Get_MC_Zaxis_depth() - z_location));
+        CylinderAbsorber *cylinder_absorber2_0p267mm_along_optical_axis = new CylinderAbsorber(cylinder_radius,
+                                                                         pointA,
+                                                                         pointB);
+        cylinder_absorber2_0p267mm_along_optical_axis->setAbsorberAbsorptionCoeff(layer_props.mu_a * 100);
+        cylinder_absorber2_0p267mm_along_optical_axis->setAbsorberScatterCoeff(layer_props.mu_s);
+        cylinder_absorber2_0p267mm_along_optical_axis->setAbsorberAnisotropy(layer_props.anisotropy);
+        cylinder_absorber2_0p267mm_along_optical_axis->setAbsorberRefractiveIndex(layer_props.refractive_index);
+        layer1->addAbsorber(cylinder_absorber2_0p267mm_along_optical_axis);
+
+        /// Define a third cylindrical absorber that runs along the optical axis depth.
+        cylinder_radius = 0.000267;     // Radius of cylinder [meters]
+        x_location = AO_simulation.Get_MC_Xaxis_depth()/2;
+        y_location = AO_simulation.Get_MC_Yaxis_depth()/2 + 0.002;  // Move this absorber 2 mm to the side of the first. [meters]
+        z_location = 1e-6;  // [meters]. 'z' axis is the optical axis.
+        pointA.reset(new Vector3d(x_location,
+                                  y_location,
+                                  z_location));
+        pointB.reset(new Vector3d(x_location,
+                                  y_location,
+                                  AO_simulation.Get_MC_Zaxis_depth() - z_location));
+        CylinderAbsorber *cylinder_absorber3_0p267mm_along_optical_axis = new CylinderAbsorber(cylinder_radius,
+                                                                         pointA,
+                                                                         pointB);
+        cylinder_absorber3_0p267mm_along_optical_axis->setAbsorberAbsorptionCoeff(layer_props.mu_a * 100);
+        cylinder_absorber3_0p267mm_along_optical_axis->setAbsorberScatterCoeff(layer_props.mu_s);
+        cylinder_absorber3_0p267mm_along_optical_axis->setAbsorberAnisotropy(layer_props.anisotropy);
+        cylinder_absorber3_0p267mm_along_optical_axis->setAbsorberRefractiveIndex(layer_props.refractive_index);
+        layer1->addAbsorber(cylinder_absorber3_0p267mm_along_optical_axis);
+
+
+//        /// Create a spherical absorber that is a factor of 5 higher absorption than the background.
+//        /// The sphere is centered over the injection aperture and lies 2mm deep along the optical axis.
+//        double absorber_radius = 0.0001;     // Radius of absorber [meters]
+//        z_location = 0.002;                  // [meters]
+//        SphereAbsorber *sphere_absorber_0p1mm = new SphereAbsorber(absorber_radius,
+//                                                                   x_location,
+//                                                                   y_location,
+//                                                                   z_location);
+//        sphere_absorber_0p1mm->setAbsorberAbsorptionCoeff(layer_props.mu_a * 50);
+//        sphere_absorber_0p1mm->setAbsorberScatterCoeff(layer_props.mu_s);
+//        sphere_absorber_0p1mm->setAbsorberAnisotropy(layer_props.anisotropy);
+//        sphere_absorber_0p1mm->setAbsorberRefractiveIndex(layer_props.refractive_index);
+//        layer1->addAbsorber(sphere_absorber_0p1mm);
+        
+//        /// Create a spherical absorber that is a factor of 5 higher absorption than the background.
+//        /// The sphere is centered over the injection aperture and lies 4mm deep along the optical axis
+//        /// and 4mm below the center and 2mm to the left of the input aperture.
+//        absorber_radius = 0.0002;     // Radius of absorber [meters]
+//        x_location = AO_simulation.Get_MC_Xaxis_depth()/2 + 0.004;
+//        y_location = AO_simulation.Get_MC_Yaxis_depth()/2 - 0.002;
+//        z_location = 0.004;                  // [meters]
+//        SphereAbsorber *sphere_absorber_0p2mm = new SphereAbsorber(absorber_radius,
+//                                                                   x_location,
+//                                                                   y_location,
+//                                                                   z_location);
+//        sphere_absorber_0p2mm->setAbsorberAbsorptionCoeff(layer_props.mu_a * 50);
+//        sphere_absorber_0p2mm->setAbsorberScatterCoeff(layer_props.mu_s);
+//        sphere_absorber_0p2mm->setAbsorberAnisotropy(layer_props.anisotropy);
+//        sphere_absorber_0p2mm->setAbsorberRefractiveIndex(layer_props.refractive_index);
+//        layer1->addAbsorber(sphere_absorber_0p2mm);
+        
+//        /// Create a spherical absorber that is a factor of 5 higher absorption than the background.
+//        /// The sphere is centered over the injection aperture and lies 6.5mm deep along the optical axis
+//        absorber_radius = 0.0003;     // Radius of absorber [meters]
+//        x_location = AO_simulation.Get_MC_Xaxis_depth()/2;
+//        y_location = AO_simulation.Get_MC_Yaxis_depth()/2;
+//        z_location = 0.0065;                  // [meters]
+//        SphereAbsorber *sphere_absorber_0p3mm = new SphereAbsorber(absorber_radius,
+//                                                                   x_location,
+//                                                                   y_location,
+//                                                                   z_location);
+//        sphere_absorber_0p3mm->setAbsorberAbsorptionCoeff(layer_props.mu_a * 50);
+//        sphere_absorber_0p3mm->setAbsorberScatterCoeff(layer_props.mu_s);
+//        sphere_absorber_0p3mm->setAbsorberAnisotropy(layer_props.anisotropy);
+//        sphere_absorber_0p3mm->setAbsorberRefractiveIndex(layer_props.refractive_index);
+//        layer1->addAbsorber(sphere_absorber_0p3mm);
+        
+//        /// Create a spherical absorber that is a factor of 5 higher absorption than the background.
+//        /// The sphere is centered over the injection aperture and lies 7.5mm deep along the optical axis
+//        /// and 4mm above the center and 2mm to the left of the input aperture.
+//        absorber_radius = 0.0004;     // Radius of absorber [meters]
+//        x_location = AO_simulation.Get_MC_Xaxis_depth()/2 - 0.004;
+//        y_location = AO_simulation.Get_MC_Yaxis_depth()/2 + 0.002;
+//        z_location = 0.0075;                 // [meters]
+//        SphereAbsorber *sphere_absorber_0p4mm = new SphereAbsorber(absorber_radius,
+//                                                                   x_location,
+//                                                                   y_location,
+//                                                                   z_location);
+//        sphere_absorber_0p4mm->setAbsorberAbsorptionCoeff(layer_props.mu_a * 50);
+//        sphere_absorber_0p4mm->setAbsorberScatterCoeff(layer_props.mu_s);
+//        sphere_absorber_0p4mm->setAbsorberAnisotropy(layer_props.anisotropy);
+//        sphere_absorber_0p4mm->setAbsorberRefractiveIndex(layer_props.refractive_index);
+//        layer1->addAbsorber(sphere_absorber_0p4mm);
+        
+//        /// Create a spherical absorber that is a factor of 5 higher absorption than the background.
+//        /// The sphere is centered over the injection aperture and lies 8.75mm deep along the optical axis
+//        absorber_radius = 0.0005;     // Radius of absorber [meters]
+//        x_location = AO_simulation.Get_MC_Xaxis_depth()/2;
+//        y_location = AO_simulation.Get_MC_Yaxis_depth()/2;
+//        z_location = 0.00875;                 // [meters]
+//        SphereAbsorber *sphere_absorber_0p5mm = new SphereAbsorber(absorber_radius,
+//                                                                   x_location,
+//                                                                   y_location,
+//                                                                   z_location);
+//        sphere_absorber_0p5mm->setAbsorberAbsorptionCoeff(layer_props.mu_a * 50);
+//        sphere_absorber_0p5mm->setAbsorberScatterCoeff(layer_props.mu_s);
+//        sphere_absorber_0p5mm->setAbsorberAnisotropy(layer_props.anisotropy);
+//        sphere_absorber_0p5mm->setAbsorberRefractiveIndex(layer_props.refractive_index);
+//        layer1->addAbsorber(sphere_absorber_0p5mm);
 
 
         /// Add the layer to the monte-carlo medium.
@@ -927,8 +978,6 @@ int main(int argc, char** argv)
 //        refl_detection_aperture.name = "refl";
 //        AO_simulation.Add_circular_detector_MC_medium(refl_detection_aperture);
 
-
-
     	/// Define the injection point of light in the medium.
         Aperture_Properties input_aperture;
         input_aperture.xy_plane = true;
@@ -939,22 +988,20 @@ int main(int argc, char** argv)
         
         AO_simulation.Add_injection_aperture_MC_medium(input_aperture);
 
-
 		/// Set how often the monte-carlo simulation runs.
         /// NOTE:
         /// - There can be a subtle issue with the MC_sim time step and the time step of kWave (dt). To know
         ///   when to run the MC_sim properly the time step of the MC_sim must be evenly divisible by the kWave
         ///   time step. To ensure this, the 'dt' of kWave must be set accordingly in the matlab script that
         ///   produces the h5 input file.
-        /// - We only want to run the MC_sim at every PI phase shift of the US propagation to use Steffen's theory.
-        //float mc_step = 100e-9; /// For 5MHz with medium.sound_speed of 1,500 m/s
-        float mc_step = 500e-9; /// For 1MHz with medium.sound_speed of 1,500 m/s
+        /// - We only want to run the MC_sim at every PI phase shift of the US propagation to use TUMI theory.
+        float mc_step = 100e-9; /// For 5MHz with medium.sound_speed of 1,500 m/s
+        //float mc_step = 500e-9; /// For 1MHz with medium.sound_speed of 1,500 m/s
         if (sim_acousto_optics)
         {
             assert(mc_step >= Parameters->Get_dt());
             AO_simulation.Set_MC_time_step(mc_step);
         }
-
 
     	/// Display the monte-carlo simulation parameters
         const size_t hardware_threads = Parameters->GetNumberOfThreads();

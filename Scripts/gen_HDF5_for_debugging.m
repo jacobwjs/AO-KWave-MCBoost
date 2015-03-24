@@ -51,7 +51,7 @@ kgrid = makeGrid(Nx, dx, Ny, dy, Nz, dz);
 % Density, attenuation, SOS, etc. of Agar
 % ---------------------------------------
 rho0_agar           = 1024;
-c0_agar             = 1500;
+c0_agar             = 1510;
 alpha_atten_agar    = 0.7;
 alpha_power_agar    = 1.5;
 BonA_agar           = 6.0;
@@ -256,7 +256,7 @@ x_offset = PML_X_SIZE+5;
 transducer.position = round([x_offset, Ny/2 - transducer_width/2, Nz/2 - transducer.element_length/2]);
 
 % properties used to derive the beamforming delays
-transducer.sound_speed = 1500;              % sound speed [m/s]
+transducer.sound_speed = c0;              % sound speed [m/s]
 if (PLANAR_WAVE)
     transducer.focus_distance = inf;
     transducer.elevation_focus_distance = inf;

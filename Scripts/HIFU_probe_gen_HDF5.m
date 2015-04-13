@@ -17,9 +17,9 @@ PML_Y_SIZE = 10;            % [grid points]
 PML_Z_SIZE = 10;            % [grid points]
 
 % set total number of grid points not including the PML
-x_axis_num_points = 1024;
-y_axis_num_points = 432; 
-z_axis_num_points = 432; 
+x_axis_num_points = 1024;    % Ultrasound transmission axis
+y_axis_num_points = 598; 
+z_axis_num_points = 410;     % Optical axis
 % x_axis_num_points = 1024/2;
 % y_axis_num_points = 648/2; 
 % z_axis_num_points = 648/2; 
@@ -35,6 +35,10 @@ x = 60e-3;        % [m]
 dx = (x/Nx);      % [m]
 dy = dx;          % [m]
 dz = dx;          % [m]
+
+% Display the grid size
+fprintf('Medium dimensions: x:%f, y:%f, z:%f', Nx*dx, Ny*dy, Nz*dz);
+pause(1.5);
 
 % create the k-space grid
 kgrid = makeGrid(Nx, dx, Ny, dy, Nz, dz);
@@ -115,6 +119,7 @@ cfl = 0.3;
 % The probe ships with the diameter and radius of curvature in the
 % documentation. We need to find the height (h) of the curvature from that, and
 % translate it to the discrete grid in kWave.
+% Just as a note, the focal length is 35 mm.
 US_freq = 3.5e6;
 source_strength = 1.8e6;    	% [Pa] 
 num_cycles = 5;
@@ -157,9 +162,9 @@ pi_phase_shift = lambda/2 * (1/c0);
 fprintf('To meet criteria of the medium, max time step allowed is: %.12f [secs]\n', cfl*dx/c0);
 % Calculate time step.  Based on the CFL, max SOS and the minimum voxel
 % size.
-dt = cfl*dx/medium.sound_speed;
+%dt = cfl*dx/medium.sound_speed;
 %dt = (pi_phase_shift/32)
-%dt = 10e-9;
+dt = 10e-9;
 fprintf('Setting time step to: %.12f [secs]\n', dt);
 pause(1);
 % Calculate the number of steps we must take to allow the ultrasound to
@@ -191,11 +196,13 @@ source.p = input_signal;
 % =========================================================================
 % DEFINE THE LOCATION OF THE SENSOR MASK
 % =========================================================================
-%sensor.mask = ones(Nx, Ny, Nz); % The full medium
-sensor.mask = zeros(Nx, Ny, Nz);
+sensor.mask = ones(Nx, Ny, Nz); % The full medium
 
-% Single plane through the medium along the ultrasound axis.
-sensor.mask(:, :,Nz/2) = 1; 
+
+% % Single plane through the medium along the ultrasound axis.
+% sensor.mask = zeros(Nx, Ny, Nz);
+% sensor.mask(:, :,Nz/2) = 1; 
+
 % sensor.mask(Nx/4:Nx-Nx/4,...
 %             Ny/4:Ny-Ny/4,...
 %             Nz/4:Nz-Nz/4) = 1;
@@ -209,7 +216,7 @@ sensor.mask(:, :,Nz/2) = 1;
 % set the input settings
 input_args = {...
     'PMLInside', true, 'PlotSim', false, 'PMLSize', [PML_X_SIZE, PML_Y_SIZE, PML_Z_SIZE], ...
-    'DisplayMask', source.p_mask,...
+    %'DisplayMask', source.p_mask,...
     %'PlotScale', [-(source_strength+source_strength/2), (source_strength+source_strength/2)],...
      };
  

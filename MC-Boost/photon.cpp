@@ -165,7 +165,7 @@ void Photon::Inject_photon_through_aperture(Medium *medium, const int num_iterat
     
 	// Set the current layer the photon starts propagating through.  This will
 	// be updated as the photon moves through layers by checking 'hitLayerBoundary'.
-	currLayer = m_medium->getLayerFromDepth(currLocation->location.z);
+	currLayer = m_medium->getLayerFromDepth(m_input_aperture->Get_z_coord());
     
 	// Move the photon through the medium. 'iterations' represents the number of photons this
 	// object (which is a thread) will execute.
@@ -219,7 +219,7 @@ void Photon::propagatePhoton(const int iterations)
         /// defined detector.
         exit_seeds = RNG_generator->getState();
 
-
+ 
         // Initialize the photon's trajectory before any scattering event has taken place.
         initTrajectory();
 
@@ -349,6 +349,7 @@ void Photon::reset()
 // Update the step size for the photon.
 void Photon::setStepSize()
 {
+    
 	// Update the current values of the absorption and scattering coefficients
 	// based on the depth in the medium (i.e. which layer the photon is in).
 	double mu_a = currLayer->getAbsorpCoeff(currLocation);
@@ -384,7 +385,27 @@ bool Photon::checkLayerBoundary(void)
 		cout << "Hit layer boundary\n";
 #endif
 
-		hop();	// Move the photon to the layer boundary.
+		///hop();	// Move the photon to the layer boundary.
+        
+        /// We want to move the photon to the layer boundary, therefore we check
+        /// which direction we are moving in, and move the photon to the boundary.
+        /// NOTE:
+        ///  - This assumes the layers are only stacked along the z-axis (optical injection axis).
+        ///  - This should be changed in future updates.
+        if ((currLocation->location.z - prevLocation->location.z) > 0.0f)
+        {
+            /// We know we are moving in the positive direction, so move the photon to the edge of
+            /// the layer boundary and check if it should transmit or reflect.
+            step_remainder = abs(currLocation->location.z - currLayer->getDepthEnd());
+            currLocation->location.z = currLayer->getDepthEnd();
+        }
+        else
+        {
+            step_remainder = abs(currLocation->location.z - currLayer->getDepthStart());
+            currLocation->location.z = currLayer->getDepthStart();
+        }
+        
+        
 		transmitOrReflect("layer");
 		return true;
 	}
@@ -400,7 +421,26 @@ bool Photon::checkMediumBoundary(void)
 #ifdef DEBUG
 		cout << "Hit medium boundary\n";
 #endif
-		hop();  // Move the photon to the medium boundary.
+		///hop();  // Move the photon to the medium boundary.
+        
+        /// We want to move the photon to the layer boundary, therefore we check
+        /// which direction we are moving in, and move the photon to the boundary.
+        /// NOTE:
+        ///  - This assumes the layers are only stacked along the z-axis (optical injection axis).
+        ///  - This should be changed in future updates.
+        if ((currLocation->location.z - prevLocation->location.z) > 0.0f)
+        {
+            /// We know we are moving in the positive direction, so move the photon to the edge of
+            /// the layer boundary and check if it should transmit or reflect.
+            step_remainder = abs(currLocation->location.z - currLayer->getDepthEnd());
+            currLocation->location.z = currLayer->getDepthEnd();
+        }
+        else
+        {
+            step_remainder = abs(currLocation->location.z - currLayer->getDepthStart());
+            currLocation->location.z = currLayer->getDepthStart();
+        }
+        
 		transmitOrReflect("medium");
 		return true;
 	}
@@ -494,7 +534,10 @@ void Photon::hop()
 	currLocation->location.y += step * currLocation->getDirY();
 	currLocation->location.z += step * currLocation->getDirZ();
 
-
+    /// FIXME:
+    /// This assumes the layers are stacked along the z-axis.
+    /// Need to move the optical definitions into the matlab generated h5 file.
+    currLayer = m_medium->getLayerFromDepth(currLocation->location.z);
 }
 
 
@@ -1340,6 +1383,9 @@ void Photon::transmitOrReflect(const char *type)
 #ifdef DEBUG
 			cout << "Internally reflecting on layer boundary\n";
 #endif
+            /// FIXME:
+            ///  - This assumes layers are slabs stacked along the z-axis. Should
+            ///    be moved to a more general implementation.
 			internallyReflectZ();
 
 			// Since the photon has interacted with the tissue we deposit weight.
@@ -1555,9 +1601,9 @@ bool Photon::hitMediumBoundary(void)
 
 	//Layer *layer = m_medium->getLayerFromDepth(currLocation->location.z);
 	double mu_t = currLayer->getTotalAttenuationCoeff(currLocation);
-	double x_bound = m_medium->Get_X_bound();
-	double y_bound = m_medium->Get_Y_bound();
-	double z_bound = m_medium->Get_Z_bound();
+	static double x_bound = m_medium->Get_X_bound();
+	static double y_bound = m_medium->Get_Y_bound();
+	static double z_bound = m_medium->Get_Z_bound();
 
 	// Check if the photon has been given a step size past the outer edges of the medium.
 	// If so we calculate the distance to the boundary.

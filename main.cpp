@@ -600,7 +600,7 @@ using namespace std;
  */
 // Number of photons to simulate.
 //const int MAX_PHOTONS = 50e6;
-const int MAX_PHOTONS = 100e3;
+const int MAX_PHOTONS = 1e3;
 
 
 // Testing routines.
@@ -1003,7 +1003,7 @@ int main(int argc, char** argv)
         input_aperture.radius = trans_detection_aperture.radius;              /// Ensure that the input and detection apertures match.
         input_aperture.center_coords.location.x = trans_detection_aperture.center_coords.location.x;
         input_aperture.center_coords.location.y = trans_detection_aperture.center_coords.location.y;
-        input_aperture.center_coords.location.z = scattering_layer_props.start_depth+0.00001; //0.0f;
+        input_aperture.center_coords.location.z = scattering_layer_props.start_depth+0.0001; //0.0f;
         
         AO_simulation.Add_injection_aperture_MC_medium(input_aperture);
 

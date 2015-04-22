@@ -94,11 +94,13 @@ ifeq ($(UNAME), Darwin)
   # Custom built GNU compiler on OS X since what ships with Xcode currently lacks
   # OMP support
   CXX	   = /usr/local/bin/g++
+  #CXX      = /usr/bin/g++
 else
   CXX	   = /usr/bin/g++
 endif
 
-  CPU_FLAGS = -msse4.2 -m64 -mtune=native
+  #CPU_FLAGS = -msse4.2 -m64 -mtune=native
+  CPU_FLAGS = 
 
   #Generic CPU (any intel and AMD 64b CPU)
   #CPU_FLAGS = -msse2 -m64
@@ -108,12 +110,12 @@ endif
 
   # CFLAGS for running 
   #------------------------
-  CXXFLAGS = -O3 -mtune=native -fopenmp $(CPU_FLAGS) -ffast-math -fassociative-math -Wall \
+  #CXXFLAGS = -O1 -mtune=native -fopenmp $(CPU_FLAGS) -ffast-math -fassociative-math -Wall \
 		     -I$(HDF5_DIR)/include -I$(FFT_DIR)/include -I .
   
   # CFLAGS for debugging
   #------------------------
-  #CXXFLAGS = -O0 -fopenmp $(CPU_FLAGS) -Wall -g -I$(HDF5_DIR)/include -I$(FFT_DIR)/include -I .
+  CXXFLAGS = -O0 -fopenmp $(CPU_FLAGS) -Wall -g -I$(HDF5_DIR)/include -I$(FFT_DIR)/include -I .
 
   ifeq ($(LINKING),STATIC)
 

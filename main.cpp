@@ -599,8 +599,7 @@ using namespace std;
  * ------------------------------------------------------- Various functions for Monte-Carlo -----------------
  */
 // Number of photons to simulate.
-//const int MAX_PHOTONS = 50e6;
-const int MAX_PHOTONS = 1e3;
+const int MAX_PHOTONS = 110e6;
 
 
 // Testing routines.
@@ -739,15 +738,12 @@ int main(int argc, char** argv)
         nonscattering_layer_props.refractive_index = 1.33f;
         nonscattering_layer_props.anisotropy  = 0.95f;
         nonscattering_layer_props.start_depth = 0.0f;       // meters
-        nonscattering_layer_props.end_depth   = 0.010f;    // meters
+        nonscattering_layer_props.end_depth   = 0.006f;    // meters
         Layer *front_nonscattering_slab = new Layer(nonscattering_layer_props);
-        /// Update the 'start' and 'end' depth for producing a new layer object
-        /// at the back of the medium.
-        nonscattering_layer_props.start_depth = 0.011f;       // meters
-        nonscattering_layer_props.end_depth   = AO_simulation.Get_MC_Zaxis_depth();    // meters
-        Layer *back_nonscattering_slab  = new Layer(nonscattering_layer_props);
+
     
         /// Scattering layer definition (Agar with Intralipid)
+        double scattering_layer_thickness_optical_axis = 0.012;   // meters
         scattering_layer_props.mu_a = 0.01f;                       // cm^-1
         scattering_layer_props.mu_s = 100.0f;                      // cm^-1
         ///   Move mu_s dimensions from cm^-1 to m^-1.
@@ -755,12 +751,17 @@ int main(int argc, char** argv)
         scattering_layer_props.mu_s = scattering_layer_props.mu_s * 100;      // m^-1
         scattering_layer_props.refractive_index = 1.33f;
         scattering_layer_props.anisotropy  = 0.9f;
-        scattering_layer_props.start_depth = 0.010f;      // meters
-        scattering_layer_props.end_depth   = 0.011f;  // meters
+        scattering_layer_props.start_depth = nonscattering_layer_props.end_depth;      // meters
+        scattering_layer_props.end_depth   = scattering_layer_props.start_depth + scattering_layer_thickness_optical_axis;  // meters
         ///   NOTE: The reduced scattering coefficient is 10 cm^-1 for this layer
         Layer *middle_scattering_slab = new Layer(scattering_layer_props);
 
 
+        /// Update the 'start' and 'end' depth for producing a new layer object
+        /// at the back of the medium.
+        nonscattering_layer_props.start_depth = scattering_layer_props.end_depth;       // meters
+        nonscattering_layer_props.end_depth   = AO_simulation.Get_MC_Zaxis_depth();    // meters
+        Layer *back_nonscattering_slab  = new Layer(nonscattering_layer_props);
         
         
         /// Adding absorbers to the layer.
@@ -1003,7 +1004,7 @@ int main(int argc, char** argv)
         input_aperture.radius = trans_detection_aperture.radius;              /// Ensure that the input and detection apertures match.
         input_aperture.center_coords.location.x = trans_detection_aperture.center_coords.location.x;
         input_aperture.center_coords.location.y = trans_detection_aperture.center_coords.location.y;
-        input_aperture.center_coords.location.z = scattering_layer_props.start_depth+0.0001; //0.0f;
+        input_aperture.center_coords.location.z = scattering_layer_props.start_depth+0.0000001; //0.0f;
         
         AO_simulation.Add_injection_aperture_MC_medium(input_aperture);
 
